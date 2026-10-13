@@ -34,6 +34,11 @@ import {
   UserPlus,
   Trash2,
   X,
+  Check,
+  Crown,
+  User,
+  Eye,
+  ArrowRight,
 } from 'lucide-react';
 import { StatusBadge } from '../components/StatusBadge';
 import { ProgressBar } from '../components/ProgressBar';
@@ -605,15 +610,16 @@ export const WorkflowBuilderPage = () => {
         {/* Right: Actions (Role Badge, Team, Add Task, Auto Align, Save Workflow) */}
         <div className="flex items-center space-x-2">
           {saveMessage && (
-            <span className="text-xs font-mono text-emerald-400 animate-fadeIn hidden sm:inline">
-              ✓ {saveMessage}
+            <span className="text-xs font-mono text-emerald-400 animate-fadeIn hidden sm:inline-flex items-center space-x-1">
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{saveMessage}</span>
             </span>
           )}
 
           {/* User Workflow Role Badge */}
           {workflow?.userRole ? (
             <span
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold font-mono border hidden md:inline-flex items-center space-x-1 ${
+              className={`px-2.5 py-1 rounded-xl text-xs font-bold font-mono border hidden md:inline-flex items-center space-x-1.5 ${
                 workflow.userRole === 'ADMIN' || workflow.userRole === 'TEAM_ADMIN' || workflow.userRole === 'OWNER'
                   ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
                   : workflow.userRole === 'MANAGER' || workflow.userRole === 'WORKFLOW_MANAGER' || workflow.userRole === 'TEAM_MANAGER'
@@ -621,12 +627,19 @@ export const WorkflowBuilderPage = () => {
                   : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
               }`}
             >
+              {workflow.userRole === 'ADMIN' || workflow.userRole === 'TEAM_ADMIN' || workflow.userRole === 'OWNER' ? (
+                <Crown className="w-3.5 h-3.5 text-amber-400" />
+              ) : workflow.userRole === 'MANAGER' || workflow.userRole === 'WORKFLOW_MANAGER' || workflow.userRole === 'TEAM_MANAGER' ? (
+                <Shield className="w-3.5 h-3.5 text-indigo-400" />
+              ) : (
+                <User className="w-3.5 h-3.5 text-emerald-400" />
+              )}
               <span>
                 {workflow.userRole === 'ADMIN' || workflow.userRole === 'TEAM_ADMIN' || workflow.userRole === 'OWNER'
-                  ? '👑 ' + (workflow.userRole === 'OWNER' ? 'OWNER' : 'ADMIN')
+                  ? (workflow.userRole === 'OWNER' ? 'OWNER' : 'ADMIN')
                   : workflow.userRole === 'MANAGER' || workflow.userRole === 'WORKFLOW_MANAGER' || workflow.userRole === 'TEAM_MANAGER'
-                  ? '🛡️ MANAGER'
-                  : '👤 MEMBER'}
+                  ? 'MANAGER'
+                  : 'MEMBER'}
               </span>
             </span>
           ) : (
@@ -696,8 +709,9 @@ export const WorkflowBuilderPage = () => {
               </button>
             </>
           ) : (
-            <span className="px-2.5 py-1 bg-dark-850 text-slate-400 border border-slate-800 rounded-xl text-xs font-medium hidden sm:inline-block">
-              👁️ Member View
+            <span className="px-2.5 py-1 bg-dark-850 text-slate-400 border border-slate-800 rounded-xl text-xs font-medium hidden sm:inline-flex items-center space-x-1.5">
+              <Eye className="w-3.5 h-3.5 text-slate-400" />
+              <span>Member View</span>
             </span>
           )}
         </div>
@@ -749,7 +763,7 @@ export const WorkflowBuilderPage = () => {
               <span className="font-semibold text-brand-300 max-w-[120px] truncate">
                 {nodes.find((n) => n.id === selectedEdge.source)?.data?.task?.title || 'Source'}
               </span>
-              <span className="text-slate-500 font-mono">➔</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
               <span className="font-semibold text-brand-300 max-w-[120px] truncate">
                 {nodes.find((n) => n.id === selectedEdge.target)?.data?.task?.title || 'Target'}
               </span>
@@ -797,7 +811,11 @@ export const WorkflowBuilderPage = () => {
         {/* Canvas Instructions Floating Pill */}
         <div className="absolute bottom-4 left-4 z-10 hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-dark-900/80 border border-slate-800/80 rounded-xl text-[11px] text-slate-400 backdrop-blur-sm pointer-events-none">
           <Info className="w-3.5 h-3.5 text-brand-400" />
-          <span>Tip: Drag handles to connect tasks. Click ✕ on arrow, or select & press Delete to remove wrong connections.</span>
+          <span className="flex items-center space-x-1">
+            <span>Tip: Drag handles to connect tasks. Click</span>
+            <X className="w-3 h-3 text-rose-400 inline" />
+            <span>on arrow, or select & press Delete to remove connections.</span>
+          </span>
         </div>
 
         {/* Task Details Side Drawer */}

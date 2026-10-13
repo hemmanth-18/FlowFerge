@@ -27,6 +27,7 @@ import { PriorityBadge } from '../components/PriorityBadge';
 import { ProgressBar } from '../components/ProgressBar';
 import { WorkflowModal } from '../components/WorkflowModal';
 import { CreateTeamModal } from '../components/CreateTeamModal';
+import { TeamIcon } from '../components/TeamIcon';
 import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
 import { useToast } from '../context/ToastContext';
@@ -131,8 +132,8 @@ export const DashboardPage = () => {
     return (
       <div className="min-h-screen bg-dark-950 p-6 flex flex-col items-center justify-center">
         <div className="max-w-md w-full p-8 rounded-2xl bg-dark-900 border border-slate-800 text-center space-y-4 shadow-2xl">
-          <div className="w-14 h-14 rounded-2xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center mx-auto text-3xl">
-            💻
+          <div className="w-14 h-14 rounded-2xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center mx-auto">
+            <Building2 className="w-7 h-7 text-brand-400" />
           </div>
           <h2 className="text-xl font-bold text-slate-100">Welcome to FlowForge!</h2>
           <p className="text-xs text-slate-400 leading-relaxed">
@@ -202,8 +203,8 @@ export const DashboardPage = () => {
           <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <div className="w-14 h-14 rounded-2xl bg-dark-800 border border-slate-700 flex items-center justify-center text-3xl shadow-lg">
-                {activeTeam.icon || '💻'}
+              <div className="w-14 h-14 rounded-2xl bg-dark-800 border border-slate-700 flex items-center justify-center shadow-lg">
+                <TeamIcon icon={activeTeam.icon} className="w-7 h-7 text-brand-400" />
               </div>
               <div>
                 <div className="flex items-center space-x-2.5">
@@ -432,8 +433,9 @@ export const DashboardPage = () => {
               </div>
 
               {myTasks.length === 0 ? (
-                <div className="text-center py-6 text-slate-500 text-xs">
-                  ✨ You have no pending tasks assigned in this team.
+                <div className="text-center py-6 text-slate-500 text-xs flex items-center justify-center space-x-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-brand-400" />
+                  <span>You have no pending tasks assigned in this team.</span>
                 </div>
               ) : (
                 <div className="space-y-2">

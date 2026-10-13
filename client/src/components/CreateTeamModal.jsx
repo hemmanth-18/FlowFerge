@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { X, Sparkles, Building2, Layers, Check } from 'lucide-react';
 import { useTeam } from '../context/TeamContext';
-
-const TEAM_ICONS = ['💻', '📢', '⚡', '🚀', '🛠️', '🎨', '💼', '📊', '🛡️', '🌐'];
+import { TeamIcon, AVAILABLE_TEAM_ICONS } from './TeamIcon';
 
 export const CreateTeamModal = ({ isOpen, onClose, onSuccess }) => {
   const { createTeam } = useTeam();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [icon, setIcon] = useState('💻');
+  const [icon, setIcon] = useState('code');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -49,8 +48,8 @@ export const CreateTeamModal = ({ isOpen, onClose, onSuccess }) => {
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-5">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-xl">
-              {icon}
+            <div className="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center">
+              <TeamIcon icon={icon} className="w-5 h-5 text-brand-400" />
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
@@ -85,18 +84,19 @@ export const CreateTeamModal = ({ isOpen, onClose, onSuccess }) => {
               Team Icon
             </label>
             <div className="flex items-center space-x-2 flex-wrap gap-y-2">
-              {TEAM_ICONS.map((emoji) => (
+              {AVAILABLE_TEAM_ICONS.map(({ id, label, Icon }) => (
                 <button
                   type="button"
-                  key={emoji}
-                  onClick={() => setIcon(emoji)}
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg transition-all ${
-                    icon === emoji
-                      ? 'bg-brand-600/30 border-2 border-brand-400 scale-105 shadow-glow-brand'
-                      : 'bg-dark-850 hover:bg-dark-800 border border-slate-800'
+                  key={id}
+                  title={label}
+                  onClick={() => setIcon(id)}
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                    icon === id
+                      ? 'bg-brand-600/30 border-2 border-brand-400 scale-105 shadow-glow-brand text-brand-300'
+                      : 'bg-dark-850 hover:bg-dark-800 border border-slate-800 text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  {emoji}
+                  <Icon className="w-4 h-4" />
                 </button>
               ))}
             </div>

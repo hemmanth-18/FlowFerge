@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { InviteMemberModal } from '../components/InviteMemberModal';
+import { TeamIcon } from '../components/TeamIcon';
 import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
 import { useToast } from '../context/ToastContext';
@@ -190,8 +191,8 @@ export const TeamPage = () => {
         {/* Team Overview Card */}
         <div className="p-5 rounded-2xl bg-dark-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3.5">
-            <div className="w-12 h-12 rounded-xl bg-dark-850 border border-slate-800 flex items-center justify-center text-2xl">
-              {activeTeam?.icon || '💻'}
+            <div className="w-12 h-12 rounded-xl bg-dark-850 border border-slate-800 flex items-center justify-center">
+              <TeamIcon icon={activeTeam?.icon} className="w-6 h-6 text-brand-400" />
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
@@ -278,8 +279,8 @@ export const TeamPage = () => {
                               onChange={(e) => handleRoleChange(member.id, e.target.value)}
                               className="px-2.5 py-1 rounded-lg bg-dark-800 border border-slate-700 text-slate-200 text-xs font-medium focus:outline-none focus:border-brand-500"
                             >
-                              <option value="TEAM_MANAGER">🛡️ TEAM_MANAGER</option>
-                              <option value="TEAM_MEMBER">👤 TEAM_MEMBER</option>
+                              <option value="TEAM_MANAGER">TEAM_MANAGER</option>
+                              <option value="TEAM_MEMBER">TEAM_MEMBER</option>
                             </select>
                           ) : (
                             <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-dark-800 border border-slate-700/80 text-xs font-semibold">

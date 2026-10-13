@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { NotificationsDropdown } from './NotificationsDropdown';
+import { TeamIcon } from './TeamIcon';
 import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
 import { api } from '../services/api';
@@ -92,7 +93,7 @@ export const Navbar = ({ onOpenSidebar, title, actions = null }) => {
 
         {/* Page Title & Breadcrumbs */}
         <div className="flex items-center space-x-2">
-          <span className="text-xl hidden sm:inline">{activeTeam?.icon || '💻'}</span>
+          <TeamIcon icon={activeTeam?.icon} className="w-5 h-5 text-brand-400 hidden sm:inline-block flex-shrink-0" />
           <h1 className="text-base sm:text-lg font-bold text-slate-100 tracking-tight truncate max-w-xs sm:max-w-sm">
             {title || 'Dashboard'}
           </h1>

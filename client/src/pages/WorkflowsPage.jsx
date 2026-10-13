@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { StatusBadge } from '../components/StatusBadge';
+import { TeamIcon } from '../components/TeamIcon';
 import { ProgressBar } from '../components/ProgressBar';
 import { WorkflowModal } from '../components/WorkflowModal';
 import { WorkflowPermissionsModal } from '../components/WorkflowPermissionsModal';
@@ -400,7 +401,7 @@ export const WorkflowsPage = () => {
                     {/* Header line */}
                     <div className="flex items-center justify-between mb-2 gap-2">
                       <div className="flex items-center space-x-2 truncate">
-                        <span className="text-lg flex-shrink-0">{wf.teamIcon || '🚀'}</span>
+                        <TeamIcon icon={wf.teamIcon} className="w-5 h-5 text-brand-400 flex-shrink-0" />
                         <h3 className="text-sm font-bold text-slate-100 group-hover:text-brand-300 transition-colors truncate">
                           {wf.name}
                         </h3>

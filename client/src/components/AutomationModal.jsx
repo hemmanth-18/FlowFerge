@@ -165,8 +165,9 @@ export const AutomationModal = ({
 
         {/* Live Preview Summary Card */}
         <div className="mx-6 mt-4 p-3.5 rounded-xl bg-gradient-to-r from-amber-950/30 to-brand-950/30 border border-amber-500/30 text-xs">
-          <span className="font-mono text-[10px] text-amber-400 uppercase font-bold tracking-wider block mb-1">
-            ⚡ Rule Summary
+          <span className="font-mono text-[10px] text-amber-400 uppercase font-bold tracking-wider flex items-center space-x-1.5 mb-1">
+            <Zap className="w-3.5 h-3.5 text-amber-400" />
+            <span>Rule Summary</span>
           </span>
           <p className="text-slate-200 font-medium leading-relaxed font-mono text-[11px]">
             {getSummary()}

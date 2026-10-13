@@ -25,9 +25,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
 import { useToast } from '../context/ToastContext';
 import { usePageMeta } from '../hooks/usePageMeta';
+import { TeamIcon, AVAILABLE_TEAM_ICONS } from '../components/TeamIcon';
 import { api } from '../services/api';
-
-const TEAM_ICONS = ['💻', '📢', '⚡', '🚀', '🛠️', '🎨', '💼', '📊', '🛡️', '🌐'];
 
 export const SettingsPage = () => {
   const { setSidebarOpen } = useOutletContext() || {};
@@ -49,7 +48,7 @@ export const SettingsPage = () => {
   // Active Team form state
   const [teamName, setTeamName] = useState(activeTeam?.name || '');
   const [teamDesc, setTeamDesc] = useState(activeTeam?.description || '');
-  const [teamIcon, setTeamIcon] = useState(activeTeam?.icon || '💻');
+  const [teamIcon, setTeamIcon] = useState(activeTeam?.icon || 'code');
   const [savingTeam, setSavingTeam] = useState(false);
   const [teamSuccess, setTeamSuccess] = useState(false);
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
@@ -60,7 +59,7 @@ export const SettingsPage = () => {
     if (activeTeam) {
       setTeamName(activeTeam.name || '');
       setTeamDesc(activeTeam.description || '');
-      setTeamIcon(activeTeam.icon || '💻');
+      setTeamIcon(activeTeam.icon || 'code');
     }
   }, [activeTeam]);
 
@@ -327,7 +326,7 @@ export const SettingsPage = () => {
                         className="p-3 rounded-xl bg-dark-850 border border-slate-800 space-y-1"
                       >
                         <div className="flex items-center space-x-2">
-                          <span className="text-base">{t.teamIcon || '💻'}</span>
+                          <TeamIcon icon={t.teamIcon} className="w-4 h-4 text-brand-400 flex-shrink-0" />
                           <span className="text-xs font-bold text-slate-200 truncate">
                             {t.teamName}
                           </span>
@@ -386,18 +385,19 @@ export const SettingsPage = () => {
                   Team Icon
                 </label>
                 <div className="flex items-center space-x-2 flex-wrap gap-y-2">
-                  {TEAM_ICONS.map((emoji) => (
+                  {AVAILABLE_TEAM_ICONS.map(({ id, label, Icon }) => (
                     <button
                       type="button"
-                      key={emoji}
-                      onClick={() => setTeamIcon(emoji)}
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-base transition-all ${
-                        teamIcon === emoji
-                          ? 'bg-brand-600/30 border-2 border-brand-400 scale-105'
-                          : 'bg-dark-850 hover:bg-dark-800 border border-slate-800'
+                      key={id}
+                      title={label}
+                      onClick={() => setTeamIcon(id)}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                        teamIcon === id
+                          ? 'bg-brand-600/30 border-2 border-brand-400 scale-105 text-brand-300'
+                          : 'bg-dark-850 hover:bg-dark-800 border border-slate-800 text-slate-400 hover:text-slate-200'
                       }`}
                     >
-                      {emoji}
+                      <Icon className="w-4 h-4" />
                     </button>
                   ))}
                 </div>

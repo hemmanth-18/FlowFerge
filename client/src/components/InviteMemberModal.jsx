@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, UserPlus, Shield, User, Send, Check } from 'lucide-react';
+import { X, UserPlus, Shield, User, Send, Check, Info } from 'lucide-react';
 import { api } from '../services/api';
 import { useTeam } from '../context/TeamContext';
 
@@ -127,8 +127,9 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-dark-850 border border-slate-800 text-[11px] text-slate-400">
-            💡 The invited user will receive a notification and must accept before accessing team workflows.
+          <div className="flex items-start space-x-2 p-3 rounded-xl bg-dark-850 border border-slate-800 text-[11px] text-slate-400">
+            <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+            <span>The invited user will receive a notification and must accept before accessing team workflows.</span>
           </div>
 
           <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">

@@ -27,6 +27,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
 import { CreateTeamModal } from './CreateTeamModal';
+import { TeamIcon } from './TeamIcon';
 import { api } from '../services/api';
 
 export const Sidebar = ({ isOpen, onClose }) => {
@@ -153,7 +154,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
             className="w-full flex items-center justify-between p-2.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-slate-800/80 transition-all text-left group"
           >
             <div className="flex items-center space-x-2.5 truncate">
-              <span className="text-xl flex-shrink-0">{activeTeam?.icon || '💻'}</span>
+              <TeamIcon icon={activeTeam?.icon} className="w-5 h-5 text-brand-400 flex-shrink-0" />
               <div className="truncate">
                 <div className="flex items-center space-x-1.5 truncate">
                   <span className="text-xs font-bold text-slate-100 truncate group-hover:text-brand-300 transition-colors">
@@ -200,7 +201,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
                       }`}
                     >
                       <div className="flex items-center space-x-2 truncate">
-                        <span className="text-base">{t.icon || '💻'}</span>
+                        <TeamIcon icon={t.icon} className="w-4 h-4 text-brand-400 flex-shrink-0" />
                         <div className="text-left truncate">
                           <p className="truncate text-xs">{t.name}</p>
                           <span className="text-[9px] text-slate-500 font-mono">

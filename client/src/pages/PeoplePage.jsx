@@ -421,9 +421,9 @@ export const PeoplePage = () => {
           <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-6 relative">
             <button
               onClick={() => setProfileModalUser(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-200"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-200 p-1 rounded-lg transition-colors"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
             <div className="text-center space-y-3">
               <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white font-black text-xl flex items-center justify-center shadow-lg">

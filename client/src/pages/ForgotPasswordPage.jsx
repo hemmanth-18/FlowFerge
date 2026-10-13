@@ -91,7 +91,8 @@ export const ForgotPasswordPage = () => {
               {resetToken && (
                 <div className="p-3.5 bg-brand-950/40 border border-brand-800/50 rounded-xl text-left text-xs text-slate-300 space-y-1.5">
                   <div className="font-semibold text-brand-400 flex items-center space-x-1.5">
-                    <span>🔑 Development Reset Token</span>
+                    <KeyRound className="w-3.5 h-3.5 text-brand-400" />
+                    <span>Development Reset Token</span>
                   </div>
                   <p className="text-[11px] text-slate-400 font-mono break-all bg-dark-950 p-2 rounded-lg border border-slate-800">
                     {resetToken}

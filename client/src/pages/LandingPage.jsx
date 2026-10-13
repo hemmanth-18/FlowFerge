@@ -80,7 +80,7 @@ export const LandingPage = () => {
     setSendingContact(true);
     setTimeout(() => {
       setSendingContact(false);
-      const msg = '✓ Message sent successfully! Our engineering team will follow up within 2 hours.';
+      const msg = 'Message sent successfully! Our engineering team will follow up within 2 hours.';
       setContactSuccess(msg);
       toast.success('Message sent successfully! We will get back to you shortly.');
       setContactName('');

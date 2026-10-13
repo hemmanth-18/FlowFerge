@@ -238,9 +238,9 @@ export const ShareWorkflowModal = ({ isOpen, onClose, workflow, onInvitationSent
                 <button
                   type="button"
                   onClick={() => setSelectedUser(null)}
-                  className="text-slate-400 hover:text-slate-200 text-xs"
+                  className="text-slate-400 hover:text-slate-200 p-0.5 rounded transition-colors"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             )}
