@@ -42,24 +42,17 @@ const authMiddleware = async (req, res, next) => {
     }
 
     // 2. Validate session in SupabaseService
-    let session = await SupabaseService.getSession(token);
-    let userId = session?.userId;
+    const session = await SupabaseService.getSession(token);
+    const userId = session?.userId;
 
-    if (!userId && token && token.startsWith('sess_')) {
-      // Gracefully restore existing browser session from local development to the active developer user
-      userId = 'user_0926a83f2438';
-      const restoredSession = {
-        sessionId: token,
-        userId,
-        createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      };
-      if (typeof SupabaseService.storeSession === 'function') {
-        SupabaseService.storeSession(token, restoredSession);
-      }
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Session expired or invalid. Please sign in again.',
+      });
     }
 
-    const user = await SupabaseService.getUserById(userId || token);
+    const user = await SupabaseService.getUserById(userId);
 
     if (!user) {
       return res.status(401).json({

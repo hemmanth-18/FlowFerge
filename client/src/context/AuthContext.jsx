@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { supabase } from '../services/supabaseClient';
 
 const AuthContext = createContext(null);
 
@@ -11,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeSession = async () => {
       try {
+        const token = localStorage.getItem('flowforge_token');
         const res = await api.get('/auth/me');
         if (res.data?.success && res.data?.user) {
           setUser(res.data.user);
@@ -19,11 +21,13 @@ export const AuthProvider = ({ children }) => {
           setUser(null);
           localStorage.removeItem('flowforge_token');
           localStorage.removeItem('flowforge_user');
+          localStorage.removeItem('flowforge_active_team_id');
         }
       } catch (err) {
         setUser(null);
         localStorage.removeItem('flowforge_token');
         localStorage.removeItem('flowforge_user');
+        localStorage.removeItem('flowforge_active_team_id');
       } finally {
         setLoading(false);
       }
@@ -95,15 +99,25 @@ export const AuthProvider = ({ children }) => {
 
   // Sign Out
   const signOut = async () => {
-    try {
-      await api.post('/auth/logout');
-    } catch (e) {
-      // quiet
-    }
-    setUser(null);
+    // 1. Immediately wipe local state
     localStorage.removeItem('flowforge_token');
     localStorage.removeItem('flowforge_user');
     localStorage.removeItem('flowforge_active_team_id');
+    setUser(null);
+
+    // 2. Supabase Auth sign out
+    try {
+      if (supabase && typeof supabase.auth?.signOut === 'function') {
+        await supabase.auth.signOut();
+      }
+    } catch (e) {}
+
+    // 3. Backend session sign out
+    try {
+      await api.post('/auth/logout');
+    } catch (e) {}
+
+    // 4. Force browser redirect to login
     window.location.href = '/login';
   };
 

@@ -366,19 +366,39 @@ const SupabaseService = {
       user = await this.getUserByUsername(cleanIdentifier);
     }
 
-    if (!user) {
-      throw new Error('Invalid email/username or password.');
-    }
-
-    if (user.passwordHash) {
+    // If local user found and has passwordHash, verify bcrypt hash
+    if (user && user.passwordHash) {
       const isMatch = await bcrypt.compare(password, user.passwordHash);
-      if (!isMatch) {
-        throw new Error('Invalid email/username or password.');
+      if (isMatch) {
+        user.lastLogin = new Date().toISOString();
+        return this.sanitizeUser(user);
       }
     }
 
-    user.lastLogin = new Date().toISOString();
-    return this.sanitizeUser(user);
+    // Fallback: Check Supabase Auth if identifier is an email
+    if (supabase && cleanIdentifier.includes('@')) {
+      try {
+        const { data: sbData, error: sbErr } = await supabase.auth.signInWithPassword({
+          email: cleanIdentifier,
+          password,
+        });
+        if (!sbErr && sbData?.user) {
+          const sbUser = sbData.user;
+          user = (await this.getUserById(sbUser.id)) || (await this.getUserByEmail(sbUser.email));
+          if (!user) {
+            user = await this.getOrCreateUser(sbUser.id, {
+              email: sbUser.email,
+              name: sbUser.user_metadata?.name || sbUser.email.split('@')[0],
+              username: sbUser.user_metadata?.username,
+            });
+          }
+          user.lastLogin = new Date().toISOString();
+          return this.sanitizeUser(user);
+        }
+      } catch (e) {}
+    }
+
+    throw new Error('Invalid email/username or password.');
   },
 
   async createSession(userId) {

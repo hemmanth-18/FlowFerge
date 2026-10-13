@@ -162,8 +162,10 @@ const authController = {
         await SupabaseService.deleteSession(sessionId);
       }
 
-      // Clear cookie
+      // Clear cookie with full options and fallback paths
+      res.clearCookie('flowforge_session', COOKIE_OPTIONS);
       res.clearCookie('flowforge_session', { path: '/' });
+      res.clearCookie('flowforge_session');
 
       return res.json({
         success: true,
@@ -171,6 +173,7 @@ const authController = {
       });
     } catch (err) {
       console.error('[Logout Error]:', err);
+      res.clearCookie('flowforge_session', COOKIE_OPTIONS);
       res.clearCookie('flowforge_session', { path: '/' });
       return res.json({ success: true, message: 'Logged out.' });
     }
