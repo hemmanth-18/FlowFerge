@@ -326,7 +326,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
 
                 <div className="flex items-center space-x-1.5 flex-shrink-0">
                   {item.badge && (
-                    <span className="w-5 h-5 rounded-full bg-purple-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+                    <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-purple-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse leading-none shadow-sm shadow-purple-500/40">
                       {item.badge > 9 ? '9+' : item.badge}
                     </span>
                   )}

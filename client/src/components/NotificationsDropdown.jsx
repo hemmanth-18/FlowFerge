@@ -54,14 +54,16 @@ export const NotificationsDropdown = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         title="Notifications"
-        className="relative p-2 text-slate-400 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors"
+        className="relative p-2.5 text-slate-300 hover:text-white hover:bg-white/[0.08] rounded-xl transition-all flex items-center justify-center cursor-pointer group"
       >
-        <Bell className="w-5 h-5" />
-        {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-brand-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse shadow-md shadow-brand-500/50">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
+        <div className="relative flex items-center justify-center">
+          <Bell className="w-5 h-5 text-slate-300 group-hover:text-purple-300 transition-colors" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[9.5px] font-black flex items-center justify-center shadow-lg shadow-purple-500/50 border-2 border-[#0D1220] leading-none pointer-events-none animate-pulse">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </div>
       </button>
 
       {isOpen && (
@@ -72,13 +74,13 @@ export const NotificationsDropdown = () => {
           {/* Header */}
           <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
             <div className="flex items-center space-x-2">
-              <div className="p-1.5 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20">
+              <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
                 <Bell className="w-4 h-4" />
               </div>
               <h4 className="text-sm font-bold text-white">Notifications</h4>
               {unreadCount > 0 && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 font-mono font-bold border border-brand-500/30">
-                  {unreadCount} new
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono font-bold border border-purple-500/30">
+                  {unreadCount > 9 ? '9+ new' : `${unreadCount} new`}
                 </span>
               )}
             </div>
@@ -86,7 +88,7 @@ export const NotificationsDropdown = () => {
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="text-xs text-brand-400 hover:text-brand-300 font-medium transition-colors"
+                className="text-xs text-purple-400 hover:text-purple-300 font-medium transition-colors cursor-pointer"
               >
                 Mark all read
               </button>
