@@ -178,46 +178,46 @@ export const WorkflowsPage = () => {
     const normalized = (role || 'VIEWER').toUpperCase();
     if (normalized === 'OWNER') {
       return (
-        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-          <Crown className="w-3 h-3 text-amber-400" />
+        <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full font-mono text-[10px] font-bold bg-[#FBBF24]/15 text-[#FBBF24] border border-[#FBBF24]/30 backdrop-blur-sm shadow-sm">
+          <Crown className="w-3 h-3 text-[#FBBF24]" />
           <span>OWNER</span>
         </span>
       );
     }
     if (normalized === 'MANAGER' || normalized === 'WORKFLOW_MANAGER') {
       return (
-        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-          <Shield className="w-3 h-3 text-indigo-400" />
+        <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full font-mono text-[10px] font-bold bg-[#8B5CF6]/15 text-[#A78BFA] border border-[#8B5CF6]/30 backdrop-blur-sm shadow-sm">
+          <Shield className="w-3 h-3 text-[#A78BFA]" />
           <span>MANAGER</span>
         </span>
       );
     }
     if (normalized === 'MEMBER' || normalized === 'WORKFLOW_MEMBER') {
       return (
-        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-          <User className="w-3 h-3 text-emerald-400" />
+        <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full font-mono text-[10px] font-bold bg-[#34D399]/15 text-[#34D399] border border-[#34D399]/30 backdrop-blur-sm shadow-sm">
+          <User className="w-3 h-3 text-[#34D399]" />
           <span>MEMBER</span>
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-        <Eye className="w-3 h-3 text-cyan-400" />
+      <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full font-mono text-[10px] font-bold bg-[#38BDF8]/15 text-[#38BDF8] border border-[#38BDF8]/30 backdrop-blur-sm shadow-sm">
+        <Eye className="w-3 h-3 text-[#38BDF8]" />
         <span>VIEWER</span>
       </span>
     );
   };
 
   return (
-    <div className="min-h-screen bg-dark-950 pb-16 relative">
-      {/* Top Banner Notification (Requested by user: "send me message at top invitation sent seccessfully") */}
+    <div className="min-h-screen bg-transparent text-[#F8FAFC] pb-16 relative selection:bg-purple-600 selection:text-white">
+      {/* Top Banner Notification */}
       {topNotification && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-2.5 px-5 py-2.5 bg-emerald-950/95 border border-emerald-500/60 text-emerald-200 text-xs font-semibold rounded-2xl shadow-2xl backdrop-blur-md animate-slideDown">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-2.5 px-5 py-2.5 bg-[#0D1220]/90 border border-[#34D399]/40 text-[#34D399] text-xs font-semibold rounded-2xl shadow-2xl backdrop-blur-xl animate-slideDown">
+          <CheckCircle2 className="w-4 h-4 text-[#34D399] flex-shrink-0" />
           <span>{topNotification}</span>
           <button
             onClick={() => setTopNotification('')}
-            className="ml-2 text-emerald-400 hover:text-emerald-200 transition-colors cursor-pointer"
+            className="ml-2 text-slate-400 hover:text-white transition-colors cursor-pointer"
             title="Dismiss"
           >
             <X className="w-3.5 h-3.5" />
@@ -234,7 +234,7 @@ export const WorkflowsPage = () => {
               setEditingWorkflow(null);
               setIsCreateModalOpen(true);
             }}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-glow-brand transition-all"
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/25 transition-all"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>+ Create Workflow</span>
@@ -244,34 +244,34 @@ export const WorkflowsPage = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* Ownership Navigation Tabs (Section 5) */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
-          <div className="flex items-center space-x-1 p-1 bg-dark-900 border border-slate-800 rounded-xl overflow-x-auto text-xs whitespace-nowrap">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/10">
+          <div className="flex items-center space-x-1 p-1 bg-white/[0.045] border border-white/10 rounded-2xl backdrop-blur-xl overflow-x-auto text-xs whitespace-nowrap shadow-inner">
             <button
               onClick={() => setSearchParams({ filter: 'all' })}
-              className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all ${
+              className={`px-4 py-1.5 rounded-xl font-semibold transition-all ${
                 activeTab === 'all'
-                  ? 'bg-brand-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
               }`}
             >
               All Accessible
             </button>
             <button
               onClick={() => setSearchParams({ filter: 'owned' })}
-              className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all ${
+              className={`px-4 py-1.5 rounded-xl font-semibold transition-all ${
                 activeTab === 'owned'
-                  ? 'bg-brand-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
               }`}
             >
               My Workflows (Owned)
             </button>
             <button
               onClick={() => setSearchParams({ filter: 'shared' })}
-              className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all ${
+              className={`px-4 py-1.5 rounded-xl font-semibold transition-all ${
                 activeTab === 'shared'
-                  ? 'bg-brand-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
               }`}
             >
               Shared With Me
@@ -279,10 +279,10 @@ export const WorkflowsPage = () => {
             {activeTeam && (
               <button
                 onClick={() => setSearchParams({ filter: 'team' })}
-                className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all ${
+                className={`px-4 py-1.5 rounded-xl font-semibold transition-all ${
                   activeTab === 'team'
-                    ? 'bg-brand-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                    : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
                 }`}
               >
                 {activeTeam.name} Pipelines
@@ -290,9 +290,9 @@ export const WorkflowsPage = () => {
             )}
           </div>
 
-          <div className="text-xs text-slate-400 flex items-center space-x-2">
-            <span>Viewing:</span>
-            <span className="font-semibold text-slate-200">
+          <div className="text-xs text-[#CBD5E1] flex items-center space-x-2">
+            <span className="text-slate-400">Viewing:</span>
+            <span className="font-semibold text-white">
               {activeTab === 'owned'
                 ? 'Workflows Owned By You'
                 : activeTab === 'shared'
@@ -306,29 +306,29 @@ export const WorkflowsPage = () => {
 
         {/* Templates gallery if activeTab is team & isManager */}
         {activeTab === 'team' && isManager && templates.length > 0 && (
-          <div className="p-4 rounded-2xl bg-dark-900 border border-slate-800 space-y-3">
+          <div className="p-5 rounded-3xl bg-white/[0.045] border border-white/10 backdrop-blur-xl shadow-xl space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <h3 className="text-xs font-bold text-slate-200">
+                <Sparkles className="w-4 h-4 text-[#FBBF24]" />
+                <h3 className="text-xs font-bold text-[#F8FAFC]">
                   {activeTeam?.name} Ready-to-Use Templates
                 </h3>
               </div>
-              <span className="text-[10px] text-slate-500 font-mono">1-Click Deployment</span>
+              <span className="text-[10px] text-slate-400 font-mono">1-Click Deployment</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {templates.map((tmpl) => (
                 <div
                   key={tmpl.id}
-                  className="p-3 rounded-xl bg-dark-850 border border-slate-800 hover:border-slate-700 flex flex-col justify-between space-y-2 transition-all"
+                  className="p-3.5 rounded-2xl bg-white/[0.035] border border-white/10 hover:border-white/20 hover:bg-white/[0.06] flex flex-col justify-between space-y-2.5 transition-all"
                 >
                   <div>
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300">
+                    <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#8B5CF6]/20 text-[#A78BFA] border border-[#8B5CF6]/30">
                       {tmpl.category}
                     </span>
-                    <h4 className="text-xs font-bold text-slate-200 mt-1">{tmpl.name}</h4>
-                    <p className="text-[10px] text-slate-400 line-clamp-2 mt-1 leading-snug">
+                    <h4 className="text-xs font-bold text-[#F8FAFC] mt-1.5">{tmpl.name}</h4>
+                    <p className="text-[10px] text-[#CBD5E1] line-clamp-2 mt-1 leading-snug">
                       {tmpl.description}
                     </p>
                   </div>
@@ -336,7 +336,7 @@ export const WorkflowsPage = () => {
                   <button
                     onClick={() => handleInstantiateTemplate(tmpl.id)}
                     disabled={instantiating === tmpl.id}
-                    className="w-full py-1.5 px-2 rounded-lg bg-dark-800 hover:bg-dark-750 text-brand-300 border border-brand-500/30 text-[11px] font-medium transition-all flex items-center justify-center space-x-1.5 disabled:opacity-50"
+                    className="w-full py-1.5 px-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-[#A78BFA] hover:text-white border border-[#8B5CF6]/30 text-[11px] font-medium transition-all flex items-center justify-center space-x-1.5 disabled:opacity-50"
                   >
                     {instantiating === tmpl.id ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -352,15 +352,15 @@ export const WorkflowsPage = () => {
         )}
 
         {/* Search & Status Filter Bar */}
-        <div className="p-4 rounded-2xl bg-dark-900 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-4 rounded-3xl bg-white/[0.045] border border-white/10 backdrop-blur-xl shadow-xl flex flex-wrap items-center justify-between gap-3">
           <div className="relative flex-1 w-full sm:w-auto sm:min-w-[220px]">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               placeholder="Search workflows by title or description..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-dark-850 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-white/[0.05] hover:bg-white/[0.07] focus:bg-white/[0.09] border border-white/10 focus:border-[#8B5CF6]/50 rounded-xl text-xs text-[#F8FAFC] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/25 transition-all shadow-inner backdrop-blur-md"
             />
           </div>
 
@@ -368,27 +368,31 @@ export const WorkflowsPage = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 bg-dark-850 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-brand-500"
+              className="px-3 py-2 bg-white/[0.05] hover:bg-white/[0.07] border border-white/10 focus:border-[#8B5CF6]/50 rounded-xl text-xs text-[#F8FAFC] focus:outline-none backdrop-blur-md transition-all cursor-pointer"
             >
-              <option value="ALL">All Statuses</option>
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="COMPLETED">COMPLETED</option>
-              <option value="PAUSED">PAUSED</option>
+              <option value="ALL" className="bg-[#0D1220] text-white">All Statuses</option>
+              <option value="ACTIVE" className="bg-[#0D1220] text-white">ACTIVE</option>
+              <option value="COMPLETED" className="bg-[#0D1220] text-white">COMPLETED</option>
+              <option value="PAUSED" className="bg-[#0D1220] text-white">PAUSED</option>
             </select>
           </div>
         </div>
 
         {/* Workflows Grid */}
         {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center space-y-3">
-            <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
-            <p className="text-xs text-slate-400">Loading workflows from Supabase...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3, 4, 5, 6].map((idx) => (
+              <div
+                key={idx}
+                className="p-6 rounded-3xl bg-white/[0.045] border border-white/10 backdrop-blur-xl animate-pulse h-64 shadow-xl"
+              />
+            ))}
           </div>
         ) : filteredWorkflows.length === 0 ? (
-          <div className="p-16 text-center rounded-2xl bg-dark-900 border border-slate-800 space-y-3">
-            <FolderGit2 className="w-10 h-10 text-slate-600 mx-auto" />
-            <h3 className="text-sm font-bold text-slate-200">No workflows found</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+          <div className="p-16 text-center rounded-3xl bg-white/[0.045] border border-white/10 backdrop-blur-xl shadow-xl space-y-3">
+            <FolderGit2 className="w-10 h-10 text-slate-500 mx-auto" />
+            <h3 className="text-sm font-bold text-[#F8FAFC]">No workflows found</h3>
+            <p className="text-xs text-[#94A3B8] max-w-sm mx-auto">
               {activeTab === 'owned'
                 ? "You haven't created any personal workflows yet. Click '+ Create Workflow' to start!"
                 : activeTab === 'shared'
@@ -397,7 +401,7 @@ export const WorkflowsPage = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredWorkflows.map((wf) => {
               const isOwner = wf.userRole === 'OWNER' || wf.ownerId === user?.id || wf.createdBy === user?.id;
               const isManagerOrOwner = isOwner || wf.userRole === 'MANAGER' || wf.userRole === 'WORKFLOW_MANAGER';
@@ -405,14 +409,14 @@ export const WorkflowsPage = () => {
               return (
                 <div
                   key={wf.id}
-                  className="halo-card p-5 rounded-3xl bg-[#10141D] border border-white/10 hover:border-brand-500/40 transition-all flex flex-col justify-between space-y-4 group"
+                  className="workflow-glass-card p-5 rounded-3xl flex flex-col justify-between space-y-4 group"
                 >
                   <div>
                     {/* Header line */}
-                    <div className="flex items-center justify-between mb-2 gap-2">
+                    <div className="flex items-center justify-between mb-2.5 gap-2">
                       <div className="flex items-center space-x-2 truncate">
-                        <TeamIcon icon={wf.teamIcon} className="w-5 h-5 text-brand-400 flex-shrink-0" />
-                        <h3 className="text-sm font-bold text-slate-100 group-hover:text-brand-300 transition-colors truncate">
+                        <TeamIcon icon={wf.teamIcon} className="w-5 h-5 text-[#38BDF8] flex-shrink-0" />
+                        <h3 className="text-sm font-bold text-[#F8FAFC] group-hover:text-[#A78BFA] transition-colors truncate">
                           {wf.name}
                         </h3>
                       </div>
@@ -423,17 +427,17 @@ export const WorkflowsPage = () => {
                             e.stopPropagation();
                             setSelectedWfForDocs(wf);
                           }}
-                          className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] text-slate-300 hover:text-sky-300 transition-colors cursor-pointer"
+                          className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-[10px] text-[#CBD5E1] hover:text-[#38BDF8] transition-colors cursor-pointer backdrop-blur-sm"
                           title="View & manage shared workflow documents"
                         >
-                          <Paperclip className="w-3 h-3 text-sky-400" />
+                          <Paperclip className="w-3 h-3 text-[#38BDF8]" />
                           <span>Docs</span>
                         </button>
                         <StatusBadge status={wf.status} size="sm" />
                       </div>
                     </div>
 
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-[#CBD5E1] line-clamp-2 leading-relaxed">
                       {wf.description || 'FlowForge connected workflow'}
                     </p>
 
@@ -442,19 +446,19 @@ export const WorkflowsPage = () => {
                       <div className="flex items-center space-x-1.5">
                         {getRoleBadge(wf.userRole)}
                         {wf.teamName && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-dark-800 text-slate-300 border border-slate-700">
+                          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-white/[0.05] text-[#CBD5E1] border border-white/10 backdrop-blur-sm">
                             {wf.teamName}
                           </span>
                         )}
                       </div>
 
                       {wf.isRestricted ? (
-                        <span className="inline-flex items-center space-x-1 text-[10px] text-amber-400">
+                        <span className="inline-flex items-center space-x-1 text-[10px] text-[#FBBF24]">
                           <Lock className="w-3 h-3" />
                           <span>Restricted</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center space-x-1 text-[10px] text-emerald-400">
+                        <span className="inline-flex items-center space-x-1 text-[10px] text-[#34D399]">
                           <Unlock className="w-3 h-3" />
                           <span>Standard</span>
                         </span>
@@ -477,12 +481,12 @@ export const WorkflowsPage = () => {
                       : (totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0);
 
                     return (
-                      <div className="space-y-2 pt-3 border-t border-slate-800/80">
-                        <div className="flex items-center justify-between text-xs text-slate-400">
+                      <div className="space-y-2 pt-3 border-t border-white/10">
+                        <div className="flex items-center justify-between text-xs text-[#94A3B8]">
                           <span>
                             {completedCount}/{totalCount} Tasks
                           </span>
-                          <span className="font-mono font-bold text-slate-200">
+                          <span className="font-mono font-bold text-[#F8FAFC]">
                             {currentProgress}%
                           </span>
                         </div>
@@ -492,7 +496,7 @@ export const WorkflowsPage = () => {
                   })()}
 
                   {/* Card Actions (Section 5, 6, 9) */}
-                  <div className="flex items-center justify-between pt-2 gap-1.5 border-t border-slate-800/60 flex-wrap">
+                  <div className="flex items-center justify-between pt-2 gap-1.5 border-t border-white/10 flex-wrap">
                     <div className="flex items-center space-x-1 flex-wrap gap-y-1">
                       {/* Move to In Progress Transition Button */}
                       {wf.status !== 'IN_PROGRESS' && wf.status !== 'ACTIVE' && wf.status !== 'COMPLETED' && (
@@ -503,7 +507,7 @@ export const WorkflowsPage = () => {
                             setTransitionTarget('IN_PROGRESS');
                             setIsTransitionModalOpen(true);
                           }}
-                          className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-dark-800 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-[#34D399] hover:bg-white/[0.08] rounded-xl transition-colors"
                           title="Start Workflow / Move to In Progress (optional document upload)"
                         >
                           <Play className="w-3.5 h-3.5" />
@@ -519,7 +523,7 @@ export const WorkflowsPage = () => {
                             setTransitionTarget('COMPLETED');
                             setIsTransitionModalOpen(true);
                           }}
-                          className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-dark-800 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-[#38BDF8] hover:bg-white/[0.08] rounded-xl transition-colors"
                           title="Mark Workflow Completed (Mandatory 25-word summary & document)"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -531,7 +535,7 @@ export const WorkflowsPage = () => {
                         type="button"
                         onClick={() => handleDuplicateWorkflow(wf)}
                         disabled={duplicatingId === wf.id}
-                        className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-dark-800 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-white hover:bg-white/[0.08] rounded-xl transition-colors"
                         title="Duplicate Workflow"
                       >
                         {duplicatingId === wf.id ? (
@@ -546,7 +550,7 @@ export const WorkflowsPage = () => {
                         <button
                           type="button"
                           onClick={() => setSharingWorkflow(wf)}
-                          className="p-1.5 text-slate-400 hover:text-brand-300 hover:bg-dark-800 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-[#A78BFA] hover:bg-white/[0.08] rounded-xl transition-colors"
                           title="Invite Collaborators"
                         >
                           <Share2 className="w-3.5 h-3.5" />
@@ -558,7 +562,7 @@ export const WorkflowsPage = () => {
                         <button
                           type="button"
                           onClick={() => setSelectedWfForPerms(wf)}
-                          className="p-1.5 text-slate-400 hover:text-brand-300 hover:bg-dark-800 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-[#A78BFA] hover:bg-white/[0.08] rounded-xl transition-colors"
                           title="Manage Workflow Access & Members"
                         >
                           <Users className="w-3.5 h-3.5" />
@@ -573,7 +577,7 @@ export const WorkflowsPage = () => {
                             setEditingWorkflow(wf);
                             setIsCreateModalOpen(true);
                           }}
-                          className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-dark-800 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-white hover:bg-white/[0.08] rounded-xl transition-colors"
                           title="Edit Workflow Details"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -585,7 +589,7 @@ export const WorkflowsPage = () => {
                         <button
                           type="button"
                           onClick={() => handleDeleteWorkflow(wf.id, wf.name)}
-                          className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-dark-800 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-[#FB7185] hover:bg-white/[0.08] rounded-xl transition-colors"
                           title="Delete Workflow"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -595,7 +599,7 @@ export const WorkflowsPage = () => {
 
                     <Link
                       to={`/workflows/${wf.id}`}
-                      className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 border border-brand-500/30 text-xs font-semibold transition-all group-hover:bg-brand-600 group-hover:text-white"
+                      className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-purple-600 text-[#CBD5E1] hover:text-white border border-white/10 text-xs font-semibold transition-all group-hover:border-purple-500/40"
                     >
                       <span>Open Canvas</span>
                       <ArrowRight className="w-3 h-3" />

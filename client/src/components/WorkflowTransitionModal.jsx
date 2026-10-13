@@ -142,7 +142,7 @@ export const WorkflowTransitionModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md overflow-y-auto">
-      <div className="w-full max-w-xl bg-[#10141D] border border-white/15 rounded-3xl p-5 sm:p-8 shadow-2xl relative my-auto max-h-[92vh] overflow-y-auto">
+      <div className="w-full max-w-xl bg-[#0D1220]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 sm:p-8 shadow-2xl shadow-black/80 relative my-auto max-h-[92vh] overflow-y-auto">
         {/* Close Button */}
         <button
           type="button"
@@ -219,7 +219,7 @@ export const WorkflowTransitionModal = ({
                   ? 'Describe in detail how this workflow was completed, deliverables produced, validation steps conducted, and team outcomes (minimum 25 words)...'
                   : 'Add any optional notes or instructions for collaborators...'
               }
-              className="w-full p-3 bg-[#151A24] border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs sm:text-sm leading-relaxed"
+              className="w-full p-3 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none text-xs sm:text-sm leading-relaxed transition-all"
             />
             {isCompleted && wordCount < 25 && (
               <p className="mt-1 text-[11px] text-amber-400/90 flex items-center space-x-1">
@@ -238,7 +238,7 @@ export const WorkflowTransitionModal = ({
             </div>
 
             {file ? (
-              <div className="p-3.5 rounded-xl bg-[#151A24] border border-white/15 flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-white/[0.045] border border-white/10 flex items-center justify-between">
                 <div className="flex items-center space-x-3 overflow-hidden">
                   <div className="w-9 h-9 rounded-lg bg-brand-500/15 text-brand-400 flex items-center justify-center flex-shrink-0">
                     <File className="w-5 h-5" />
@@ -269,7 +269,7 @@ export const WorkflowTransitionModal = ({
                 className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
                   dragActive
                     ? 'border-brand-400 bg-brand-500/10'
-                    : 'border-slate-700/80 hover:border-slate-500 bg-[#151A24]/60'
+                    : 'border-white/15 hover:border-white/30 bg-white/[0.03] hover:bg-white/[0.06]'
                 }`}
                 onClick={() => document.getElementById('workflow-doc-input')?.click()}
               >

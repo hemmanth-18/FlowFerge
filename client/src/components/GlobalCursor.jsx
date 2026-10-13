@@ -104,7 +104,7 @@ export const GlobalCursor = () => {
       {/* Inner glowing dot */}
       <div
         ref={dotRef}
-        className={`fixed top-0 left-0 -ml-1 -mt-1 w-2 h-2 rounded-full bg-gradient-to-tr from-brand-400 to-sky-400 shadow-[0_0_12px_#8b5cf6] transition-transform duration-75 will-change-transform ${
+        className={`fixed top-0 left-0 -ml-1 -mt-1 w-2 h-2 rounded-full bg-brand-400 shadow-[0_0_12px_#8b5cf6] transition-transform duration-75 will-change-transform ${
           isClicking ? 'scale-75' : isHovered ? 'scale-150' : 'scale-100'
         }`}
       />
@@ -114,9 +114,9 @@ export const GlobalCursor = () => {
         ref={ringRef}
         className={`fixed top-0 left-0 -ml-4 -mt-4 w-8 h-8 rounded-full border border-brand-400/50 bg-brand-500/10 backdrop-blur-[1px] shadow-[0_0_20px_rgba(139,92,246,0.35)] transition-[width,height,opacity,border-color] duration-200 ease-out will-change-transform ${
           isClicking
-            ? 'scale-90 border-sky-400/80 bg-sky-500/20'
+            ? 'scale-90 border-brand-400/90 bg-brand-500/30 shadow-[0_0_20px_rgba(139,92,246,0.5)]'
             : isHovered
-            ? 'scale-125 border-brand-400/80 bg-brand-500/20 shadow-[0_0_25px_rgba(56,189,248,0.4)]'
+            ? 'scale-125 border-brand-300 bg-brand-500/25 shadow-[0_0_25px_rgba(139,92,246,0.5)]'
             : 'scale-100 opacity-80'
         }`}
       />
@@ -124,7 +124,7 @@ export const GlobalCursor = () => {
       {/* Click ripple */}
       <div
         ref={rippleRef}
-        className="fixed top-0 left-0 -ml-5 -mt-5 w-10 h-10 rounded-full border border-sky-400 opacity-0 transition-[transform,opacity] duration-300 pointer-events-none will-change-transform"
+        className="fixed top-0 left-0 -ml-5 -mt-5 w-10 h-10 rounded-full border border-brand-400 opacity-0 transition-[transform,opacity] duration-300 pointer-events-none will-change-transform"
       />
     </div>
   );

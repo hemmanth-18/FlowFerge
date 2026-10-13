@@ -403,6 +403,72 @@ ${process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app'}
       return { success: false, error: err.message };
     }
   }
+
+  /**
+   * Send notification email when someone accepts or declines an invitation
+   */
+  async sendInvitationResponseEmail({ to, inviterName, respondentName, resourceTitle, action, resourceType = 'Workflow' }) {
+    if (!to || !to.includes('@')) {
+      return { success: false, error: 'Valid recipient email required' };
+    }
+
+    const cleanTo = to.trim().toLowerCase();
+    const isAccepted = action === 'ACCEPTED';
+    const actionText = isAccepted ? 'accepted' : 'declined';
+    const actionColor = isAccepted ? '#10b981' : '#f43f5e';
+    const safeInviter = escapeHtml(inviterName || 'Team Manager');
+    const safeRespondent = escapeHtml(respondentName || 'A collaborator');
+    const safeTitle = escapeHtml(resourceTitle || 'FlowForge Resource');
+
+    const subject = `[FlowForge] ${safeRespondent} ${actionText} your invitation to ${safeTitle}`;
+    const senderEmail = process.env.MAIL_USER || 'hemmanthguna@gmail.com';
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f17; color: #f1f5f9; margin: 0; padding: 24px; }
+    .card { background-color: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; max-width: 540px; margin: 0 auto; padding: 32px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .badge { display: inline-block; padding: 6px 14px; border-radius: 9999px; font-size: 13px; font-weight: 700; color: #ffffff; background-color: ${actionColor}; margin-bottom: 16px; }
+    h2 { margin: 0 0 12px; font-size: 20px; color: #ffffff; }
+    p { margin: 8px 0; font-size: 14px; line-height: 1.6; color: #cbd5e1; }
+    .highlight { color: #ffffff; font-weight: 600; }
+    .footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; color: #64748b; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">Invitation ${isAccepted ? 'Accepted' : 'Declined'}</div>
+    <h2>Hello ${safeInviter},</h2>
+    <p><span class="highlight">${safeRespondent}</span> has <strong>${actionText}</strong> your invitation to join <span class="highlight">${safeTitle}</span> (${resourceType}).</p>
+    ${isAccepted ? '<p>They now have access to collaborate on tasks and workflows with your team.</p>' : '<p>They will not have access to this workspace unless invited again.</p>'}
+    <div class="footer">
+      <p>© ${new Date().getFullYear()} FlowForge. Intelligent Workflow Orchestration.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+    try {
+      const transporter = this.getTransporter();
+      const info = await transporter.sendMail({
+        from: `"FlowForge" <${senderEmail}>`,
+        to: cleanTo,
+        replyTo: senderEmail,
+        subject,
+        text: `${safeRespondent} has ${actionText} your invitation to ${safeTitle} on FlowForge.`,
+        html: htmlContent,
+      });
+
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.warn(`[MailService] Response email error:`, err.message);
+      return { success: false, error: err.message };
+    }
+  }
 }
 
 module.exports = new MailService();

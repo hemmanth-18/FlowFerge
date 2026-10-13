@@ -210,7 +210,7 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
       </Link>
 
       {/* Mobile Mode Switcher Banner (Visible only on small screens) */}
-      <div className="md:hidden w-full max-w-md mb-4 bg-[#10141D] p-1.5 rounded-2xl border border-white/10 flex items-center shadow-lg">
+      <div className="md:hidden w-full max-w-md mb-4 bg-white/[0.045] backdrop-blur-xl p-1.5 rounded-2xl border border-white/10 flex items-center shadow-lg">
         <button
           type="button"
           onClick={() => switchMode('signin')}
@@ -236,15 +236,15 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
       </div>
 
       {/* Main Authentication Container */}
-      <div className="w-full max-w-4xl lg:max-w-5xl min-h-[580px] md:h-[670px] relative overflow-hidden rounded-3xl border border-white/10 bg-[#10141D]/95 backdrop-blur-2xl shadow-2xl shadow-black/80 flex flex-col md:flex-row">
+      <div className="w-full max-w-4xl lg:max-w-5xl min-h-[580px] md:h-[670px] relative overflow-hidden rounded-3xl border border-white/10 bg-[#0D1220]/85 backdrop-blur-2xl shadow-2xl shadow-black/80 flex flex-col md:flex-row">
         {/* ========================================================================= */}
         {/* LEFT COLUMN: Sign In Form Area (Desktop 50%, Mobile 100%) */}
         {/* ========================================================================= */}
         <div
           className={`w-full md:w-1/2 h-full flex flex-col justify-center px-6 sm:px-10 lg:px-12 transition-opacity duration-300 ${
             mode === 'signin'
-              ? 'opacity-100 pointer-events-auto z-10'
-              : 'opacity-0 pointer-events-none select-none invisible md:visible'
+              ? 'flex opacity-100 pointer-events-auto z-10'
+              : 'hidden md:flex md:opacity-0 md:pointer-events-none md:select-none'
           }`}
         >
           <div className="max-w-md w-full mx-auto">
@@ -288,7 +288,7 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
                     placeholder="name@example.com or username"
                     value={loginIdentifier}
                     onChange={(e) => setLoginIdentifier(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#151A24] border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500 text-sm transition-all"
                   />
                 </div>
               </div>
@@ -317,7 +317,7 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
                     placeholder="Enter your password"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    className="w-full pl-10 pr-11 py-2.5 bg-[#151A24] border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm transition-all"
+                    className="w-full pl-10 pr-11 py-2.5 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500 text-sm transition-all"
                   />
                   <button
                     type="button"
@@ -335,7 +335,7 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded bg-[#151A24] border-slate-700 text-brand-600 focus:ring-brand-500 focus:ring-offset-0"
+                    className="w-4 h-4 rounded bg-white/5 border-white/20 text-brand-600 focus:ring-brand-500 focus:ring-offset-0"
                   />
                   <span>Remember session</span>
                 </label>
@@ -381,8 +381,8 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
         <div
           className={`w-full md:w-1/2 h-full flex flex-col justify-center px-6 sm:px-10 lg:px-12 transition-opacity duration-300 ${
             mode === 'signup'
-              ? 'opacity-100 pointer-events-auto z-10'
-              : 'opacity-0 pointer-events-none select-none invisible md:visible'
+              ? 'flex opacity-100 pointer-events-auto z-10'
+              : 'hidden md:flex md:opacity-0 md:pointer-events-none md:select-none'
           }`}
         >
           <div className="max-w-md w-full mx-auto">
@@ -427,7 +427,7 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
                       placeholder="Jane Doe"
                       value={signupName}
                       onChange={(e) => setSignupName(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 bg-[#151A24] border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs sm:text-sm transition-all"
+                      className="w-full pl-9 pr-3 py-2 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none text-xs sm:text-sm transition-all"
                     />
                   </div>
                 </div>
@@ -446,7 +446,7 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
                       placeholder="janedoe"
                       value={signupUsername}
                       onChange={(e) => setSignupUsername(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 bg-[#151A24] border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs sm:text-sm transition-all"
+                      className="w-full pl-9 pr-3 py-2 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none text-xs sm:text-sm transition-all"
                     />
                   </div>
                 </div>
@@ -467,7 +467,7 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
                     placeholder="jane@company.com"
                     value={signupEmail}
                     onChange={(e) => setSignupEmail(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-[#151A24] border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs sm:text-sm transition-all"
+                    className="w-full pl-9 pr-3 py-2 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none text-xs sm:text-sm transition-all"
                   />
                 </div>
               </div>
@@ -488,7 +488,7 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
                       placeholder="At least 6 chars"
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
-                      className="w-full pl-9 pr-9 py-2 bg-[#151A24] border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs sm:text-sm transition-all"
+                      className="w-full pl-9 pr-9 py-2 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none text-xs sm:text-sm transition-all"
                     />
                     <button
                       type="button"
@@ -515,7 +515,7 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
                       placeholder="Repeat password"
                       value={signupConfirmPassword}
                       onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                      className="w-full pl-9 pr-9 py-2 bg-[#151A24] border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs sm:text-sm transition-all"
+                      className="w-full pl-9 pr-9 py-2 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none text-xs sm:text-sm transition-all"
                     />
                     <button
                       type="button"
@@ -566,21 +566,20 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
         {/* DESKTOP DIAGONAL SLIDING PANEL (Framer Motion Animation) */}
         {/* ========================================================================= */}
         <motion.div
-          className="hidden md:flex absolute top-0 bottom-0 z-30 w-[55%] flex-col justify-center px-12 lg:px-14 overflow-hidden border-x border-white/10 shadow-2xl"
+          className="hidden md:flex absolute top-0 bottom-0 z-30 w-1/2 flex-col justify-center px-10 lg:px-14 overflow-hidden shadow-2xl backdrop-blur-2xl"
           style={{
             background:
-              'linear-gradient(135deg, rgba(24, 29, 42, 0.98) 0%, rgba(18, 23, 35, 0.98) 50%, rgba(12, 16, 26, 0.99) 100%)',
+              'linear-gradient(135deg, rgba(13, 18, 32, 0.96) 0%, rgba(17, 24, 39, 0.96) 50%, rgba(8, 11, 18, 0.98) 100%)',
           }}
           animate={{
-            left: mode === 'signin' ? '45%' : '0%',
-            clipPath:
-              mode === 'signin'
-                ? 'polygon(15% 0%, 100% 0%, 100% 100%, 0% 100%)'
-                : 'polygon(0% 0%, 100% 0%, 85% 100%, 0% 100%)',
+            left: mode === 'signin' ? '50%' : '0%',
+            borderLeftWidth: mode === 'signin' ? '1px' : '0px',
+            borderRightWidth: mode === 'signup' ? '1px' : '0px',
+            borderColor: 'rgba(255, 255, 255, 0.12)',
           }}
           transition={{
-            duration: shouldReduceMotion ? 0 : 0.72,
-            ease: [0.65, 0, 0.35, 1], // Natural bezier curve
+            duration: shouldReduceMotion ? 0 : 0.70,
+            ease: [0.10, 1, 1, 1],
           }}
         >
           {/* Subtle Ambient Pattern & Glow inside the diagonal panel */}
@@ -681,12 +680,12 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
       {/* ========================================================================= */}
       <AnimatePresence>
         {forgotModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-[#10141D] border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl relative"
+              className="w-full max-w-md bg-[#0D1220]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black/80 relative"
             >
               <button
                 type="button"
@@ -750,7 +749,7 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
                       placeholder="name@example.com"
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-[#151A24] border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 text-sm"
+                      className="w-full px-4 py-2.5 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none text-sm transition-all"
                     />
                   </div>
 

@@ -127,18 +127,21 @@ export const SettingsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dark-950 pb-16">
+    <div className="min-h-screen bg-transparent pb-16 selection:bg-purple-600 selection:text-white">
       <Navbar onOpenSidebar={() => setSidebarOpen && setSidebarOpen(true)} title="Settings & User Profile" />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-        {/* 24. USER PROFILE (Name, Email, Teams, Roles, Assigned Tasks) */}
-        <div className="p-4 sm:p-6 rounded-2xl bg-dark-900 border border-slate-800 space-y-5">
-          <div className="flex items-center space-x-3 pb-3 border-b border-slate-800">
-            <div className="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-400 flex items-center justify-center">
+        {/* USER PROFILE (Name, Email, Teams, Roles, Assigned Tasks) */}
+        <div className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl bg-[#0D1220]/80 backdrop-blur-2xl border border-white/10 shadow-2xl space-y-5 relative overflow-hidden">
+          {/* Top edge highlight */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+          <div className="flex items-center space-x-3 pb-3 border-b border-white/10">
+            <div className="w-10 h-10 rounded-2xl bg-brand-500/10 border border-brand-500/20 text-brand-400 flex items-center justify-center shadow-inner">
               <User className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-100">User Profile</h3>
+              <h3 className="text-base font-bold text-white">User Profile</h3>
               <p className="text-xs text-slate-400">
                 Your account details, team memberships, and assigned tasks
               </p>
@@ -146,20 +149,20 @@ export const SettingsPage = () => {
           </div>
 
           {loadingProfile ? (
-            <div className="py-6 flex items-center justify-center space-y-2">
+            <div className="py-8 flex items-center justify-center space-y-2">
               <Loader2 className="w-6 h-6 text-brand-400 animate-spin" />
             </div>
           ) : (
             <div className="space-y-6">
               {/* Header with Avatar and Basic Info */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-dark-850/60 border border-slate-800">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white/[0.035] border border-white/10">
                 <div className="flex items-center space-x-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-purple-600 text-white font-extrabold text-xl flex items-center justify-center shadow-lg border border-brand-500/30">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-purple-600 text-white font-extrabold text-xl flex items-center justify-center shadow-lg shadow-brand-500/25 border border-white/20 flex-shrink-0">
                     {(profileData?.name || user?.name || profileData?.username || 'U')[0].toUpperCase()}
                   </div>
                   <div>
                     <div className="flex items-center space-x-2">
-                      <h4 className="text-lg font-bold text-slate-100">
+                      <h4 className="text-lg font-bold text-white">
                         {profileData?.name || user?.name || 'User'}
                       </h4>
                       {profileSuccess && (
@@ -186,7 +189,7 @@ export const SettingsPage = () => {
                     <button
                       type="button"
                       onClick={() => setIsEditingName(true)}
-                      className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-750 text-slate-200 border border-slate-700 text-xs font-medium transition-colors"
+                      className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] text-slate-200 border border-white/10 text-xs font-semibold transition-colors"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       <span>Edit Name</span>
@@ -197,14 +200,14 @@ export const SettingsPage = () => {
                         type="text"
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="min-w-0 flex-1 sm:w-auto px-2.5 py-1.5 bg-dark-900 border border-brand-500/50 rounded-lg text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        className="min-w-0 flex-1 sm:w-auto px-3 py-1.5 bg-[#111827] border border-brand-500/50 rounded-xl text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand-500"
                         placeholder="Full Name"
                         required
                       />
                       <button
                         type="submit"
                         disabled={savingProfile}
-                        className="px-2.5 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-medium transition-colors flex items-center space-x-1 disabled:opacity-50"
+                        className="px-3 py-1.5 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white rounded-xl text-xs font-semibold transition-all flex items-center space-x-1 disabled:opacity-50 shadow-md shadow-brand-500/20"
                       >
                         {savingProfile ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                         <span>Save</span>
@@ -215,7 +218,7 @@ export const SettingsPage = () => {
                           setIsEditingName(false);
                           setEditName(profileData?.name || user?.name || '');
                         }}
-                        className="px-2.5 py-1.5 bg-dark-800 hover:bg-dark-700 text-slate-400 rounded-lg text-xs font-medium transition-colors"
+                        className="px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 rounded-xl text-xs font-medium transition-colors border border-white/10"
                       >
                         Cancel
                       </button>
@@ -226,7 +229,7 @@ export const SettingsPage = () => {
 
               {/* Account Details Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-3.5 rounded-xl bg-dark-850 border border-slate-800">
+                <div className="p-4 rounded-2xl bg-white/[0.035] border border-white/10">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block">
                     Email Address
                   </span>
@@ -235,7 +238,7 @@ export const SettingsPage = () => {
                   </span>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-dark-850 border border-slate-800">
+                <div className="p-4 rounded-2xl bg-white/[0.035] border border-white/10">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block">
                     Workflows Owned
                   </span>
@@ -244,18 +247,18 @@ export const SettingsPage = () => {
                   </span>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-dark-850 border border-slate-800">
+                <div className="p-4 rounded-2xl bg-white/[0.035] border border-white/10">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block">
                     Shared With Me
                   </span>
-                  <span className="text-base font-bold text-indigo-400 mt-0.5 block">
+                  <span className="text-base font-bold text-sky-400 mt-0.5 block">
                     {profileData?.sharedWorkflowsCount ?? (profileData?.sharedWorkflows?.length || 0)}
                   </span>
                 </div>
               </div>
 
               {/* Security Policy Reminder */}
-              <div className="p-3 rounded-xl bg-dark-950/60 border border-slate-800/80 text-[11px] text-slate-400 flex items-start space-x-2">
+              <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 text-[11px] text-slate-400 flex items-start space-x-2.5">
                 <ShieldCheck className="w-4 h-4 text-brand-400 flex-shrink-0 mt-0.5" />
                 <span>
                   <strong>Permission & Role Policy:</strong> FlowForge assigns user roles strictly through team ownership and workflow invitations. User roles cannot be modified via profile editing.
@@ -265,18 +268,18 @@ export const SettingsPage = () => {
               {/* Workflows Owned Breakdown */}
               {profileData?.ownedWorkflows?.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center space-x-1.5">
+                  <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2.5 flex items-center space-x-1.5">
                     <FolderGit2 className="w-3.5 h-3.5 text-brand-400" />
                     <span>My Owned Workflows ({profileData.ownedWorkflows.length})</span>
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {profileData.ownedWorkflows.map((w) => (
                       <div
                         key={w.id}
-                        className="p-2.5 rounded-lg bg-dark-850 border border-slate-800/80 flex items-center justify-between"
+                        className="p-3 rounded-xl bg-white/[0.035] border border-white/10 flex items-center justify-between"
                       >
                         <span className="text-xs font-medium text-slate-200 truncate">{w.name}</span>
-                        <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-300 border border-brand-500/30">
+                        <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-brand-500/20 text-brand-300 border border-brand-500/30">
                           OWNER
                         </span>
                       </div>
@@ -288,15 +291,15 @@ export const SettingsPage = () => {
               {/* Workflows Shared Breakdown */}
               {profileData?.sharedWorkflows?.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center space-x-1.5">
-                    <Share2 className="w-3.5 h-3.5 text-indigo-400" />
+                  <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2.5 flex items-center space-x-1.5">
+                    <Share2 className="w-3.5 h-3.5 text-sky-400" />
                     <span>Shared Workflows ({profileData.sharedWorkflows.length})</span>
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {profileData.sharedWorkflows.map((w) => (
                       <div
                         key={w.id}
-                        className="p-2.5 rounded-lg bg-dark-850 border border-slate-800/80 flex items-center justify-between"
+                        className="p-3 rounded-xl bg-white/[0.035] border border-white/10 flex items-center justify-between"
                       >
                         <div className="truncate pr-2">
                           <span className="text-xs font-medium text-slate-200 block truncate">{w.name}</span>
@@ -304,7 +307,7 @@ export const SettingsPage = () => {
                             <span className="text-[10px] text-slate-500">{w.teamName}</span>
                           )}
                         </div>
-                        <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-sky-500/20 text-sky-300 border border-sky-500/30">
                           {w.userRole || 'COLLABORATOR'}
                         </span>
                       </div>
@@ -313,9 +316,9 @@ export const SettingsPage = () => {
                 </div>
               )}
 
-              {/* Teams & Roles Matrix (Section 24) */}
+              {/* Teams & Roles Matrix */}
               <div>
-                <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2.5">
                   My Teams & Roles ({profileData?.teams?.length || 0})
                 </h4>
                 {profileData?.teams?.length > 0 ? (
@@ -323,11 +326,11 @@ export const SettingsPage = () => {
                     {profileData.teams.map((t) => (
                       <div
                         key={t.teamId}
-                        className="p-3 rounded-xl bg-dark-850 border border-slate-800 space-y-1"
+                        className="p-3.5 rounded-2xl bg-white/[0.035] border border-white/10 space-y-1.5"
                       >
                         <div className="flex items-center space-x-2">
                           <TeamIcon icon={t.teamIcon} className="w-4 h-4 text-brand-400 flex-shrink-0" />
-                          <span className="text-xs font-bold text-slate-200 truncate">
+                          <span className="text-xs font-bold text-white truncate">
                             {t.teamName}
                           </span>
                         </div>
@@ -346,14 +349,14 @@ export const SettingsPage = () => {
               </div>
 
               {/* Total Assigned Tasks Summary */}
-              <div className="p-3.5 rounded-xl bg-dark-850 border border-slate-800 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-white/[0.035] border border-white/10 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <CheckSquare className="w-4 h-4 text-emerald-400" />
                   <span className="text-xs text-slate-300">
                     Total Assigned Tasks:
                   </span>
                 </div>
-                <span className="font-mono text-xs font-bold text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">
+                <span className="font-mono text-xs font-bold text-emerald-400 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
                   {profileData?.assignedTasksCount || 0} Tasks
                 </span>
               </div>
@@ -363,13 +366,16 @@ export const SettingsPage = () => {
 
         {/* ACTIVE TEAM SETTINGS & ARCHIVING (Team Admin Only) */}
         {isAdmin && activeTeam && (
-          <div className="p-4 sm:p-6 rounded-2xl bg-dark-900 border border-slate-800 space-y-5">
-            <div className="flex items-center space-x-3 pb-3 border-b border-slate-800">
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+          <div className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl bg-[#0D1220]/80 backdrop-blur-2xl border border-white/10 shadow-2xl space-y-5 relative overflow-hidden">
+            {/* Top edge highlight */}
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+            <div className="flex items-center space-x-3 pb-3 border-b border-white/10">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shadow-inner">
                 <Building2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-100">
+                <h3 className="text-base font-bold text-white">
                   {activeTeam.name} Team Settings
                 </h3>
                 <p className="text-xs text-slate-400">
@@ -391,10 +397,10 @@ export const SettingsPage = () => {
                       key={id}
                       title={label}
                       onClick={() => setTeamIcon(id)}
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
                         teamIcon === id
-                          ? 'bg-brand-600/30 border-2 border-brand-400 scale-105 text-brand-300'
-                          : 'bg-dark-850 hover:bg-dark-800 border border-slate-800 text-slate-400 hover:text-slate-200'
+                          ? 'bg-brand-500/25 border-2 border-brand-400 scale-105 text-brand-300 shadow-md shadow-brand-500/20'
+                          : 'bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-slate-400 hover:text-slate-200'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -411,7 +417,7 @@ export const SettingsPage = () => {
                   type="text"
                   value={teamName}
                   onChange={(e) => setTeamName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-dark-850 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 text-sm"
+                  className="w-full px-3.5 py-2.5 bg-[#111827] border border-white/15 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 text-sm"
                   required
                 />
               </div>
@@ -424,7 +430,7 @@ export const SettingsPage = () => {
                   rows={3}
                   value={teamDesc}
                   onChange={(e) => setTeamDesc(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-dark-850 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 text-xs resize-none"
+                  className="w-full px-3.5 py-2 bg-[#111827] border border-white/15 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 text-xs resize-none"
                 />
               </div>
 
@@ -432,7 +438,7 @@ export const SettingsPage = () => {
                 <button
                   type="submit"
                   disabled={savingTeam}
-                  className="flex items-center space-x-2 px-5 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold shadow-glow-brand transition-all disabled:opacity-50"
+                  className="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-brand-500/25 transition-all disabled:opacity-50"
                 >
                   {savingTeam ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                   <span>Save Team Details</span>
@@ -446,21 +452,21 @@ export const SettingsPage = () => {
               </div>
             </form>
 
-            {/* 26. Team Archive / Danger Zone */}
-            <div className="pt-5 border-t border-slate-800 space-y-3">
+            {/* Team Archive / Danger Zone */}
+            <div className="pt-5 border-t border-white/10 space-y-3">
               <h4 className="text-xs font-bold text-rose-400 uppercase tracking-wider">
                 Danger Zone
               </h4>
-              <div className="p-4 rounded-xl bg-rose-500/5 border border-rose-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-4 rounded-2xl bg-rose-500/5 border border-rose-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h5 className="text-xs font-bold text-slate-200">Archive {activeTeam.name}</h5>
+                  <h5 className="text-xs font-bold text-white">Archive {activeTeam.name}</h5>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     Soft-delete this team, revoking active access for all members.
                   </p>
                 </div>
                 <button
                   onClick={() => setIsArchiveModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 text-xs font-semibold transition-all flex items-center space-x-1.5 self-start sm:self-auto"
+                  className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-semibold transition-all flex items-center space-x-1.5 self-start sm:self-auto"
                 >
                   <Archive className="w-3.5 h-3.5" />
                   <span>Archive Team</span>
@@ -471,28 +477,31 @@ export const SettingsPage = () => {
         )}
 
         {/* Database & System Telemetry */}
-        <div className="p-4 sm:p-6 rounded-2xl bg-dark-900 border border-slate-800 space-y-4">
-          <div className="flex items-center space-x-3 pb-3 border-b border-slate-800">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+        <div className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl bg-[#0D1220]/80 backdrop-blur-2xl border border-white/10 shadow-2xl space-y-4 relative overflow-hidden">
+          {/* Top edge highlight */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+          <div className="flex items-center space-x-3 pb-3 border-b border-white/10">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shadow-inner">
               <Database className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-100">Primary Database Engine</h3>
+              <h3 className="text-base font-bold text-white">Primary Database Engine</h3>
               <p className="text-xs text-slate-400">Supabase PostgreSQL & Auth persistence</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div className="p-3 rounded-xl bg-dark-850 border border-slate-800">
-              <span className="text-[10px] text-slate-400 uppercase block">Engine Mode</span>
-              <span className="font-mono text-emerald-400 font-bold flex items-center space-x-1.5">
+            <div className="p-3.5 rounded-2xl bg-white/[0.035] border border-white/10">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold block">Engine Mode</span>
+              <span className="font-mono text-emerald-400 font-bold flex items-center space-x-1.5 mt-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>{healthData?.database || 'Supabase PostgreSQL'}</span>
               </span>
             </div>
-            <div className="p-3 rounded-xl bg-dark-850 border border-slate-800">
-              <span className="text-[10px] text-slate-400 uppercase block">API & Auth Platform</span>
-              <span className="font-mono text-slate-200 font-bold">
+            <div className="p-3.5 rounded-2xl bg-white/[0.035] border border-white/10">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold block">API & Auth Platform</span>
+              <span className="font-mono text-slate-200 font-bold mt-1 block">
                 {healthData?.auth || 'Supabase Auth'} • {healthData?.status || 'ok'}
               </span>
             </div>

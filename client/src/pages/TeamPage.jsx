@@ -176,7 +176,7 @@ export const TeamPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dark-950 pb-16">
+    <div className="min-h-screen bg-transparent text-[#F8FAFC] pb-16 selection:bg-purple-600 selection:text-white">
       <Navbar
         onOpenSidebar={() => setSidebarOpen(true)}
         title={`${activeTeam?.name || 'Team'} Members & Roles`}
@@ -185,7 +185,7 @@ export const TeamPage = () => {
             {isManager && (
               <button
                 onClick={() => setIsInviteModalOpen(true)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-glow-brand transition-all"
+                className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/25 transition-all"
               >
                 <UserPlus className="w-3.5 h-3.5" />
                 <span>+ Invite Member</span>
@@ -195,7 +195,7 @@ export const TeamPage = () => {
               <button
                 type="button"
                 onClick={() => setIsArchiveModalOpen(true)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 text-xs font-semibold transition-all hover:bg-rose-600 hover:text-white"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#FB7185]/15 hover:bg-[#FB7185]/25 text-[#FB7185] hover:text-white border border-[#FB7185]/30 text-xs font-semibold transition-all backdrop-blur-sm"
                 title="Delete or Archive this workspace team"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -209,14 +209,14 @@ export const TeamPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* Banner for user's pending invitations if any */}
         {myInvitations.length > 0 && (
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+          <div className="p-4 rounded-3xl bg-[#FBBF24]/10 border border-[#FBBF24]/25 backdrop-blur-xl shadow-lg flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Mail className="w-5 h-5 text-amber-400" />
+              <Mail className="w-5 h-5 text-[#FBBF24]" />
               <div>
-                <p className="text-xs font-bold text-amber-300">
+                <p className="text-xs font-bold text-[#FBBF24]">
                   You have pending team invitations ({myInvitations.length})
                 </p>
-                <p className="text-[11px] text-amber-200/70">
+                <p className="text-[11px] text-[#CBD5E1]">
                   Invited to join "{myInvitations[0].teamName}" as {myInvitations[0].role?.replace('TEAM_', '')}.
                 </p>
               </div>
@@ -224,13 +224,13 @@ export const TeamPage = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => acceptInvitation(myInvitations[0].id)}
-                className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-dark-950 text-xs font-bold transition-colors"
+                className="px-3.5 py-1.5 rounded-xl bg-[#FBBF24] hover:bg-[#FBBF24]/90 text-black text-xs font-bold transition-all shadow-md"
               >
                 Accept & Join
               </button>
               <button
                 onClick={() => declineInvitation(myInvitations[0].id)}
-                className="px-3 py-1.5 rounded-lg bg-dark-850 hover:bg-dark-800 text-slate-300 text-xs transition-colors"
+                className="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 hover:text-white text-xs transition-all border border-white/10"
               >
                 Decline
               </button>
@@ -239,19 +239,19 @@ export const TeamPage = () => {
         )}
 
         {/* Team Overview Card */}
-        <div className="p-5 rounded-2xl bg-dark-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-6 rounded-3xl bg-white/[0.045] border border-white/10 backdrop-blur-xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3.5">
-            <div className="w-12 h-12 rounded-xl bg-dark-850 border border-slate-800 flex items-center justify-center">
-              <TeamIcon icon={activeTeam?.icon} className="w-6 h-6 text-brand-400" />
+            <div className="w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/10 flex items-center justify-center shadow-inner">
+              <TeamIcon icon={activeTeam?.icon} className="w-6 h-6 text-[#38BDF8]" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
+              <h2 className="text-base font-bold text-[#F8FAFC] flex items-center space-x-2">
                 <span>{activeTeam?.name}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 font-mono">
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#8B5CF6]/15 text-[#A78BFA] border border-[#8B5CF6]/30 font-mono backdrop-blur-sm">
                   {members.length} Active Members
                 </span>
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[#94A3B8] mt-0.5">
                 {activeTeam?.description || 'Team members and granular role assignments.'}
               </p>
             </div>
@@ -259,34 +259,43 @@ export const TeamPage = () => {
 
           <div className="flex items-center space-x-3">
             <span className="text-xs text-slate-400">Your Team Role:</span>
-            <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30">
+            <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-[#8B5CF6]/15 text-[#A78BFA] border border-[#8B5CF6]/30 backdrop-blur-sm shadow-sm">
               {activeRole}
             </span>
           </div>
         </div>
 
         {/* 5. Team Members Table */}
-        <div className="rounded-2xl bg-dark-900 border border-slate-800 overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="rounded-3xl bg-white/[0.045] border border-white/10 backdrop-blur-xl overflow-hidden shadow-xl">
+          <div className="p-5 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center space-x-2">
-              <Users className="w-4 h-4 text-brand-400" />
-              <h3 className="text-sm font-bold text-slate-100">Team Members List</h3>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-dark-800 text-slate-400 font-mono">
+              <Users className="w-4 h-4 text-[#8B5CF6]" />
+              <h3 className="text-sm font-bold text-[#F8FAFC]">Team Members List</h3>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-[#CBD5E1] font-mono border border-white/10">
                 {members.length}
               </span>
             </div>
 
             <div className="flex items-center space-x-3 w-full sm:w-auto">
-              {/* Member Search Bar */}
-              <div className="relative flex-1 sm:w-64">
-                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              {/* Member Search Bar with Clear action */}
+              <div className="relative flex-1 sm:w-72">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Filter by name, email, or role..."
                   value={memberSearch}
                   onChange={(e) => setMemberSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 bg-dark-850 border border-slate-800 focus:border-brand-500 rounded-xl text-xs text-slate-200 placeholder-slate-500 outline-none transition-all"
+                  className="w-full pl-8 pr-8 py-2 bg-white/[0.05] hover:bg-white/[0.07] focus:bg-white/[0.09] border border-white/10 focus:border-[#8B5CF6]/50 rounded-xl text-xs text-[#F8FAFC] placeholder-slate-400 outline-none transition-all shadow-inner backdrop-blur-md"
                 />
+                {memberSearch && (
+                  <button
+                    onClick={() => setMemberSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
               <span className="text-xs text-slate-400 hidden md:inline">
@@ -296,23 +305,24 @@ export const TeamPage = () => {
           </div>
 
           {loading ? (
-            <div className="py-20 flex flex-col items-center justify-center space-y-3">
-              <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
-              <p className="text-xs text-slate-400">Loading members from Supabase...</p>
+            <div className="p-8 space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-14 rounded-2xl bg-white/[0.03] animate-pulse border border-white/5" />
+              ))}
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-dark-850 border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                <thead className="bg-white/[0.02] border-b border-white/10 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                   <tr>
-                    <th className="py-3 px-4">Member Name</th>
-                    <th className="py-3 px-4">Team Role</th>
-                    <th className="py-3 px-4 text-center">Assigned Tasks</th>
-                    <th className="py-3 px-4">Joined Date</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                    <th className="py-3 px-5">Member Name</th>
+                    <th className="py-3 px-5">Team Role</th>
+                    <th className="py-3 px-5 text-center">Assigned Tasks</th>
+                    <th className="py-3 px-5">Joined Date</th>
+                    <th className="py-3 px-5 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80">
+                <tbody className="divide-y divide-white/5">
                   {members.filter((m) => {
                     if (!memberSearch.trim()) return true;
                     const q = memberSearch.toLowerCase();
@@ -326,48 +336,48 @@ export const TeamPage = () => {
                     const isTeamAdmin = member.role === 'TEAM_ADMIN';
 
                     return (
-                      <tr key={member.id} className="hover:bg-dark-850/60 transition-colors">
+                      <tr key={member.id} className="hover:bg-white/[0.035] transition-colors">
                         {/* Name & Email */}
-                        <td className="py-3.5 px-4">
+                        <td className="py-3.5 px-5">
                           <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 rounded-lg bg-brand-500/20 border border-brand-500/30 text-brand-300 font-bold flex items-center justify-center flex-shrink-0">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-700 to-purple-500 text-white font-bold flex items-center justify-center flex-shrink-0 shadow-sm text-sm">
                               {member.name ? member.name[0].toUpperCase() : 'U'}
                             </div>
                             <div>
                               <div className="flex items-center space-x-1.5">
-                                <span className="font-semibold text-slate-100">{member.name}</span>
+                                <span className="font-semibold text-[#F8FAFC]">{member.name}</span>
                                 {isSelf && (
-                                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-mono">
+                                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/[0.08] text-[#CBD5E1] font-mono border border-white/10">
                                     You
                                   </span>
                                 )}
                               </div>
-                              <span className="text-[11px] text-slate-500">{member.email}</span>
+                              <span className="text-[11px] text-[#94A3B8]">{member.email}</span>
                             </div>
                           </div>
                         </td>
 
                         {/* Role Selector or Badge */}
-                        <td className="py-3.5 px-4">
+                        <td className="py-3.5 px-5">
                           {isAdmin && !isTeamAdmin ? (
                             <select
                               value={member.role}
                               onChange={(e) => handleRoleChange(member.id, e.target.value)}
-                              className="px-2.5 py-1 rounded-lg bg-dark-800 border border-slate-700 text-slate-200 text-xs font-medium focus:outline-none focus:border-brand-500"
+                              className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-[#F8FAFC] text-xs font-medium focus:outline-none focus:border-[#8B5CF6]/50 transition-all cursor-pointer backdrop-blur-md"
                             >
-                              <option value="TEAM_MANAGER">TEAM_MANAGER</option>
-                              <option value="TEAM_MEMBER">TEAM_MEMBER</option>
+                              <option value="TEAM_MANAGER" className="bg-[#0D1220] text-white">TEAM_MANAGER</option>
+                              <option value="TEAM_MEMBER" className="bg-[#0D1220] text-white">TEAM_MEMBER</option>
                             </select>
                           ) : (
-                            <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-dark-800 border border-slate-700/80 text-xs font-semibold">
+                            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-white/[0.05] border border-white/10 text-xs font-semibold backdrop-blur-sm">
                               {getRoleIcon(member.role)}
                               <span
                                 className={
                                   member.role === 'TEAM_ADMIN'
-                                    ? 'text-amber-400'
+                                    ? 'text-[#FBBF24]'
                                     : member.role === 'TEAM_MANAGER'
-                                    ? 'text-indigo-400'
-                                    : 'text-emerald-400'
+                                    ? 'text-[#A78BFA]'
+                                    : 'text-[#34D399]'
                                 }
                               >
                                 {member.role.replace('TEAM_', '')}
@@ -377,23 +387,23 @@ export const TeamPage = () => {
                         </td>
 
                         {/* Tasks Count */}
-                        <td className="py-3.5 px-4 text-center">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-dark-800 border border-slate-700 font-mono font-bold text-slate-200">
+                        <td className="py-3.5 px-5 text-center">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/[0.05] border border-white/10 font-mono font-bold text-[#F8FAFC] backdrop-blur-sm">
                             {member.tasksCount || 0}
                           </span>
                         </td>
 
                         {/* Joined Date */}
-                        <td className="py-3.5 px-4 text-slate-400 text-[11px]">
+                        <td className="py-3.5 px-5 text-[#94A3B8] text-[11px]">
                           {member.joinedAt?.substring(0, 10) || 'Recently'}
                         </td>
 
                         {/* Actions */}
-                        <td className="py-3.5 px-4 text-right">
+                        <td className="py-3.5 px-5 text-right">
                           <div className="flex items-center justify-end space-x-2">
                             <button
                               onClick={() => handleViewProfile(member)}
-                              className="px-2.5 py-1 text-slate-400 hover:text-slate-200 hover:bg-dark-800 rounded-lg text-xs font-medium border border-slate-800 transition-colors inline-flex items-center space-x-1"
+                              className="px-3 py-1.5 text-[#CBD5E1] hover:text-white hover:bg-white/[0.08] rounded-xl text-xs font-medium border border-white/10 transition-colors inline-flex items-center space-x-1 backdrop-blur-sm"
                               title="View Member Profile"
                             >
                               <Eye className="w-3.5 h-3.5" />
@@ -403,7 +413,7 @@ export const TeamPage = () => {
                             {isAdmin && !isTeamAdmin && (
                               <button
                                 onClick={() => handleRemoveMember(member)}
-                                className="p-1 text-slate-500 hover:text-rose-400 hover:bg-dark-800 rounded-lg transition-colors"
+                                className="p-1.5 text-slate-400 hover:text-[#FB7185] hover:bg-white/[0.08] rounded-xl transition-colors"
                                 title="Remove Member from Team"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -422,47 +432,47 @@ export const TeamPage = () => {
 
         {/* 6. Pending Invitations Section (Managers & Admins) */}
         {isManager && (
-          <div className="rounded-2xl bg-dark-900 border border-slate-800 overflow-hidden shadow-sm">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+          <div className="rounded-3xl bg-white/[0.045] border border-white/10 backdrop-blur-xl overflow-hidden shadow-xl">
+            <div className="p-5 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4 text-indigo-400" />
-                <h3 className="text-sm font-bold text-slate-100">
+                <Mail className="w-4 h-4 text-[#38BDF8]" />
+                <h3 className="text-sm font-bold text-[#F8FAFC]">
                   Pending Team Invitations ({invitations.length})
                 </h3>
               </div>
               <button
                 onClick={() => setIsInviteModalOpen(true)}
-                className="text-xs text-brand-400 hover:text-brand-300 font-medium"
+                className="text-xs text-[#38BDF8] hover:text-[#38BDF8]/80 font-medium"
               >
                 + Send Invite
               </button>
             </div>
 
             {invitations.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-xs">
+              <div className="p-8 text-center text-[#94A3B8] text-xs">
                 No active pending invitations for this team.
               </div>
             ) : (
-              <div className="divide-y divide-slate-800/80">
+              <div className="divide-y divide-white/5">
                 {invitations.map((inv) => {
                   const isResending = resendingId === inv.id;
                   return (
                     <div
                       key={inv.id}
-                      className="p-3.5 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-dark-850/60 transition-colors text-xs"
+                      className="p-4 px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.035] transition-colors text-xs"
                     >
                       <div className="flex items-center space-x-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center flex-shrink-0">
+                        <div className="w-9 h-9 rounded-xl bg-[#8B5CF6]/15 border border-[#8B5CF6]/30 text-[#A78BFA] flex items-center justify-center flex-shrink-0">
                           <Mail className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center space-x-2 flex-wrap">
-                            <span className="font-semibold text-slate-200 truncate">{inv.email}</span>
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono">
+                            <span className="font-semibold text-[#F8FAFC] truncate">{inv.email}</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#8B5CF6]/20 text-[#A78BFA] border border-[#8B5CF6]/30 font-mono">
                               {inv.role.replace('TEAM_', '')}
                             </span>
                           </div>
-                          <span className="text-[10px] text-slate-500 block truncate">
+                          <span className="text-[10px] text-[#94A3B8] block truncate mt-0.5">
                             Invited by {inv.inviterName} • Expires {inv.expiresAt?.substring(0, 10)}
                           </span>
                         </div>
@@ -472,7 +482,7 @@ export const TeamPage = () => {
                         <button
                           type="button"
                           onClick={() => handleCopyInviteLink(inv.id)}
-                          className="px-2.5 py-1 text-slate-300 hover:text-white bg-dark-800 hover:bg-dark-750 border border-slate-700/80 rounded-lg text-xs font-medium transition-colors flex items-center space-x-1"
+                          className="px-3 py-1.5 text-[#CBD5E1] hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 rounded-xl text-xs font-medium transition-colors flex items-center space-x-1 backdrop-blur-sm"
                           title="Copy invitation link"
                         >
                           <Copy className="w-3 h-3 text-slate-400" />
@@ -483,17 +493,17 @@ export const TeamPage = () => {
                           type="button"
                           onClick={() => handleResendInvitation(inv.id)}
                           disabled={isResending}
-                          className="px-2.5 py-1 text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg text-xs font-medium transition-colors flex items-center space-x-1 disabled:opacity-50"
+                          className="px-3 py-1.5 text-[#A78BFA] hover:text-white bg-[#8B5CF6]/15 hover:bg-[#8B5CF6]/25 border border-[#8B5CF6]/30 rounded-xl text-xs font-medium transition-colors flex items-center space-x-1 disabled:opacity-50 backdrop-blur-sm"
                           title="Resend invitation email"
                         >
-                          <RotateCw className={`w-3 h-3 text-indigo-400 ${isResending ? 'animate-spin' : ''}`} />
+                          <RotateCw className={`w-3 h-3 text-[#A78BFA] ${isResending ? 'animate-spin' : ''}`} />
                           <span>{isResending ? 'Sending...' : 'Resend Email'}</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => handleCancelInvitation(inv.id)}
-                          className="px-2.5 py-1 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg text-xs font-medium transition-colors"
+                          className="px-3 py-1.5 text-[#FB7185] hover:text-white hover:bg-[#FB7185]/20 border border-[#FB7185]/30 rounded-xl text-xs font-medium transition-colors backdrop-blur-sm"
                         >
                           Cancel
                         </button>
@@ -508,21 +518,21 @@ export const TeamPage = () => {
 
         {/* Danger Zone: Delete / Archive Team (Owner / Admin Only) */}
         {(isOwner || isAdmin) && activeTeam && (
-          <div className="p-6 rounded-2xl bg-dark-900 border border-rose-900/40 space-y-3">
+          <div className="p-6 rounded-3xl bg-gradient-to-br from-[#FB7185]/10 via-[#FB7185]/5 to-transparent border border-[#FB7185]/25 backdrop-blur-xl shadow-xl space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-sm font-bold text-rose-400 flex items-center space-x-2">
-                  <Trash2 className="w-4 h-4 text-rose-500" />
+                <h3 className="text-sm font-bold text-[#FB7185] flex items-center space-x-2">
+                  <Trash2 className="w-4 h-4 text-[#FB7185]" />
                   <span>Danger Zone &bull; Delete Workspace Team</span>
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-[#CBD5E1] mt-1">
                   Permanently archive "{activeTeam.name}". This soft-deletes the team, revoking member access and hiding team workflows.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsArchiveModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-rose-600/30 hover:bg-rose-600 text-rose-200 hover:text-white border border-rose-500/40 text-xs font-semibold shadow-sm transition-all whitespace-nowrap self-start sm:self-auto cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[#FB7185]/20 hover:bg-[#FB7185] text-[#FB7185] hover:text-white border border-[#FB7185]/40 text-xs font-semibold shadow-sm transition-all whitespace-nowrap self-start sm:self-auto cursor-pointer"
               >
                 Delete Team
               </button>
@@ -549,56 +559,56 @@ export const TeamPage = () => {
 
       {/* Member Profile Modal (Section 24) */}
       {selectedProfileUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-950/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 relative">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
-              <h3 className="text-sm font-bold text-slate-100 flex items-center space-x-2">
-                <User className="w-4 h-4 text-brand-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080B12]/80 backdrop-blur-md animate-fadeIn">
+          <div className="bg-[#0D1220]/95 border border-white/15 rounded-3xl w-full max-w-md shadow-2xl p-6 relative backdrop-blur-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+              <h3 className="text-sm font-bold text-[#F8FAFC] flex items-center space-x-2">
+                <User className="w-4 h-4 text-[#8B5CF6]" />
                 <span>Member Profile</span>
               </h3>
               <button
                 onClick={() => setSelectedProfileUser(null)}
-                className="p-1 text-slate-400 hover:text-slate-200 rounded-lg"
+                className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/[0.08] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="flex items-center space-x-3 p-3 rounded-xl bg-dark-850 border border-slate-800">
-                <div className="w-12 h-12 rounded-xl bg-brand-500/20 text-brand-300 font-bold text-lg flex items-center justify-center">
+              <div className="flex items-center space-x-3.5 p-3.5 rounded-2xl bg-white/[0.045] border border-white/10 backdrop-blur-md">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-700 to-purple-500 text-white font-bold text-lg flex items-center justify-center shadow-md">
                   {selectedProfileUser.name[0].toUpperCase()}
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-100">{selectedProfileUser.name}</h4>
-                  <p className="text-slate-400 text-xs">{selectedProfileUser.email}</p>
-                  <span className="text-[10px] font-mono text-brand-400 uppercase">
+                  <h4 className="text-sm font-bold text-[#F8FAFC]">{selectedProfileUser.name}</h4>
+                  <p className="text-[#94A3B8] text-xs">{selectedProfileUser.email}</p>
+                  <span className="text-[10px] font-mono text-[#A78BFA] uppercase">
                     Role in {activeTeam.name}: {selectedProfileUser.role}
                   </span>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <h5 className="font-semibold text-slate-300 uppercase tracking-wider text-[10px]">
+                <h5 className="font-semibold text-slate-400 uppercase tracking-wider text-[10px]">
                   Team Responsibilities
                 </h5>
-                <div className="p-3 rounded-xl bg-dark-850 border border-slate-800 space-y-1.5">
+                <div className="p-3.5 rounded-2xl bg-white/[0.045] border border-white/10 space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Assigned Tasks in {activeTeam.name}:</span>
-                    <span className="font-bold text-slate-200">{selectedProfileUser.tasksCount || 0}</span>
+                    <span className="text-[#94A3B8]">Assigned Tasks in {activeTeam.name}:</span>
+                    <span className="font-bold text-[#F8FAFC]">{selectedProfileUser.tasksCount || 0}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Joined Team:</span>
-                    <span className="text-slate-200">{selectedProfileUser.joinedAt?.substring(0, 10) || 'Active'}</span>
+                    <span className="text-[#94A3B8]">Joined Team:</span>
+                    <span className="text-[#CBD5E1]">{selectedProfileUser.joinedAt?.substring(0, 10) || 'Active'}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-slate-800 text-right">
+            <div className="mt-5 pt-3 border-t border-white/10 text-right">
               <button
                 onClick={() => setSelectedProfileUser(null)}
-                className="px-4 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-200 text-xs font-semibold"
+                className="px-4 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-[#F8FAFC] text-xs font-semibold border border-white/10 transition-all"
               >
                 Close
               </button>

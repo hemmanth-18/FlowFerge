@@ -172,23 +172,23 @@ export const TaskModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-dark-950/80 backdrop-blur-sm animate-fadeIn overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-fadeIn overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl p-5 sm:p-6 relative my-auto max-h-[92vh] overflow-y-auto">
+      <div className="bg-[#0D1220]/95 backdrop-blur-2xl border border-white/10 rounded-3xl w-full max-w-lg shadow-2xl shadow-black/80 p-5 sm:p-6 relative my-auto max-h-[92vh] overflow-y-auto">
         {/* Glow */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl pointer-events-none" />
 
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-4 border-b border-white/10">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400">
+            <div className="w-10 h-10 rounded-xl bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-400">
               <CheckSquare className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-100">
+              <h2 className="text-base font-bold text-white">
                 {initialData ? 'Edit Task Details' : 'Create Team Task'}
               </h2>
               <p className="text-xs text-slate-400">
@@ -198,7 +198,7 @@ export const TaskModal = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-dark-800 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -218,7 +218,7 @@ export const TaskModal = ({
                 Workflow <span className="text-rose-400">*</span>
               </label>
               {selectedWorkflowId ? (
-                <div className="w-full px-3.5 py-2.5 bg-dark-850 border border-slate-700/80 rounded-xl text-slate-200 text-xs flex items-center justify-between">
+                <div className="w-full px-3.5 py-2.5 bg-white/[0.045] border border-white/10 rounded-xl text-slate-200 text-xs flex items-center justify-between">
                   <span className="font-semibold text-brand-300 truncate">
                     {workflowName || (workflows.find((w) => w.id === selectedWorkflowId)?.name) || 'Current Workflow'}
                   </span>
@@ -230,12 +230,12 @@ export const TaskModal = ({
                 <select
                   value={workflowId}
                   onChange={(e) => setWorkflowId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-dark-850 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 text-xs"
+                  className="w-full px-3.5 py-2.5 bg-[#111827] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 focus:outline-none text-xs"
                   required
                 >
-                  <option value="" disabled>Select target workflow</option>
+                  <option value="" disabled className="bg-[#111827]">Select target workflow</option>
                   {workflows.map((wf) => (
-                    <option key={wf.id} value={wf.id}>
+                    <option key={wf.id} value={wf.id} className="bg-[#111827]">
                       {wf.name}
                     </option>
                   ))}
@@ -254,7 +254,7 @@ export const TaskModal = ({
               placeholder="e.g. Implement Team Switcher Component"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-dark-850 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 text-sm"
+              className="w-full px-3.5 py-2.5 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none text-sm transition-all"
               required
             />
           </div>
@@ -269,7 +269,7 @@ export const TaskModal = ({
               placeholder="Task instructions, dependencies, and requirements..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3.5 py-2 bg-dark-850 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs resize-none"
+              className="w-full px-3.5 py-2 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none text-xs resize-none transition-all"
             />
           </div>
 
@@ -282,11 +282,11 @@ export const TaskModal = ({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-dark-850 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 text-xs"
+                className="w-full px-3.5 py-2.5 bg-[#111827] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 focus:outline-none text-xs"
               >
-                <option value="TODO">TODO</option>
-                <option value="IN_PROGRESS">IN_PROGRESS</option>
-                <option value="COMPLETED">COMPLETED</option>
+                <option value="TODO" className="bg-[#111827]">TODO</option>
+                <option value="IN_PROGRESS" className="bg-[#111827]">IN_PROGRESS</option>
+                <option value="COMPLETED" className="bg-[#111827]">COMPLETED</option>
               </select>
             </div>
 
@@ -297,18 +297,18 @@ export const TaskModal = ({
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-dark-850 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 text-xs"
+                className="w-full px-3.5 py-2.5 bg-[#111827] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 focus:outline-none text-xs"
               >
-                <option value="LOW">LOW</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HIGH">HIGH</option>
+                <option value="LOW" className="bg-[#111827]">LOW</option>
+                <option value="MEDIUM" className="bg-[#111827]">MEDIUM</option>
+                <option value="HIGH" className="bg-[#111827]">HIGH</option>
               </select>
             </div>
           </div>
 
           {/* Deliverable & 15-word Description Requirements (Visible when COMPLETED) */}
           {status === 'COMPLETED' && (
-            <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-3 animate-in fade-in">
+            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-3 animate-in fade-in">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-emerald-300 flex items-center space-x-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -339,7 +339,7 @@ export const TaskModal = ({
                   value={completionDescription}
                   onChange={(e) => setCompletionDescription(e.target.value)}
                   placeholder="Summarize the completed deliverables and work output (minimum 15 words required)..."
-                  className="w-full px-3 py-2 bg-dark-850 border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all resize-none"
+                  className="w-full px-3 py-2 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all resize-none"
                 />
                 <p className="text-[10px] mt-1 text-slate-400">
                   {completionWordCount < 15 ? (
@@ -362,7 +362,7 @@ export const TaskModal = ({
                     id="task-modal-file-upload"
                     accept=".pdf,.doc,.docx"
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
-                    className="text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-600/20 file:text-emerald-300 hover:file:bg-emerald-600/30 cursor-pointer"
+                    className="text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-600/20 file:text-emerald-300 hover:file:bg-emerald-600/30 cursor-pointer"
                   />
                   {initialData?.documentName && !file && (
                     <span className="text-[11px] text-cyan-400 flex items-center space-x-1">
@@ -384,7 +384,7 @@ export const TaskModal = ({
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-dark-850 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 text-xs"
+                className="w-full px-3.5 py-2.5 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 focus:outline-none text-xs transition-all"
               />
             </div>
 
@@ -397,11 +397,11 @@ export const TaskModal = ({
               <select
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-dark-850 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 text-xs"
+                className="w-full px-3.5 py-2.5 bg-[#111827] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 focus:outline-none text-xs"
               >
-                <option value="Unassigned">Unassigned</option>
+                <option value="Unassigned" className="bg-[#111827]">Unassigned</option>
                 {teamMembers.map((m) => (
-                  <option key={m.id || m.userId || m.name} value={m.name || m.username}>
+                  <option key={m.id || m.userId || m.name} value={m.name || m.username} className="bg-[#111827]">
                     {m.name || m.username} ({m.role ? m.role.replace('TEAM_', '') : 'Member'})
                   </option>
                 ))}
@@ -410,13 +410,13 @@ export const TaskModal = ({
           </div>
 
           {/* Actions */}
-          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-800">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-white/10">
             {initialData && onDelete ? (
               <button
                 type="button"
                 onClick={handleDelete}
                 disabled={loading}
-                className="flex items-center justify-center space-x-1.5 px-3 py-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl text-xs font-medium transition-colors"
+                className="flex items-center justify-center space-x-1.5 px-3 py-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl text-xs font-semibold transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete Task</span>
@@ -428,14 +428,14 @@ export const TaskModal = ({
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-4 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-dark-800 rounded-xl transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex items-center space-x-2 px-5 py-2 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white rounded-xl text-xs font-semibold shadow-glow-brand transition-all disabled:opacity-50"
+                className="flex items-center space-x-2 px-5 py-2 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-brand-500/25 transition-all disabled:opacity-50"
               >
                 {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>{initialData ? 'Save Changes' : 'Create Task'}</span>

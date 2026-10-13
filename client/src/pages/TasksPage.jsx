@@ -175,7 +175,7 @@ export const TasksPage = () => {
   });
 
   return (
-    <div className="min-h-screen bg-dark-950 pb-16">
+    <div className="min-h-screen bg-transparent text-[#F8FAFC] pb-16 selection:bg-purple-600 selection:text-white">
       <Navbar
         onOpenSidebar={() => setSidebarOpen(true)}
         title={currentView === 'mine' ? 'My Tasks' : `${activeTeam?.name || 'Team'} Tasks`}
@@ -186,7 +186,7 @@ export const TasksPage = () => {
                 setEditingTask(null);
                 setIsTaskModalOpen(true);
               }}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-glow-brand transition-all"
+              className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/25 transition-all"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ Create Task</span>
@@ -197,14 +197,14 @@ export const TasksPage = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* View Switcher Tabs: My Tasks vs Team Tasks */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
-          <div className="flex items-center space-x-2 bg-dark-900 p-1 rounded-xl border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/10">
+          <div className="flex items-center space-x-1.5 bg-white/[0.045] p-1 rounded-2xl border border-white/10 backdrop-blur-xl shadow-inner">
             <button
               onClick={() => setSearchParams({ view: 'mine' })}
-              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex items-center space-x-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 currentView === 'mine'
-                  ? 'bg-brand-600 text-white shadow-glow-brand'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
               }`}
             >
               <CheckSquare className="w-3.5 h-3.5" />
@@ -214,10 +214,10 @@ export const TasksPage = () => {
             {isManager && (
               <button
                 onClick={() => setSearchParams({ view: 'team' })}
-                className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center space-x-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                   currentView === 'team'
-                    ? 'bg-brand-600 text-white shadow-glow-brand'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                    : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
                 }`}
               >
                 <ListTodo className="w-3.5 h-3.5" />
@@ -226,23 +226,23 @@ export const TasksPage = () => {
             )}
           </div>
 
-          <div className="text-xs text-slate-400">
-            Team: <span className="font-semibold text-slate-200">{activeTeam?.name}</span> • Role:{' '}
-            <span className="font-mono text-brand-400">{activeRole}</span>
+          <div className="text-xs text-[#CBD5E1]">
+            Team: <span className="font-semibold text-white">{activeTeam?.name}</span> • Role:{' '}
+            <span className="font-mono text-[#A78BFA]">{activeRole}</span>
           </div>
         </div>
 
         {/* 12. Filters Bar */}
-        <div className="p-4 rounded-2xl bg-dark-900 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-4 rounded-3xl bg-white/[0.045] border border-white/10 backdrop-blur-xl shadow-xl flex flex-wrap items-center justify-between gap-3">
           {/* Search Box */}
           <div className="relative flex-1 w-full sm:w-auto sm:min-w-[220px]">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               placeholder="Search tasks..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-dark-850 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-white/[0.05] hover:bg-white/[0.07] focus:bg-white/[0.09] border border-white/10 focus:border-[#8B5CF6]/50 rounded-xl text-xs text-[#F8FAFC] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/25 transition-all shadow-inner backdrop-blur-md"
             />
           </div>
 
@@ -251,11 +251,11 @@ export const TasksPage = () => {
             <select
               value={workflowFilter}
               onChange={(e) => setWorkflowFilter(e.target.value)}
-              className="px-3 py-2 bg-dark-850 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-brand-500"
+              className="px-3 py-2 bg-white/[0.05] hover:bg-white/[0.07] border border-white/10 focus:border-[#8B5CF6]/50 rounded-xl text-xs text-[#F8FAFC] focus:outline-none cursor-pointer backdrop-blur-md transition-all"
             >
-              <option value="ALL">All Workflows</option>
+              <option value="ALL" className="bg-[#0D1220] text-white">All Workflows</option>
               {workflows.map((w) => (
-                <option key={w.id} value={w.id}>
+                <option key={w.id} value={w.id} className="bg-[#0D1220] text-white">
                   {w.name}
                 </option>
               ))}
@@ -265,24 +265,24 @@ export const TasksPage = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 bg-dark-850 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-brand-500"
+              className="px-3 py-2 bg-white/[0.05] hover:bg-white/[0.07] border border-white/10 focus:border-[#8B5CF6]/50 rounded-xl text-xs text-[#F8FAFC] focus:outline-none cursor-pointer backdrop-blur-md transition-all"
             >
-              <option value="ALL">All Statuses</option>
-              <option value="TODO">TODO</option>
-              <option value="IN_PROGRESS">IN_PROGRESS</option>
-              <option value="COMPLETED">COMPLETED</option>
+              <option value="ALL" className="bg-[#0D1220] text-white">All Statuses</option>
+              <option value="TODO" className="bg-[#0D1220] text-white">TODO</option>
+              <option value="IN_PROGRESS" className="bg-[#0D1220] text-white">IN_PROGRESS</option>
+              <option value="COMPLETED" className="bg-[#0D1220] text-white">COMPLETED</option>
             </select>
 
             {/* Priority Filter */}
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="px-3 py-2 bg-dark-850 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-brand-500"
+              className="px-3 py-2 bg-white/[0.05] hover:bg-white/[0.07] border border-white/10 focus:border-[#8B5CF6]/50 rounded-xl text-xs text-[#F8FAFC] focus:outline-none cursor-pointer backdrop-blur-md transition-all"
             >
-              <option value="ALL">All Priorities</option>
-              <option value="HIGH">High Priority</option>
-              <option value="MEDIUM">Medium Priority</option>
-              <option value="LOW">Low Priority</option>
+              <option value="ALL" className="bg-[#0D1220] text-white">All Priorities</option>
+              <option value="HIGH" className="bg-[#0D1220] text-white">High Priority</option>
+              <option value="MEDIUM" className="bg-[#0D1220] text-white">Medium Priority</option>
+              <option value="LOW" className="bg-[#0D1220] text-white">Low Priority</option>
             </select>
 
             {/* Assignee Filter (in Team Tasks view) */}
@@ -290,11 +290,11 @@ export const TasksPage = () => {
               <select
                 value={assigneeFilter}
                 onChange={(e) => setAssigneeFilter(e.target.value)}
-                className="px-3 py-2 bg-dark-850 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-brand-500"
+                className="px-3 py-2 bg-white/[0.05] hover:bg-white/[0.07] border border-white/10 focus:border-[#8B5CF6]/50 rounded-xl text-xs text-[#F8FAFC] focus:outline-none cursor-pointer backdrop-blur-md transition-all"
               >
-                <option value="ALL">All Assignees</option>
+                <option value="ALL" className="bg-[#0D1220] text-white">All Assignees</option>
                 {teamMembers.map((m) => (
-                  <option key={m.id} value={m.name}>
+                  <option key={m.id} value={m.name} className="bg-[#0D1220] text-white">
                     {m.name}
                   </option>
                 ))}
@@ -305,15 +305,16 @@ export const TasksPage = () => {
 
         {/* Task Cards / Table */}
         {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center space-y-3">
-            <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
-            <p className="text-xs text-slate-400">Loading tasks from Supabase...</p>
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-20 rounded-3xl bg-white/[0.035] animate-pulse border border-white/5" />
+            ))}
           </div>
         ) : filteredTasks.length === 0 ? (
-          <div className="p-12 text-center rounded-2xl bg-dark-900 border border-slate-800 space-y-3">
-            <CheckSquare className="w-10 h-10 text-slate-600 mx-auto" />
-            <h3 className="text-sm font-bold text-slate-200">No tasks found</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+          <div className="p-16 text-center rounded-3xl bg-white/[0.045] border border-white/10 backdrop-blur-xl shadow-xl space-y-3">
+            <CheckSquare className="w-10 h-10 text-slate-500 mx-auto" />
+            <h3 className="text-sm font-bold text-[#F8FAFC]">No tasks found</h3>
+            <p className="text-xs text-[#94A3B8] max-w-sm mx-auto">
               {currentView === 'mine'
                 ? "You don't have any tasks matching these filters in this team."
                 : "No tasks found across the team's workflows."}
@@ -324,7 +325,7 @@ export const TasksPage = () => {
             {filteredTasks.map((task) => (
               <div
                 key={task.id}
-                className="p-4 rounded-2xl bg-dark-900 border border-slate-800 hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                className="p-4 sm:p-5 rounded-3xl bg-white/[0.045] hover:bg-white/[0.07] border border-white/10 hover:border-white/20 backdrop-blur-xl transition-all shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 group"
               >
                 {/* Left: Completion Checkbox & Info */}
                 <div className="flex items-start space-x-3.5 flex-1 min-w-0">
@@ -338,8 +339,8 @@ export const TasksPage = () => {
                     }
                     className={`mt-0.5 w-5 h-5 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
                       task.status === 'COMPLETED'
-                        ? 'bg-emerald-500 border-emerald-500 text-dark-950 shadow-glow-emerald'
-                        : 'border-slate-600 hover:border-emerald-400 text-transparent'
+                        ? 'bg-[#34D399] border-[#34D399] text-black shadow-md'
+                        : 'border-slate-500 hover:border-[#34D399] text-transparent'
                     }`}
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
@@ -350,15 +351,15 @@ export const TasksPage = () => {
                       <h4
                         className={`text-sm font-semibold truncate ${
                           task.status === 'COMPLETED'
-                            ? 'line-through text-slate-500'
-                            : 'text-slate-100 group-hover:text-brand-300'
+                            ? 'line-through text-slate-400'
+                            : 'text-[#F8FAFC] group-hover:text-[#A78BFA]'
                         }`}
                       >
                         {task.title}
                       </h4>
                       <Link
                         to={`/workflows/${task.workflowId}`}
-                        className="text-[10px] px-2 py-0.5 rounded-md bg-dark-800 text-slate-400 hover:text-brand-400 border border-slate-700 transition-colors inline-flex items-center space-x-1"
+                        className="text-[10px] px-2.5 py-0.5 rounded-full bg-white/[0.05] text-[#CBD5E1] hover:text-purple-300 border border-white/10 transition-colors inline-flex items-center space-x-1 backdrop-blur-sm"
                       >
                         <span>{task.workflowName || 'Workflow'}</span>
                         <ExternalLink className="w-2.5 h-2.5" />
@@ -369,10 +370,10 @@ export const TasksPage = () => {
                         <button
                           type="button"
                           onClick={() => handleDownloadTaskDocument(task)}
-                          className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-cyan-950/60 border border-cyan-700/50 text-[11px] text-cyan-300 hover:text-cyan-200 hover:border-cyan-500 transition-all cursor-pointer"
+                          className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-[11px] text-purple-300 hover:bg-purple-500/25 transition-all cursor-pointer backdrop-blur-sm"
                           title="Download attached deliverable document"
                         >
-                          <Paperclip className="w-3 h-3 text-cyan-400" />
+                          <Paperclip className="w-3 h-3 text-purple-400" />
                           <span className="max-w-[140px] truncate">
                             {task.documentName || 'Deliverable Doc'}
                           </span>
@@ -381,26 +382,26 @@ export const TasksPage = () => {
                     </div>
 
                     {task.description && (
-                      <p className="text-xs text-slate-400 mt-1 line-clamp-1">
+                      <p className="text-xs text-[#CBD5E1] mt-1 line-clamp-1">
                         {task.description}
                       </p>
                     )}
 
                     {/* Completion Deliverable Notes */}
                     {task.completionDescription && (
-                      <div className="mt-2 text-[11px] text-emerald-300 bg-emerald-950/40 border border-emerald-800/40 rounded-xl p-2.5 flex items-start space-x-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <div className="mt-2 text-[11px] text-[#34D399] bg-[#34D399]/10 border border-[#34D399]/25 rounded-2xl p-2.5 flex items-start space-x-2 backdrop-blur-sm">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#34D399] flex-shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <span className="font-semibold text-emerald-200">Completion Notes: </span>
-                          <span className="text-slate-300">{task.completionDescription}</span>
+                          <span className="font-semibold text-white">Completion Notes: </span>
+                          <span className="text-[#CBD5E1]">{task.completionDescription}</span>
                         </div>
                       </div>
                     )}
 
-                    <div className="flex items-center space-x-4 mt-2 text-[11px] text-slate-500">
+                    <div className="flex items-center space-x-4 mt-2 text-[11px] text-slate-400">
                       <span className="flex items-center space-x-1">
                         <User className="w-3 h-3 text-slate-400" />
-                        <span className="text-slate-300 font-medium">
+                        <span className="text-[#CBD5E1] font-medium">
                           {task.assignedTo || 'Unassigned'}
                         </span>
                       </span>
@@ -411,7 +412,7 @@ export const TasksPage = () => {
                           <span
                             className={
                               new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
-                                ? 'text-rose-400 font-semibold'
+                                ? 'text-[#FB7185] font-semibold'
                                 : 'text-slate-400'
                             }
                           >
@@ -433,7 +434,7 @@ export const TasksPage = () => {
                     <button
                       type="button"
                       onClick={() => handleDoneClick(task)}
-                      className="flex items-center space-x-1 px-2.5 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
+                      className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-[#34D399]/15 hover:bg-[#34D399] hover:text-black text-[#34D399] border border-[#34D399]/30 text-xs font-semibold transition-all cursor-pointer shadow-sm backdrop-blur-sm"
                       title="Done (Upload deliverable & 15-word description)"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
@@ -441,13 +442,13 @@ export const TasksPage = () => {
                     </button>
                   )}
 
-                  <div className="flex items-center space-x-1 pl-2 border-l border-slate-800">
+                  <div className="flex items-center space-x-1 pl-2 border-l border-white/10">
                     <button
                       onClick={() => {
                         setEditingTask(task);
                         setIsTaskModalOpen(true);
                       }}
-                      className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-dark-800 rounded-lg transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-white hover:bg-white/[0.08] rounded-xl transition-colors"
                       title="Edit Task"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -456,7 +457,7 @@ export const TasksPage = () => {
                     {isManager && (
                       <button
                         onClick={() => handleDeleteTask(task.id)}
-                        className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-dark-800 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-[#FB7185] hover:bg-white/[0.08] rounded-xl transition-colors"
                         title="Delete Task"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

@@ -142,7 +142,7 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
           <p className="text-xs text-slate-400">Loading documents...</p>
         </div>
       ) : documents.length === 0 ? (
-        <div className="py-12 px-6 rounded-2xl bg-[#10141D]/60 border border-white/10 text-center">
+        <div className="py-12 px-6 rounded-3xl bg-white/[0.03] backdrop-blur-xl border border-white/10 text-center">
           <div className="w-12 h-12 mx-auto rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 mb-3">
             <FileText className="w-6 h-6" />
           </div>
@@ -153,7 +153,7 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
           <button
             type="button"
             onClick={() => setUploadModalOpen(true)}
-            className="mt-4 px-4 py-2 rounded-xl bg-brand-600/30 hover:bg-brand-600/50 border border-brand-500/40 text-brand-200 text-xs font-medium transition-colors"
+            className="mt-4 px-4 py-2 rounded-xl bg-brand-600/30 hover:bg-brand-600/50 border border-brand-500/40 text-brand-200 text-xs font-semibold transition-colors"
           >
             Attach First Document
           </button>
@@ -163,7 +163,7 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
           {documents.map((doc) => (
             <div
               key={doc.id}
-              className="p-4 rounded-2xl bg-[#10141D] border border-white/10 hover:border-brand-500/30 transition-all shadow-md group flex flex-col justify-between"
+              className="p-4 rounded-2xl bg-[#0D1220]/80 backdrop-blur-xl border border-white/10 hover:border-brand-500/30 transition-all shadow-md group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between">
@@ -193,7 +193,7 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
                 </div>
 
                 {doc.description && (
-                  <p className="mt-3 text-xs text-slate-300 leading-relaxed bg-[#151A24] p-2.5 rounded-xl border border-white/5 line-clamp-3">
+                  <p className="mt-3 text-xs text-slate-300 leading-relaxed bg-white/[0.045] p-2.5 rounded-xl border border-white/10 line-clamp-3">
                     {doc.description}
                   </p>
                 )}
@@ -234,7 +234,7 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
       {/* Upload Document Modal */}
       {uploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-md bg-[#10141D] border border-white/15 rounded-3xl p-5 sm:p-6 shadow-2xl relative my-auto max-h-[92vh] overflow-y-auto">
+          <div className="w-full max-w-md bg-[#0D1220]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-black/80 relative my-auto max-h-[92vh] overflow-y-auto">
             <button
               type="button"
               onClick={() => {
@@ -283,7 +283,7 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Summary or purpose of this document..."
-                  className="w-full p-2.5 bg-[#151A24] border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs"
+                  className="w-full p-2.5 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none text-xs transition-all"
                 />
               </div>
 

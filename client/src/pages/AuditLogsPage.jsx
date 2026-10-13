@@ -48,13 +48,13 @@ export const AuditLogsPage = () => {
   // Section 16: Team Members should not have access to sensitive audit logs
   if (!isManager) {
     return (
-      <div className="min-h-screen bg-dark-950 pb-16">
+      <div className="min-h-screen bg-transparent pb-16 selection:bg-purple-600 selection:text-white">
         <Navbar onOpenSidebar={() => setSidebarOpen(true)} title="Security Audit Logs" />
         <div className="max-w-2xl mx-auto px-4 pt-16 text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400">
+          <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400 shadow-inner">
             <ShieldAlert className="w-6 h-6" />
           </div>
-          <h2 className="text-base font-bold text-slate-100">
+          <h2 className="text-base font-bold text-white">
             Access Restricted: Security Audit Logs
           </h2>
           <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
@@ -80,7 +80,7 @@ export const AuditLogsPage = () => {
   const deniedCount = logs.filter((l) => l.result === 'DENIED').length;
 
   return (
-    <div className="min-h-screen bg-dark-950 pb-16">
+    <div className="min-h-screen bg-transparent pb-16 selection:bg-purple-600 selection:text-white">
       <Navbar
         onOpenSidebar={() => setSidebarOpen(true)}
         title={`${activeTeam?.name || 'Team'} Security Audit Logs`}
@@ -88,13 +88,16 @@ export const AuditLogsPage = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* Banner */}
-        <div className="p-4 sm:p-6 rounded-2xl bg-dark-900 border border-slate-800 shadow-card-dark flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl bg-[#0D1220]/80 backdrop-blur-2xl border border-white/10 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+          {/* Top edge highlight */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
-              <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-inner">
                 <Lock className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-bold text-slate-100">
+              <h3 className="text-base font-bold text-white">
                 {activeTeam?.name} Security & Anti-IDOR Audit Trail
               </h3>
             </div>
@@ -104,11 +107,11 @@ export const AuditLogsPage = () => {
           </div>
 
           <div className="flex items-center space-x-3">
-            <div className="px-4 py-2 rounded-xl bg-dark-850 border border-slate-800 text-center">
+            <div className="px-4 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-center">
               <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Audits</span>
-              <span className="font-mono text-base font-bold text-slate-100">{logs.length}</span>
+              <span className="font-mono text-base font-bold text-white">{logs.length}</span>
             </div>
-            <div className="px-4 py-2 rounded-xl bg-dark-850 border border-rose-900/40 text-center">
+            <div className="px-4 py-2 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-center">
               <span className="text-[10px] uppercase font-bold text-rose-400 block">Denials</span>
               <span className="font-mono text-base font-bold text-rose-400">{deniedCount}</span>
             </div>
@@ -116,15 +119,15 @@ export const AuditLogsPage = () => {
         </div>
 
         {/* Filter Bar */}
-        <div className="p-4 rounded-2xl bg-dark-900 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="p-4 rounded-2xl bg-[#0D1220]/80 backdrop-blur-2xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search by user, action, resource..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-dark-850 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500"
+              className="w-full pl-10 pr-4 py-2 bg-[#111827] border border-white/15 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500"
             />
           </div>
 
@@ -133,12 +136,12 @@ export const AuditLogsPage = () => {
               <button
                 key={res}
                 onClick={() => setResultFilter(res)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                   resultFilter === res
                     ? res === 'DENIED'
                       ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm'
                       : 'bg-brand-500/20 text-brand-300 border border-brand-500/40 shadow-sm'
-                    : 'bg-dark-850 hover:bg-dark-800 text-slate-400 border border-slate-800'
+                    : 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 border border-white/10'
                 }`}
               >
                 {res}
@@ -148,7 +151,10 @@ export const AuditLogsPage = () => {
         </div>
 
         {/* Logs Table */}
-        <div className="rounded-2xl bg-dark-900 border border-slate-800 overflow-hidden shadow-sm">
+        <div className="rounded-2xl sm:rounded-3xl bg-[#0D1220]/80 backdrop-blur-2xl border border-white/10 overflow-hidden shadow-2xl relative">
+          {/* Top edge highlight */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center space-y-3">
               <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
@@ -161,7 +167,7 @@ export const AuditLogsPage = () => {
           ) : (
             <div className="overflow-x-auto w-full">
               <table className="w-full min-w-[640px] text-left text-xs text-slate-300">
-                <thead className="bg-dark-850 border-b border-slate-800 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <thead className="bg-white/[0.02] border-b border-white/10 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Result</th>
                     <th className="py-3 px-4">Actor</th>
@@ -171,27 +177,27 @@ export const AuditLogsPage = () => {
                     <th className="py-3 px-4">Timestamp</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80">
+                <tbody className="divide-y divide-white/5">
                   {filteredLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-dark-850/60 transition-colors">
+                    <tr key={log.id} className="hover:bg-white/[0.03] transition-colors">
                       <td className="py-3 px-4">
                         <span
-                          className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full font-mono text-[10px] font-bold ${
+                          className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full font-mono text-[10px] font-bold ${
                             log.result === 'SUCCESS'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                              ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30'
+                              : 'bg-rose-500/10 text-rose-300 border border-rose-500/30'
                           }`}
                         >
                           {log.result === 'SUCCESS' ? (
-                            <ShieldCheck className="w-3 h-3" />
+                            <ShieldCheck className="w-3 h-3 text-emerald-400" />
                           ) : (
-                            <ShieldAlert className="w-3 h-3" />
+                            <ShieldAlert className="w-3 h-3 text-rose-400" />
                           )}
                           <span>{log.result}</span>
                         </span>
                       </td>
 
-                      <td className="py-3 px-4 font-semibold text-slate-200">
+                      <td className="py-3 px-4 font-semibold text-white">
                         {log.userName || log.userId}
                       </td>
 

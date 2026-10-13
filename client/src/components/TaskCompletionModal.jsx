@@ -143,26 +143,26 @@ export const TaskCompletionModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-950/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-2xl bg-dark-900 border border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080B12]/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-lg rounded-3xl bg-[#0D1220]/95 border border-white/15 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] backdrop-blur-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 bg-dark-900/50">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/10 bg-white/[0.02]">
+          <div className="flex items-center space-x-3">
+            <div className="p-2.5 rounded-2xl bg-[#34D399]/15 border border-[#34D399]/30 text-[#34D399] shadow-sm">
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-100">
+              <h3 className="text-base font-bold text-[#F8FAFC]">
                 Complete Task
               </h3>
-              <p className="text-xs text-slate-400 truncate max-w-[280px] sm:max-w-sm">
-                Deliverables for: <span className="text-slate-200 font-medium">{task.title}</span>
+              <p className="text-xs text-[#94A3B8] truncate max-w-[280px] sm:max-w-sm">
+                Deliverables for: <span className="text-white font-medium">{task.title}</span>
               </p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-dark-800 transition-colors"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -171,20 +171,20 @@ export const TaskCompletionModal = ({
         {/* Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto flex-1">
           {error && (
-            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start space-x-2.5 text-xs text-rose-300">
-              <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-2xl bg-[#FB7185]/15 border border-[#FB7185]/30 flex items-start space-x-2.5 text-xs text-[#FB7185] backdrop-blur-sm">
+              <AlertCircle className="w-4 h-4 text-[#FB7185] flex-shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Word Count Rule Notice */}
-          <div className="p-3.5 rounded-xl border bg-emerald-500/5 border-emerald-500/20 text-xs text-emerald-300 flex items-start space-x-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+          <div className="p-4 rounded-2xl border bg-[#34D399]/10 border-[#34D399]/25 text-xs text-[#34D399] flex items-start space-x-3 backdrop-blur-sm">
+            <CheckCircle2 className="w-4 h-4 text-[#34D399] flex-shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="font-semibold text-emerald-200">
+              <p className="font-semibold text-white">
                 Deliverable Requirements
               </p>
-              <p className="text-[11px] text-emerald-400/80 leading-relaxed">
+              <p className="text-[11px] text-[#CBD5E1] leading-relaxed">
                 Marking a task as completed requires a <strong>document attachment (.pdf, .doc, .docx)</strong> and a <strong>minimum 15-word description</strong> detailing the output.
               </p>
             </div>
@@ -194,13 +194,13 @@ export const TaskCompletionModal = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                Completion Description <span className="text-rose-400">*</span>
+                Completion Description <span className="text-[#FB7185]">*</span>
               </label>
               <div
-                className={`text-xs px-2 py-0.5 rounded-full font-mono flex items-center space-x-1 ${
+                className={`text-xs px-2.5 py-0.5 rounded-full font-mono flex items-center space-x-1 backdrop-blur-sm ${
                   meetsWordCount
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                    ? 'bg-[#34D399]/15 text-[#34D399] border border-[#34D399]/30'
+                    : 'bg-[#FBBF24]/15 text-[#FBBF24] border border-[#FBBF24]/30'
                 }`}
               >
                 {meetsWordCount ? (
@@ -222,17 +222,17 @@ export const TaskCompletionModal = ({
                 if (error) setError('');
               }}
               placeholder="Provide a detailed summary of the finished task, results, and deliverables (minimum 15 words required)..."
-              className="w-full px-3.5 py-2.5 bg-dark-850 border border-slate-700 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all resize-none"
+              className="w-full px-4 py-3 bg-white/[0.05] hover:bg-white/[0.07] focus:bg-white/[0.08] border border-white/10 rounded-2xl text-xs sm:text-sm text-[#F8FAFC] placeholder-slate-400 focus:outline-none focus:border-[#34D399]/60 focus:ring-2 focus:ring-[#34D399]/20 transition-all resize-none shadow-inner backdrop-blur-md"
               required
             />
 
             <p className="text-[11px] text-slate-400">
               {!meetsWordCount ? (
-                <span className="text-amber-400">
+                <span className="text-[#FBBF24]">
                   ⚠️ Need at least {15 - wordCount} more word{15 - wordCount === 1 ? '' : 's'} to meet completion requirements.
                 </span>
               ) : (
-                <span className="text-emerald-400">
+                <span className="text-[#34D399]">
                   ✓ Description requirement met ({wordCount} words).
                 </span>
               )}
@@ -244,7 +244,7 @@ export const TaskCompletionModal = ({
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
                 <Paperclip className="w-3.5 h-3.5 text-slate-400" />
-                <span>Supporting Document <span className="text-rose-400">*</span></span>
+                <span>Supporting Document <span className="text-[#FB7185]">*</span></span>
               </label>
               <span className="text-[10px] text-slate-400">
                 PDF, DOC, DOCX (Max 25MB)
@@ -257,10 +257,10 @@ export const TaskCompletionModal = ({
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
-                className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${
+                className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
                   dragActive
-                    ? 'border-emerald-500 bg-emerald-500/10'
-                    : 'border-slate-700 bg-dark-850/50 hover:border-slate-600'
+                    ? 'border-[#34D399] bg-[#34D399]/10'
+                    : 'border-white/15 bg-white/[0.03] hover:border-white/30 hover:bg-white/[0.05]'
                 }`}
               >
                 <input
@@ -271,30 +271,30 @@ export const TaskCompletionModal = ({
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
                 <div className="flex flex-col items-center justify-center space-y-2">
-                  <div className="p-3 rounded-full bg-dark-800 text-slate-400">
-                    <UploadCloud className="w-6 h-6 text-emerald-400" />
+                  <div className="p-3 rounded-2xl bg-white/[0.06] text-slate-300 shadow-inner">
+                    <UploadCloud className="w-6 h-6 text-[#38BDF8]" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-200">
+                    <p className="text-xs font-semibold text-[#F8FAFC]">
                       Click to upload or drag & drop deliverable
                     </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-[11px] text-[#94A3B8] mt-0.5">
                       Accepted formats: .pdf, .doc, .docx (Max 25MB)
                     </p>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="p-3.5 rounded-xl bg-dark-850 border border-slate-700 flex items-center justify-between">
+              <div className="p-3.5 rounded-2xl bg-white/[0.06] border border-white/10 flex items-center justify-between backdrop-blur-md">
                 <div className="flex items-center space-x-3 min-w-0">
-                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 flex-shrink-0">
+                  <div className="p-2.5 rounded-xl bg-[#34D399]/15 text-[#34D399] flex-shrink-0">
                     <File className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-slate-200 truncate">
+                    <p className="text-xs font-semibold text-[#F8FAFC] truncate">
                       {file.name}
                     </p>
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-[10px] text-[#94A3B8]">
                       {formatFileSize(file.size)}
                     </p>
                   </div>
@@ -302,7 +302,7 @@ export const TaskCompletionModal = ({
                 <button
                   type="button"
                   onClick={() => setFile(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-dark-800 transition-colors"
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-[#FB7185] hover:bg-white/[0.08] transition-colors"
                   title="Remove file"
                 >
                   <X className="w-4 h-4" />
@@ -312,22 +312,22 @@ export const TaskCompletionModal = ({
           </div>
 
           {/* Submit Actions */}
-          <div className="pt-2 flex items-center justify-end space-x-3 border-t border-slate-800">
+          <div className="pt-3 flex items-center justify-end space-x-3 border-t border-white/10">
             <button
               type="button"
               onClick={handleClose}
               disabled={submitting}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-dark-800 transition-colors"
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!canSubmit}
-              className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white shadow-lg transition-all ${
+              className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 canSubmit
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/20 cursor-pointer'
-                  : 'bg-dark-800 text-slate-500 border border-slate-800 cursor-not-allowed opacity-60'
+                  ? 'bg-gradient-to-r from-[#34D399] to-[#38BDF8] hover:opacity-95 text-black font-bold shadow-lg shadow-[#34D399]/25 cursor-pointer'
+                  : 'bg-white/[0.04] text-slate-500 border border-white/10 cursor-not-allowed opacity-60'
               }`}
             >
               {submitting ? (

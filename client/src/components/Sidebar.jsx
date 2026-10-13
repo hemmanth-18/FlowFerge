@@ -143,23 +143,23 @@ export const Sidebar = ({ isOpen, onClose }) => {
       )}
 
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 w-64 bg-dark-900 border-r border-slate-800/80 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed top-0 bottom-0 left-0 z-40 w-64 bg-[#0D1220]/80 backdrop-blur-2xl border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+          isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >
         {/* Brand Logo */}
-        <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800/80">
+        <div className="h-16 px-4 flex items-center justify-between border-b border-white/10 bg-white/[0.02]">
           <NavLink to="/dashboard" className="flex items-center space-x-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-glow-brand group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#8B5CF6] to-[#38BDF8] flex items-center justify-center shadow-lg shadow-purple-500/20 group-hover:scale-105 transition-transform">
               <Zap className="w-4 h-4 text-white fill-white" />
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
-                <span className="text-base font-black tracking-tight text-white group-hover:text-brand-400 transition-colors uppercase">
+                <span className="text-base font-black tracking-tight text-white group-hover:text-purple-300 transition-colors uppercase">
                   FlowForge
                 </span>
               </div>
-              <span className="block text-[9px] font-mono tracking-widest text-slate-500 uppercase">
+              <span className="block text-[9px] font-mono tracking-widest text-[#94A3B8] uppercase">
                 Workflow Platform
               </span>
             </div>
@@ -168,7 +168,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white hover:bg-dark-800 rounded-xl lg:hidden transition-colors"
+            className="p-2 text-[#94A3B8] hover:text-white hover:bg-white/10 rounded-xl lg:hidden transition-colors"
             aria-label="Close navigation drawer"
           >
             <X className="w-5 h-5" />
@@ -176,17 +176,17 @@ export const Sidebar = ({ isOpen, onClose }) => {
         </div>
 
         {/* WORKSPACE / TEAM SWITCHER */}
-        <div className="p-3 border-b border-slate-800/80 relative" ref={dropdownRef}>
+        <div className="p-3 border-b border-white/10 relative" ref={dropdownRef}>
           <button
             type="button"
             onClick={() => setTeamDropdownOpen(!teamDropdownOpen)}
-            className="w-full flex items-center justify-between p-2.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-slate-800/80 transition-all text-left group"
+            className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/[0.045] hover:bg-white/[0.08] border border-white/10 transition-all text-left group"
           >
             <div className="flex items-center space-x-2.5 truncate">
-              <TeamIcon icon={activeTeam?.icon} className="w-5 h-5 text-brand-400 flex-shrink-0" />
+              <TeamIcon icon={activeTeam?.icon} className="w-5 h-5 text-purple-400 flex-shrink-0" />
               <div className="truncate">
                 <div className="flex items-center space-x-1.5 truncate">
-                  <span className="text-xs font-bold text-slate-100 truncate group-hover:text-brand-300 transition-colors">
+                  <span className="text-xs font-bold text-[#F8FAFC] truncate group-hover:text-purple-300 transition-colors">
                     {activeTeam?.name || 'Workspace'}
                   </span>
                 </div>
@@ -200,16 +200,16 @@ export const Sidebar = ({ isOpen, onClose }) => {
               </div>
             </div>
             <ChevronDown
-              className={`w-4 h-4 text-slate-400 transition-transform ${
-                teamDropdownOpen ? 'rotate-180 text-brand-400' : ''
+              className={`w-4 h-4 text-[#94A3B8] transition-transform ${
+                teamDropdownOpen ? 'rotate-180 text-purple-400' : ''
               }`}
             />
           </button>
 
           {/* Team Switcher Menu */}
           {teamDropdownOpen && (
-            <div className="absolute top-full left-3 right-3 mt-1.5 bg-dark-900 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-              <div className="p-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-800/80">
+            <div className="absolute top-full left-3 right-3 mt-1.5 bg-[#0D1220]/95 backdrop-blur-2xl border border-white/15 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="p-2 text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-white/10">
                 Switch Team ({teams.length})
               </div>
 
@@ -225,34 +225,34 @@ export const Sidebar = ({ isOpen, onClose }) => {
                       }}
                       className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
                         isCurrent
-                          ? 'bg-brand-500/15 text-brand-300 font-semibold'
-                          : 'text-slate-300 hover:bg-dark-800 hover:text-white'
+                          ? 'bg-purple-500/15 text-purple-300 font-semibold'
+                          : 'text-[#CBD5E1] hover:bg-white/[0.08] hover:text-white'
                       }`}
                     >
                       <div className="flex items-center space-x-2 truncate">
-                        <TeamIcon icon={t.icon} className="w-4 h-4 text-brand-400 flex-shrink-0" />
+                        <TeamIcon icon={t.icon} className="w-4 h-4 text-purple-400 flex-shrink-0" />
                         <div className="text-left truncate">
                           <p className="truncate text-xs">{t.name}</p>
-                          <span className="text-[9px] text-slate-500 font-mono">
+                          <span className="text-[9px] text-[#94A3B8] font-mono">
                             {t.userRole?.replace('TEAM_', '')}
                           </span>
                         </div>
                       </div>
-                      {isCurrent && <Check className="w-3.5 h-3.5 text-brand-400 flex-shrink-0" />}
+                      {isCurrent && <Check className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />}
                     </button>
                   );
                 })}
               </div>
 
               {/* Create Team Trigger */}
-              <div className="p-2 border-t border-slate-800 bg-dark-950/60">
+              <div className="p-2 border-t border-white/10 bg-white/[0.02]">
                 <button
                   type="button"
                   onClick={() => {
                     setTeamDropdownOpen(false);
                     setCreateTeamModalOpen(true);
                   }}
-                  className="w-full flex items-center justify-center space-x-1.5 py-1.5 rounded-lg bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 border border-brand-500/30 text-xs font-semibold transition-all"
+                  className="w-full flex items-center justify-center space-x-1.5 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-semibold transition-all"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Create New Team</span>
@@ -265,7 +265,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
         {/* Pending Team Invitations Alert Card */}
         {myInvitations.length > 0 && (
           <div className="p-3">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/15 to-amber-600/5 border border-amber-500/30 space-y-2">
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-2">
               <div className="flex items-center space-x-2 text-xs font-bold text-amber-300">
                 <Mail className="w-3.5 h-3.5" />
                 <span>{myInvitations.length} Team Invitation</span>
@@ -282,7 +282,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
                 </button>
                 <button
                   onClick={() => declineInvitation(myInvitations[0].id)}
-                  className="px-2 py-1 rounded-lg bg-dark-850 hover:bg-dark-800 text-slate-400 text-[11px] transition-colors"
+                  className="px-2 py-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-[#CBD5E1] text-[11px] transition-colors"
                 >
                   Decline
                 </button>
@@ -309,14 +309,14 @@ export const Sidebar = ({ isOpen, onClose }) => {
                 onClick={onClose}
                 className={`flex items-center justify-between px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-medium transition-all group ${
                   isActive
-                    ? 'bg-brand-600/15 text-brand-400 border border-brand-500/30 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-dark-850'
+                    ? 'bg-purple-600/15 text-[#F8FAFC] border border-purple-500/35 shadow-sm'
+                    : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-white/[0.06]'
                 }`}
               >
                 <div className="flex items-center space-x-3 truncate">
                   <Icon
                     className={`w-4 h-4 transition-colors flex-shrink-0 ${
-                      isActive ? 'text-brand-400' : 'text-slate-500 group-hover:text-slate-300'
+                      isActive ? 'text-purple-400' : 'text-[#94A3B8] group-hover:text-purple-300'
                     }`}
                   />
                   <span className="truncate">{item.label}</span>
@@ -324,11 +324,11 @@ export const Sidebar = ({ isOpen, onClose }) => {
 
                 <div className="flex items-center space-x-1.5 flex-shrink-0">
                   {item.badge && (
-                    <span className="w-5 h-5 rounded-full bg-brand-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+                    <span className="w-5 h-5 rounded-full bg-purple-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
                       {item.badge > 9 ? '9+' : item.badge}
                     </span>
                   )}
-                  {isActive && <ChevronRight className="w-3.5 h-3.5 text-brand-400" />}
+                  {isActive && <ChevronRight className="w-3.5 h-3.5 text-purple-400" />}
                 </div>
               </NavLink>
             );
@@ -336,21 +336,21 @@ export const Sidebar = ({ isOpen, onClose }) => {
         </div>
 
         {/* USER PROFILE & LOGOUT */}
-        <div className="p-3 border-t border-slate-800/80 bg-dark-900/60">
-          <div className="flex items-center justify-between p-2 rounded-xl bg-dark-850 border border-slate-800/80">
+        <div className="p-3 border-t border-white/10 bg-white/[0.02]">
+          <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/15 transition-all">
             <NavLink
               to="/settings"
               onClick={onClose}
               className="flex items-center space-x-2.5 truncate flex-1 hover:opacity-90 transition-opacity"
             >
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-sm">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#8B5CF6] to-[#38BDF8] text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-sm">
                 {(user?.name || user?.username || user?.email || 'U')[0].toUpperCase()}
               </div>
               <div className="truncate">
-                <p className="text-xs font-semibold text-slate-200 truncate">
+                <p className="text-xs font-semibold text-[#F8FAFC] truncate">
                   {user?.name || 'FlowForge User'}
                 </p>
-                <span className="text-[10px] text-brand-400 font-mono truncate block">
+                <span className="text-[10px] text-purple-400 font-mono truncate block">
                   @{user?.username || user?.email?.split('@')[0]}
                 </span>
               </div>
@@ -358,7 +358,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
             <button
               onClick={handleSignOut}
               title="Sign Out"
-              className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0 ml-1"
+              className="p-1.5 text-[#94A3B8] hover:text-rose-400 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0 ml-1"
             >
               <LogOut className="w-4 h-4" />
             </button>

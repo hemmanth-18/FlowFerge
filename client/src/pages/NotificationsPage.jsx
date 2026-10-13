@@ -195,12 +195,12 @@ export const NotificationsPage = () => {
     filter === 'UNREAD' ? notifications.filter((n) => !n.read) : notifications;
 
   return (
-    <div className="min-h-screen bg-dark-950 flex flex-col">
+    <div className="min-h-screen bg-transparent flex flex-col selection:bg-purple-600 selection:text-white">
       <Navbar onOpenSidebar={() => setSidebarOpen && setSidebarOpen(true)} title="Notification Center" />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/10 gap-4">
           <div>
             <div className="flex items-center space-x-2.5">
               <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
@@ -219,13 +219,13 @@ export const NotificationsPage = () => {
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Filter buttons */}
-            <div className="inline-flex rounded-xl p-1 bg-dark-900 border border-slate-800 text-xs">
+            <div className="inline-flex rounded-2xl p-1 bg-white/[0.04] backdrop-blur-xl border border-white/10 text-xs">
               <button
                 type="button"
                 onClick={() => setFilter('ALL')}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-colors ${
+                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors ${
                   filter === 'ALL'
-                    ? 'bg-brand-600 text-white shadow-sm'
+                    ? 'bg-gradient-to-r from-brand-600 to-indigo-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -234,9 +234,9 @@ export const NotificationsPage = () => {
               <button
                 type="button"
                 onClick={() => setFilter('UNREAD')}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-colors ${
+                className={`px-3 py-1.5 rounded-xl font-semibold transition-colors ${
                   filter === 'UNREAD'
-                    ? 'bg-brand-600 text-white shadow-sm'
+                    ? 'bg-gradient-to-r from-brand-600 to-indigo-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -248,7 +248,7 @@ export const NotificationsPage = () => {
               <button
                 type="button"
                 onClick={handleMarkAllRead}
-                className="px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-dark-900 hover:bg-dark-850 border border-slate-800 rounded-xl transition-colors"
+                className="px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors"
               >
                 Mark all as read
               </button>
@@ -259,7 +259,7 @@ export const NotificationsPage = () => {
         {/* Action feedback alert */}
         {feedback && (
           <div
-            className={`p-3.5 rounded-xl border text-xs flex items-start space-x-2.5 animate-fadeIn ${
+            className={`p-3.5 rounded-2xl border text-xs flex items-start space-x-2.5 animate-fadeIn ${
               feedback.type === 'success'
                 ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-300'
                 : feedback.type === 'info'
@@ -278,7 +278,7 @@ export const NotificationsPage = () => {
 
         {/* Notifications List */}
         {filteredNotifications.length === 0 ? (
-          <div className="p-16 text-center rounded-2xl bg-dark-900 border border-slate-800 space-y-3">
+          <div className="p-16 text-center rounded-3xl bg-white/[0.03] backdrop-blur-xl border border-white/10 space-y-3">
             <CheckCircle2 className="w-12 h-12 text-slate-600 mx-auto" />
             <h3 className="text-sm font-bold text-slate-300">
               {filter === 'UNREAD' ? 'No unread notifications' : 'No notifications yet'}
@@ -299,21 +299,47 @@ export const NotificationsPage = () => {
                 }
               }
               const notifType = (notif.type || '').toUpperCase();
-              const isInvitation =
-                notifType === 'WORKFLOW_INVITE' ||
-                notifType === 'WORKFLOW_INVITATION' ||
-                notifType === 'TEAM_INVITE' ||
-                notifType === 'TEAM_INVITATION' ||
-                Boolean(notifData?.invitationId) ||
-                Boolean(notif.title && notif.title.toLowerCase().includes('invitation'));
+              const titleLower = (notif.title || '').toLowerCase();
+              const messageLower = (notif.message || '').toLowerCase();
+
+              // Status alerts (when someone accepted or declined an invite)
+              const isResponseAccepted =
+                notifType === 'INVITATION_ACCEPTED' ||
+                titleLower.includes('accepted') ||
+                messageLower.includes('accepted your invitation');
+
+              const isResponseDeclined =
+                notifType === 'INVITATION_DECLINED' ||
+                titleLower.includes('declined') ||
+                titleLower.includes('rejected') ||
+                messageLower.includes('declined your invitation') ||
+                messageLower.includes('rejected your invitation');
+
+              // Only true pending invites requiring action from the recipient
+              const isPendingInvitation =
+                !isResponseAccepted &&
+                !isResponseDeclined &&
+                !titleLower.includes('sent') &&
+                !messageLower.includes('you invited') &&
+                (
+                  notifType === 'WORKFLOW_INVITE' ||
+                  notifType === 'WORKFLOW_INVITATION' ||
+                  notifType === 'TEAM_INVITE' ||
+                  notifType === 'TEAM_INVITATION' ||
+                  Boolean(notifData?.invitationId)
+                );
+
+              const isInvitation = isPendingInvitation || isResponseAccepted || isResponseDeclined;
               const isTask = notifType === 'TASK_ASSIGNED' || notifType === 'TASK_COMPLETED';
 
               const invId = notifData?.invitationId;
               const targetWfId = notifData?.workflowId;
               const isAccepted =
+                isResponseAccepted ||
                 acceptedInvitationIds.has(notif.id) ||
                 (invId && acceptedInvitationIds.has(invId));
               const isDeclined =
+                isResponseDeclined ||
                 declinedInvitationIds.has(notif.id) ||
                 (invId && declinedInvitationIds.has(invId));
 
@@ -331,8 +357,8 @@ export const NotificationsPage = () => {
                   key={notif.id}
                   className={`p-4 sm:p-5 rounded-2xl border transition-all ${
                     !notif.read
-                      ? 'bg-dark-850/90 border-brand-500/30 shadow-sm'
-                      : 'bg-dark-900 border-slate-800/80 hover:border-slate-700'
+                      ? 'bg-[#0D1220]/90 backdrop-blur-xl border-brand-500/30 shadow-md shadow-brand-500/5'
+                      : 'bg-[#0D1220]/60 backdrop-blur-xl border-white/10 hover:border-white/16'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -430,7 +456,7 @@ export const NotificationsPage = () => {
                           <X className="w-3.5 h-3.5" />
                           <span>Invitation Declined</span>
                         </span>
-                      ) : (
+                      ) : isPendingInvitation ? (
                         <>
                           <button
                             type="button"
@@ -467,7 +493,7 @@ export const NotificationsPage = () => {
                             <span>Decline</span>
                           </button>
                         </>
-                      )}
+                      ) : null}
                     </div>
                   )}
 

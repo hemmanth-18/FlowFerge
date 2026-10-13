@@ -92,16 +92,16 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-dark-950/80 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
-      <div className="relative w-full max-w-md bg-dark-900 border border-slate-800 rounded-2xl shadow-2xl p-4 sm:p-6 my-auto max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
+      <div className="relative w-full max-w-md bg-[#0D1220]/95 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl shadow-black/80 p-5 sm:p-6 my-auto max-h-[92vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
+        <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-brand-400">
+            <div className="w-10 h-10 rounded-xl bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-400">
               <UserPlus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-100">
+              <h3 className="text-base font-bold text-white">
                 Invite Member to {activeTeam.name}
               </h3>
               <p className="text-xs text-slate-400">
@@ -111,7 +111,7 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-dark-800 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -125,7 +125,7 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
               Invitee Email Address
             </label>
             <div className="relative">
@@ -140,7 +140,7 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
                   if (searchResults.length > 0) setShowDropdown(true);
                 }}
                 placeholder="Search user or enter colleague@flowforge.dev"
-                className="w-full px-3.5 py-2.5 pr-9 rounded-xl bg-dark-850 border border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm text-slate-100 placeholder-slate-500 outline-none transition-all"
+                className="w-full px-3.5 py-2.5 pr-9 rounded-xl bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 text-sm text-slate-100 placeholder-slate-500 outline-none transition-all"
                 required
               />
               {searching && (
@@ -152,8 +152,8 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
 
             {/* Down Search Results Dropdown */}
             {showDropdown && searchResults.length > 0 && (
-              <div className="absolute left-0 right-0 mt-1.5 max-h-48 overflow-y-auto rounded-xl bg-dark-800 border border-slate-700 divide-y divide-slate-750 shadow-2xl z-50">
-                <div className="p-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider bg-dark-850/90 border-b border-slate-750">
+              <div className="absolute left-0 right-0 mt-1.5 max-h-48 overflow-y-auto rounded-2xl bg-[#111827] border border-white/15 divide-y divide-white/10 shadow-2xl z-50">
+                <div className="p-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider bg-white/5 border-b border-white/10">
                   Matching Registered Users ({searchResults.length})
                 </div>
                 {searchResults.map((u) => (
@@ -161,14 +161,14 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
                     key={u.id}
                     type="button"
                     onClick={() => handleSelectUser(u)}
-                    className="w-full p-2.5 flex items-center space-x-3 text-left hover:bg-dark-750 transition-colors cursor-pointer group"
+                    className="w-full p-2.5 flex items-center space-x-3 text-left hover:bg-white/10 transition-colors cursor-pointer group"
                   >
                     <div className="w-8 h-8 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30 flex items-center justify-center font-bold text-xs flex-shrink-0 group-hover:bg-brand-600 group-hover:text-white transition-colors">
                       {(u.name || u.username || 'U')[0].toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center space-x-1.5">
-                        <span className="text-xs font-semibold text-slate-100 truncate">
+                        <span className="text-xs font-semibold text-white truncate">
                           {u.name || u.username}
                         </span>
                         {u.username && (
@@ -188,7 +188,7 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
               Initial Team Role
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -198,12 +198,12 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
                 className={`p-3 rounded-xl border text-left transition-all ${
                   role === 'TEAM_MEMBER'
                     ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-sm ring-1 ring-emerald-500/30'
-                    : 'bg-dark-850 border-slate-800 text-slate-400 hover:bg-dark-800'
+                    : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center space-x-2 mb-1">
                   <User className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs font-bold">Team Member</span>
+                  <span className="text-xs font-bold text-white">Team Member</span>
                 </div>
                 <p className="text-[10px] text-slate-400 leading-snug">
                   Work on assigned tasks & participate in permitted workflows
@@ -216,12 +216,12 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
                 className={`p-3 rounded-xl border text-left transition-all ${
                   role === 'TEAM_MANAGER'
                     ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300 shadow-sm ring-1 ring-indigo-500/30'
-                    : 'bg-dark-850 border-slate-800 text-slate-400 hover:bg-dark-800'
+                    : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center space-x-2 mb-1">
                   <Shield className="w-4 h-4 text-indigo-400" />
-                  <span className="text-xs font-bold">Team Manager</span>
+                  <span className="text-xs font-bold text-white">Team Manager</span>
                 </div>
                 <p className="text-[10px] text-slate-400 leading-snug">
                   Create workflows, assign tasks & manage automations
@@ -230,24 +230,24 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
           </div>
 
-          <div className="flex items-start space-x-2 p-3 rounded-xl bg-dark-850 border border-slate-800 text-[11px] text-slate-400">
+          <div className="flex items-start space-x-2 p-3 rounded-xl bg-white/[0.03] border border-white/10 text-[11px] text-slate-400">
             <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
             <span>The invited user will receive a notification and must accept before accessing team workflows.</span>
           </div>
 
-          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
+          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-white/10">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-dark-800 transition-colors"
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center space-x-2 px-5 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-glow-brand transition-all disabled:opacity-50"
+              className="flex items-center space-x-2 px-5 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-brand-500/25 transition-all disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
               <span>{loading ? 'Sending...' : 'Send Invitation'}</span>

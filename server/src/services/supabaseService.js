@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
+const mailService = require('./mailService');
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -1286,6 +1287,7 @@ const SupabaseService = {
     // Notify inviter
     const recipient = await this.getUserById(userId);
     if (inv.invitedBy) {
+      const inviter = await this.getUserById(inv.invitedBy);
       await this.createNotification(inv.invitedBy, {
         title: 'Team Invitation Accepted',
         message: `${recipient?.name || 'A new member'} accepted your invitation to "${inv.teamName}".`,
@@ -1293,6 +1295,16 @@ const SupabaseService = {
         link: '/team',
         data: { teamId: inv.teamId },
       });
+      if (inviter?.email) {
+        mailService.sendInvitationResponseEmail({
+          to: inviter.email,
+          inviterName: inviter.name,
+          respondentName: recipient?.name || 'A new member',
+          resourceTitle: inv.teamName,
+          action: 'ACCEPTED',
+          resourceType: 'Team',
+        }).catch((err) => console.warn('[MailService] Team accept email warning:', err.message));
+      }
     }
 
     return { success: true, teamId: inv.teamId, role: inv.role };
@@ -1306,6 +1318,28 @@ const SupabaseService = {
         await supabase.from('team_invitations').update({ status: 'REJECTED' }).eq('id', invitationId);
       } catch (e) {}
     }
+
+    if (inv && inv.invitedBy) {
+      const recipient = await this.getUserById(userId);
+      const inviter = await this.getUserById(inv.invitedBy);
+      await this.createNotification(inv.invitedBy, {
+        title: 'Team Invitation Declined',
+        message: `${recipient?.name || 'A user'} declined your invitation to "${inv.teamName}".`,
+        type: 'INVITATION_DECLINED',
+        data: { teamId: inv.teamId },
+      });
+      if (inviter?.email) {
+        mailService.sendInvitationResponseEmail({
+          to: inviter.email,
+          inviterName: inviter.name,
+          respondentName: recipient?.name || 'A user',
+          resourceTitle: inv.teamName,
+          action: 'DECLINED',
+          resourceType: 'Team',
+        }).catch((err) => console.warn('[MailService] Team decline email warning:', err.message));
+      }
+    }
+
     return true;
   },
 
@@ -2230,12 +2264,24 @@ const SupabaseService = {
     // Notify inviter
     const recipient = await this.getUserById(userId);
     if (inv.invitedBy) {
+      const inviter = await this.getUserById(inv.invitedBy);
       await this.createNotification(inv.invitedBy, {
         title: 'Invitation Accepted',
         message: `${recipient?.name || 'A user'} accepted your invitation to "${inv.workflowName}".`,
         type: 'INVITATION_ACCEPTED',
         link: `/workflows/${inv.workflowId}`,
+        data: { workflowId: inv.workflowId },
       });
+      if (inviter?.email) {
+        mailService.sendInvitationResponseEmail({
+          to: inviter.email,
+          inviterName: inviter.name,
+          respondentName: recipient?.name || 'A collaborator',
+          resourceTitle: inv.workflowName,
+          action: 'ACCEPTED',
+          resourceType: 'Workflow',
+        }).catch((err) => console.warn('[MailService] Accept email notification warning:', err.message));
+      }
     }
 
     return { success: true, workflowId: inv.workflowId, role: inv.role };
@@ -2279,11 +2325,25 @@ const SupabaseService = {
     }
 
     const recipient = await this.getUserById(userId);
-    await this.createNotification(inv.invitedBy, {
-      title: 'Invitation Declined',
-      message: `${recipient?.name || 'A user'} declined your invitation to "${inv.workflowName}".`,
-      type: 'INVITATION_DECLINED',
-    });
+    if (inv.invitedBy) {
+      const inviter = await this.getUserById(inv.invitedBy);
+      await this.createNotification(inv.invitedBy, {
+        title: 'Invitation Declined',
+        message: `${recipient?.name || 'A user'} declined your invitation to "${inv.workflowName}".`,
+        type: 'INVITATION_DECLINED',
+        data: { workflowId: inv.workflowId },
+      });
+      if (inviter?.email) {
+        mailService.sendInvitationResponseEmail({
+          to: inviter.email,
+          inviterName: inviter.name,
+          respondentName: recipient?.name || 'A user',
+          resourceTitle: inv.workflowName,
+          action: 'DECLINED',
+          resourceType: 'Workflow',
+        }).catch((err) => console.warn('[MailService] Decline email notification warning:', err.message));
+      }
+    }
 
     return true;
   },

@@ -7,6 +7,24 @@
 @layer base {
   :root {
     color-scheme: dark;
+    --bg-primary: #080B12;
+    --bg-secondary: #0D1220;
+    --bg-elevated: #111827;
+    --glass-surface: rgba(255, 255, 255, 0.045);
+    --glass-elevated: rgba(255, 255, 255, 0.065);
+    --glass-hover: rgba(255, 255, 255, 0.09);
+    --glass-border: rgba(255, 255, 255, 0.10);
+    --glass-highlight: rgba(255, 255, 255, 0.16);
+    --accent-purple: #8B5CF6;
+    --accent-blue: #38BDF8;
+    --accent-purple-light: #A78BFA;
+    --accent-success: #34D399;
+    --accent-warning: #FBBF24;
+    --accent-error: #FB7185;
+    --text-primary: #F8FAFC;
+    --text-secondary: #CBD5E1;
+    --text-muted: #94A3B8;
+    --text-disabled: #64748B;
   }
   html {
     overflow-x: hidden;
@@ -14,12 +32,93 @@
     scroll-behavior: smooth;
   }
   body {
-    background-color: #07090e;
-    color: #f1f5f9;
+    background-color: #080B12;
+    color: #F8FAFC;
     overflow-x: hidden;
     max-width: 100vw;
     -webkit-tap-highlight-color: transparent;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
+}
+
+/* Global Ambient Purple-Blue Lighting Background */
+.ambient-glow-bg {
+  background-color: #080B12;
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(139, 92, 246, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 85% 65%, rgba(56, 189, 248, 0.04) 0%, transparent 40%);
+}
+
+/* Reusable Glassmorphism Surface Classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* Fallback for browsers without backdrop-filter support */
+@supports not ((-webkit-backdrop-filter: blur(20px)) or (backdrop-filter: blur(20px))) {
+  .glass-panel {
+    background: #0D1220;
+  }
+}
+
+.glass-panel-elevated {
+  background: rgba(255, 255, 255, 0.065);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+}
+
+.glass-input {
+  background: rgba(13, 18, 32, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #F8FAFC;
+  transition: all 0.2s ease;
+}
+
+.glass-input:focus {
+  border-color: #8B5CF6;
+  box-shadow: 0 0 0 1px #8B5CF6, 0 0 16px -2px rgba(139, 92, 246, 0.3);
+  outline: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #8B5CF6 0%, #38BDF8 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px -2px rgba(139, 92, 246, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #9F75FF 0%, #4CD1FF 100%);
+  box-shadow: 0 6px 24px -2px rgba(139, 92, 246, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #F8FAFC;
+  transition: all 0.2s ease;
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
 }
 
 /* Custom modern scrollbars */
@@ -28,14 +127,14 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0b0f17;
+  background: #080B12;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* React Flow Dark Styling Overrides */
@@ -75,27 +174,57 @@
   box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
 }
 
+.react-flow svg {
+  max-width: none !important;
+}
+
+.react-flow .react-flow__edges {
+  position: absolute !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  overflow: visible !important;
+}
+
+.react-flow .react-flow__edges svg {
+  position: absolute !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  overflow: visible !important;
+  pointer-events: none !important;
+}
+
 .react-flow__edge-path {
-  stroke: #6366f1 !important;
-  stroke-width: 2 !important;
+  fill: none !important;
+  stroke: #A855F7 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 6px #A855F7) drop-shadow(0 0 12px rgba(168, 85, 247, 0.7));
 }
 
 .react-flow__edge.selected .react-flow__edge-path {
-  stroke: #06b6d4 !important;
-  stroke-width: 3 !important;
+  fill: none !important;
+  stroke: #C084FC !important;
+  stroke-width: 4px !important;
+  filter: drop-shadow(0 0 8px #C084FC) drop-shadow(0 0 16px rgba(192, 132, 252, 0.9));
 }
 
 .react-flow__handle {
-  width: 10px !important;
-  height: 10px !important;
-  background: #6366f1 !important;
-  border: 2px solid #0b0f17 !important;
-  transition: transform 0.2s, background-color 0.2s;
+  width: 14px !important;
+  height: 14px !important;
+  background: #8B5CF6 !important;
+  border: 2px solid #0D1220 !important;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.7) !important;
+  transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+  cursor: crosshair !important;
+  border-radius: 9999px !important;
+  z-index: 20 !important;
 }
 
 .react-flow__handle:hover {
-  transform: scale(1.3);
-  background: #06b6d4 !important;
+  transform: scale(1.35) !important;
+  background: #A78BFA !important;
+  box-shadow: 0 0 14px rgba(167, 139, 250, 0.95) !important;
 }
 
 /* Custom animations */
@@ -143,6 +272,30 @@
   box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.6), 0 0 25px -5px rgba(139, 92, 246, 0.15);
 }
 
+/* Premium Workflow Glass Card */
+.workflow-glass-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 1.5rem;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease, background-color 0.22s ease;
+}
+
+.workflow-glass-card:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.065);
+  border-color: rgba(139, 92, 246, 0.45);
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.6), 0 0 25px -5px rgba(139, 92, 246, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workflow-glass-card:hover, .halo-card:hover, .bento-card:hover {
+    transform: none;
+  }
+}
+
 /* Touch optimizations & safe areas */
 @supports (padding: max(0px)) {
   body {
@@ -163,7 +316,7 @@
 }
 
 /* Ensure images, SVG and canvases never push layout wider than viewport */
-img, svg, video, canvas {
+img, svg:not(.react-flow svg), video, canvas {
   max-width: 100%;
   height: auto;
 }

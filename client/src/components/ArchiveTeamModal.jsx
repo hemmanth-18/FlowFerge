@@ -27,15 +27,15 @@ export const ArchiveTeamModal = ({ isOpen, onClose, team }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-dark-950/80 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
-      <div className="relative w-full max-w-md bg-dark-900 border border-rose-500/40 rounded-2xl shadow-2xl p-5 sm:p-6 my-auto max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
+      <div className="relative w-full max-w-md bg-[#0D1220]/95 backdrop-blur-2xl border border-rose-500/30 rounded-3xl shadow-2xl shadow-black/80 p-5 sm:p-6 my-auto max-h-[92vh] overflow-y-auto">
         {/* Warning Accent */}
         <div className="flex items-center space-x-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">
+          <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
             <AlertTriangle className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-100">
+            <h3 className="text-base font-bold text-white">
               Archive Team "{team.name}"?
             </h3>
             <p className="text-xs text-rose-300">
@@ -48,14 +48,14 @@ export const ArchiveTeamModal = ({ isOpen, onClose, team }) => {
           Archiving this team will soft-delete the team container and revoke active access to all associated workflows, tasks, and automations for all members.
         </p>
 
-        <div className="p-3.5 rounded-xl bg-dark-850 border border-slate-800 space-y-2 mb-4 text-xs">
+        <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2 mb-4 text-xs">
           <div className="flex items-center justify-between text-slate-400">
             <span>Workflows in team:</span>
-            <span className="font-semibold text-slate-200">{team.workflowCount || 0}</span>
+            <span className="font-semibold text-white">{team.workflowCount || 0}</span>
           </div>
           <div className="flex items-center justify-between text-slate-400">
             <span>Team members:</span>
-            <span className="font-semibold text-slate-200">{team.memberCount || 1}</span>
+            <span className="font-semibold text-white">{team.memberCount || 1}</span>
           </div>
           <div className="flex items-center justify-between text-slate-400">
             <span>Deletion Policy:</span>
@@ -64,21 +64,21 @@ export const ArchiveTeamModal = ({ isOpen, onClose, team }) => {
         </div>
 
         {error && (
-          <div className="mb-4 p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+          <div className="mb-4 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
             {error}
           </div>
         )}
 
         <div className="mb-5">
-          <label className="block text-xs text-slate-400 mb-1.5">
-            Type <span className="font-bold text-slate-200">"{team.name}"</span> to confirm:
+          <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+            Type <span className="font-bold text-white">"{team.name}"</span> to confirm:
           </label>
           <input
             type="text"
             value={confirmName}
             onChange={(e) => setConfirmName(e.target.value)}
             placeholder={team.name}
-            className="w-full px-3.5 py-2 rounded-xl bg-dark-850 border border-slate-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-sm text-slate-100 placeholder-slate-600 outline-none"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-rose-500 text-sm text-slate-100 placeholder-slate-500 outline-none transition-all"
           />
         </div>
 
@@ -87,7 +87,7 @@ export const ArchiveTeamModal = ({ isOpen, onClose, team }) => {
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-dark-800 transition-colors"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
           >
             Cancel
           </button>
@@ -95,7 +95,7 @@ export const ArchiveTeamModal = ({ isOpen, onClose, team }) => {
             type="button"
             onClick={handleArchive}
             disabled={!isConfirmed || loading}
-            className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-glow-rose transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white text-xs font-semibold shadow-lg shadow-rose-500/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Archive className="w-4 h-4" />}
             <span>Archive Team</span>

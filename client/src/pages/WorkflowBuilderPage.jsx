@@ -10,6 +10,7 @@ import {
   addEdge,
   reconnectEdge,
   MarkerType,
+  ConnectionMode,
   applyNodeChanges,
   applyEdgeChanges,
 } from '@xyflow/react';
@@ -64,6 +65,21 @@ const nodeTypes = {
 const edgeTypes = {
   deletableEdge: DeletableEdge,
   default: DeletableEdge,
+};
+
+const defaultEdgeOptions = {
+  type: 'deletableEdge',
+  animated: true,
+  style: {
+    stroke: '#8B5CF6',
+    strokeWidth: 2.5,
+  },
+  markerEnd: {
+    type: MarkerType.ArrowClosed,
+    width: 20,
+    height: 20,
+    color: '#8B5CF6',
+  },
 };
 
 export const WorkflowBuilderPage = () => {
@@ -258,18 +274,20 @@ export const WorkflowBuilderPage = () => {
       // Enhance edges with deletableEdge type and delete callback
       const mappedEdges = (initialEdges || []).map((edge) => ({
         ...edge,
+        sourceHandle: edge.sourceHandle || 'source-right',
+        targetHandle: edge.targetHandle || 'target-left',
         type: 'deletableEdge',
         animated: true,
         data: {
           ...edge.data,
           onDeleteEdge: (edgeId) => handleDeleteEdge(edgeId),
         },
-        style: { stroke: '#6366f1', strokeWidth: 2, strokeDasharray: '4,4' },
+        style: { stroke: '#8B5CF6', strokeWidth: 2.5 },
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          width: 16,
-          height: 16,
-          color: '#6366f1',
+          width: 20,
+          height: 20,
+          color: '#8B5CF6',
         },
       }));
 
@@ -353,12 +371,12 @@ export const WorkflowBuilderPage = () => {
           data: {
             onDeleteEdge: (edgeId) => handleDeleteEdge(edgeId),
           },
-          style: { stroke: '#6366f1', strokeWidth: 2, strokeDasharray: '4,4' },
+          style: { stroke: '#8B5CF6', strokeWidth: 2.5 },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            width: 16,
-            height: 16,
-            color: '#6366f1',
+            width: 20,
+            height: 20,
+            color: '#8B5CF6',
           },
         };
         const next = addEdge(newEdge, eds);
@@ -563,7 +581,7 @@ export const WorkflowBuilderPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center space-y-3 text-slate-400">
+      <div className="min-h-screen bg-[#080B12] flex flex-col items-center justify-center space-y-3 text-slate-400">
         <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
         <p className="text-xs">Loading workflow graph from Supabase...</p>
       </div>
@@ -572,26 +590,26 @@ export const WorkflowBuilderPage = () => {
 
   if (loadError || !workflow) {
     return (
-      <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center p-6 text-slate-300">
-        <div className="p-6 rounded-2xl bg-dark-900 border border-slate-800 shadow-2xl text-center max-w-md space-y-4">
-          <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto text-rose-400">
+      <div className="min-h-screen bg-[#080B12] flex flex-col items-center justify-center p-6 text-slate-300">
+        <div className="p-6 rounded-2xl sm:rounded-3xl bg-[#0D1220]/80 backdrop-blur-2xl border border-white/10 shadow-2xl text-center max-w-md space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto text-rose-400 shadow-inner">
             <Info className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-bold text-slate-100">Workflow Unavailable</h3>
+          <h3 className="text-base font-bold text-white">Workflow Unavailable</h3>
           <p className="text-xs text-slate-400 leading-relaxed">
             {loadError || 'The requested workflow could not be loaded or you may not have permission to view it.'}
           </p>
           <div className="flex items-center justify-center gap-3 pt-2">
             <button
               onClick={() => loadWorkflowData()}
-              className="inline-flex items-center space-x-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold shadow-glow-brand transition-all"
+              className="inline-flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-brand-500/25 transition-all"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Retry</span>
             </button>
             <Link
               to="/workflows"
-              className="inline-flex items-center space-x-1.5 px-4 py-2 bg-dark-800 hover:bg-dark-750 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition-all"
+              className="inline-flex items-center space-x-1.5 px-4 py-2 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/10 rounded-xl text-xs font-semibold transition-all"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>All Workflows</span>
@@ -603,10 +621,10 @@ export const WorkflowBuilderPage = () => {
   }
 
   return (
-    <div className="h-screen w-full flex flex-col bg-dark-950 overflow-hidden relative">
-      {/* Top Banner Notification (Requested by user: "send me message at top invitation sent seccessfully") */}
+    <div className="h-screen w-full flex flex-col bg-[#080B12] overflow-hidden relative selection:bg-brand-500 selection:text-white">
+      {/* Top Banner Notification */}
       {topNotification && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-2.5 px-5 py-2.5 bg-emerald-950/95 border border-emerald-500/60 text-emerald-200 text-xs font-semibold rounded-2xl shadow-2xl backdrop-blur-md animate-slideDown">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-2.5 px-5 py-2.5 bg-emerald-950/90 border border-emerald-500/50 text-emerald-200 text-xs font-semibold rounded-2xl shadow-2xl backdrop-blur-md animate-slideDown">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
           <span>{topNotification}</span>
           <button
@@ -620,12 +638,12 @@ export const WorkflowBuilderPage = () => {
       )}
 
       {/* Top Bar */}
-      <header className="h-16 border-b border-slate-800/80 bg-dark-900/90 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between z-20 flex-shrink-0 gap-2">
+      <header className="h-16 border-b border-white/10 bg-[#0D1220]/80 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between z-20 flex-shrink-0 gap-2">
         {/* Left: Back Link & Workflow Info */}
         <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
           <Link
             to="/workflows"
-            className="p-2 text-slate-400 hover:text-slate-100 hover:bg-dark-800 rounded-xl transition-colors flex-shrink-0"
+            className="p-2 text-slate-400 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors flex-shrink-0"
             title="Back to Workflows"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -642,7 +660,7 @@ export const WorkflowBuilderPage = () => {
               </span>
             </div>
             <div className="flex items-center space-x-2">
-              <h2 className="text-sm sm:text-base font-bold text-slate-100 truncate">
+              <h2 className="text-sm sm:text-base font-bold text-white truncate">
                 {workflow?.name || 'Workflow Builder'}
               </h2>
               <StatusBadge status={workflow?.status} size="xs" />
@@ -656,7 +674,7 @@ export const WorkflowBuilderPage = () => {
         </div>
 
         {/* Center: Live Progress Bar Display */}
-        <div className="hidden md:flex items-center space-x-3 bg-dark-950 px-4 py-1.5 rounded-xl border border-slate-800 min-w-[260px]">
+        <div className="hidden md:flex items-center space-x-3 bg-white/[0.035] px-4 py-1.5 rounded-xl border border-white/10 min-w-[260px]">
           <div className="w-full">
             <div className="flex justify-between items-center text-[11px] text-slate-400 mb-1">
               <span className="font-semibold text-slate-300">
@@ -672,7 +690,7 @@ export const WorkflowBuilderPage = () => {
           </div>
         </div>
 
-        {/* Right: Actions (Role Badge, Team, Add Task, Auto Align, Save Workflow) */}
+        {/* Right: Actions */}
         <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
           {saveMessage && (
             <span className="text-xs font-mono text-emerald-400 animate-fadeIn hidden sm:inline-flex items-center space-x-1">
@@ -708,7 +726,7 @@ export const WorkflowBuilderPage = () => {
               </span>
             </span>
           ) : (
-            <span className="px-2 py-0.5 rounded-lg bg-dark-800 border border-slate-700 text-slate-300 text-xs font-mono hidden md:inline">
+            <span className="px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/10 text-slate-300 text-xs font-mono hidden md:inline">
               {activeRole?.replace('TEAM_', '') || 'MEMBER'}
             </span>
           )}
@@ -717,7 +735,7 @@ export const WorkflowBuilderPage = () => {
           <button
             onClick={loadWorkflowData}
             title="Reload from Supabase"
-            className="p-2 text-slate-400 hover:text-slate-200 hover:bg-dark-800 rounded-xl border border-slate-800 transition-colors"
+            className="p-2 text-slate-400 hover:text-white hover:bg-white/[0.06] rounded-xl border border-white/10 transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -726,7 +744,7 @@ export const WorkflowBuilderPage = () => {
           <button
             onClick={() => setIsDocumentsOpen(true)}
             title="View & Attach Workflow Documents"
-            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-dark-800 hover:bg-dark-750 text-slate-200 border border-slate-700 text-xs font-semibold rounded-xl transition-all shadow-sm"
+            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/10 text-xs font-semibold rounded-xl transition-all shadow-sm"
           >
             <FileText className="w-3.5 h-3.5 text-sky-400" />
             <span className="hidden sm:inline">Documents</span>
@@ -764,11 +782,11 @@ export const WorkflowBuilderPage = () => {
                 </button>
               )}
 
-              {/* Invite Collaborator Button (Section 9) */}
+              {/* Invite Collaborator Button */}
               <button
                 onClick={() => setIsShareModalOpen(true)}
                 title="Invite Collaborators to Workflow"
-                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-dark-800 hover:bg-dark-750 text-brand-300 border border-brand-500/30 text-xs font-semibold rounded-xl transition-all shadow-sm"
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-brand-300 border border-brand-500/30 text-xs font-semibold rounded-xl transition-all shadow-sm"
               >
                 <UserPlus className="w-3.5 h-3.5 text-brand-400" />
                 <span className="hidden sm:inline">Invite</span>
@@ -778,7 +796,7 @@ export const WorkflowBuilderPage = () => {
               <button
                 onClick={() => setIsPermissionsOpen(true)}
                 title="Manage Workflow Team & Permissions"
-                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-dark-800 hover:bg-dark-750 text-slate-200 border border-slate-700 text-xs font-semibold rounded-xl transition-all shadow-sm"
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/10 text-xs font-semibold rounded-xl transition-all shadow-sm"
               >
                 <Users className="w-3.5 h-3.5 text-brand-400" />
                 <span className="hidden sm:inline">Access</span>
@@ -787,14 +805,14 @@ export const WorkflowBuilderPage = () => {
               <button
                 onClick={handleAutoLayout}
                 title="Auto Align Nodes"
-                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-dark-800 rounded-xl border border-slate-800 transition-colors hidden sm:inline-flex"
+                className="p-2 text-slate-400 hover:text-white hover:bg-white/[0.06] rounded-xl border border-white/10 transition-colors hidden sm:inline-flex"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
 
               <button
                 onClick={() => setIsTaskModalOpen(true)}
-                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-dark-800 hover:bg-dark-750 text-brand-300 hover:text-brand-200 border border-brand-500/30 text-xs font-semibold rounded-xl transition-all"
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white/[0.05] hover:bg-white/[0.09] text-brand-300 hover:text-brand-200 border border-brand-500/30 text-xs font-semibold rounded-xl transition-all"
               >
                 <Plus className="w-4 h-4 text-brand-400" />
                 <span className="hidden sm:inline">Add Task</span>
@@ -803,7 +821,7 @@ export const WorkflowBuilderPage = () => {
               <button
                 onClick={handleSaveGraph}
                 disabled={saving}
-                className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-xl shadow-glow-brand transition-all disabled:opacity-50"
+                className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-brand-500/25 transition-all disabled:opacity-50"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -814,7 +832,7 @@ export const WorkflowBuilderPage = () => {
               </button>
             </>
           ) : (
-            <span className="px-2.5 py-1 bg-dark-850 text-slate-400 border border-slate-800 rounded-xl text-xs font-medium hidden sm:inline-flex items-center space-x-1.5">
+            <span className="px-2.5 py-1 bg-white/[0.04] text-slate-400 border border-white/10 rounded-xl text-xs font-medium hidden sm:inline-flex items-center space-x-1.5">
               <Eye className="w-3.5 h-3.5 text-slate-400" />
               <span>Member View</span>
             </span>
@@ -830,6 +848,8 @@ export const WorkflowBuilderPage = () => {
           nodesDraggable={canManageWorkflow}
           nodesConnectable={canManageWorkflow}
           edgesReconnectable={canManageWorkflow}
+          connectionMode={ConnectionMode.Loose}
+          defaultEdgeOptions={defaultEdgeOptions}
           onNodesChange={(changes) => setNodes((nds) => applyNodeChanges(changes, nds))}
           onEdgesChange={(changes) => setEdges((eds) => applyEdgeChanges(changes, eds))}
           onConnect={onConnect}
@@ -845,24 +865,24 @@ export const WorkflowBuilderPage = () => {
           minZoom={0.2}
           maxZoom={1.8}
           proOptions={{ hideAttribution: true }}
-          className="bg-dark-950"
+          className="bg-[#080B12]"
         >
-          <Background color="#1e293b" gap={20} size={1} />
-          <Controls className="!bg-dark-900 !border-slate-800" />
+          <Background color="rgba(255,255,255,0.06)" gap={24} size={1} />
+          <Controls className="!bg-[#0D1220]/90 !backdrop-blur-xl !border-white/10 !rounded-xl !shadow-2xl overflow-hidden [&>button]:!bg-[#0D1220] [&>button]:!border-white/10 [&>button]:!text-slate-300 hover:[&>button]:!text-white" />
           <MiniMap
             nodeColor={(node) => {
-              if (node.data?.task?.status === 'COMPLETED') return '#10b981';
-              if (node.data?.task?.status === 'IN_PROGRESS') return '#6366f1';
+              if (node.data?.task?.status === 'COMPLETED') return '#34D399';
+              if (node.data?.task?.status === 'IN_PROGRESS') return '#8B5CF6';
               return '#475569';
             }}
-            maskColor="rgba(7, 9, 14, 0.7)"
-            className="!bg-dark-900 !border-slate-800"
+            maskColor="rgba(8, 11, 18, 0.75)"
+            className="!bg-[#0D1220]/90 !backdrop-blur-xl !border-white/10 !rounded-xl !shadow-2xl overflow-hidden"
           />
         </ReactFlow>
 
         {/* Selected Arrow Floating Action Toolbar */}
         {selectedEdge && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center space-x-3 px-4 py-2.5 bg-dark-900/95 border border-brand-500/40 rounded-2xl shadow-2xl backdrop-blur-md animate-fadeIn">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center space-x-3 px-4 py-2.5 bg-[#0D1220]/95 border border-brand-500/40 rounded-2xl shadow-2xl backdrop-blur-2xl animate-fadeIn">
             <div className="flex items-center space-x-2 text-xs text-slate-300">
               <span className="text-slate-400 font-medium">Wrong connection?</span>
               <span className="font-semibold text-brand-300 max-w-[120px] truncate">
@@ -873,7 +893,7 @@ export const WorkflowBuilderPage = () => {
                 {nodes.find((n) => n.id === selectedEdge.target)?.data?.task?.title || 'Target'}
               </span>
             </div>
-            <div className="h-4 w-px bg-slate-700" />
+            <div className="h-4 w-px bg-white/10" />
             <button
               type="button"
               onClick={() => handleDeleteEdge(selectedEdge.id)}
@@ -885,7 +905,7 @@ export const WorkflowBuilderPage = () => {
             <button
               type="button"
               onClick={() => setSelectedEdge(null)}
-              className="p-1 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-dark-800 transition-colors"
+              className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-white/[0.06] transition-colors"
               title="Close"
             >
               <X className="w-3.5 h-3.5" />
@@ -896,15 +916,15 @@ export const WorkflowBuilderPage = () => {
         {/* Empty State Banner if no tasks exist */}
         {nodes.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="p-6 rounded-2xl bg-dark-900/90 border border-slate-800 shadow-2xl text-center space-y-3 pointer-events-auto max-w-sm">
+            <div className="p-6 rounded-2xl sm:rounded-3xl bg-[#0D1220]/90 border border-white/10 shadow-2xl text-center space-y-3 pointer-events-auto max-w-sm backdrop-blur-2xl">
               <FolderGit2 className="w-10 h-10 text-slate-600 mx-auto" />
-              <h3 className="text-sm font-bold text-slate-200">No tasks in this workflow</h3>
+              <h3 className="text-sm font-bold text-white">No tasks in this workflow</h3>
               <p className="text-xs text-slate-400">
                 Click "Add Task" to start placing task nodes onto the canvas and connect dependencies.
               </p>
               <button
                 onClick={() => setIsTaskModalOpen(true)}
-                className="inline-flex items-center space-x-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-xl shadow-glow-brand transition-all"
+                className="inline-flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-brand-500/25 transition-all"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add First Task</span>
@@ -914,7 +934,7 @@ export const WorkflowBuilderPage = () => {
         )}
 
         {/* Canvas Instructions Floating Pill */}
-        <div className="absolute bottom-4 left-4 z-10 hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-dark-900/80 border border-slate-800/80 rounded-xl text-[11px] text-slate-400 backdrop-blur-sm pointer-events-none">
+        <div className="absolute bottom-4 left-4 z-10 hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-[#0D1220]/80 border border-white/10 rounded-xl text-[11px] text-slate-400 backdrop-blur-md pointer-events-none">
           <Info className="w-3.5 h-3.5 text-brand-400" />
           <span className="flex items-center space-x-1">
             <span>Tip: Drag handles to connect tasks. Click</span>
@@ -933,6 +953,7 @@ export const WorkflowBuilderPage = () => {
           }}
           onUpdate={handleDrawerUpdate}
           onDelete={handleDrawerDelete}
+          teamMembers={teamMembers}
         />
       </div>
 

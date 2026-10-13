@@ -137,13 +137,13 @@ export const AutomationsPage = () => {
   // Section 13: Team Members cannot modify automation rules
   if (!isManager) {
     return (
-      <div className="min-h-screen bg-dark-950 pb-16">
+      <div className="min-h-screen bg-transparent pb-16 selection:bg-purple-600 selection:text-white">
         <Navbar onOpenSidebar={() => setSidebarOpen(true)} title="Automations" />
         <div className="max-w-2xl mx-auto px-4 pt-16 text-center space-y-4">
           <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
             <ShieldAlert className="w-6 h-6" />
           </div>
-          <h2 className="text-base font-bold text-slate-100">
+          <h2 className="text-base font-bold text-white">
             Restricted to Team Managers & Admins
           </h2>
           <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
@@ -159,7 +159,7 @@ export const AutomationsPage = () => {
     : rules.filter((r) => r.workflowId === selectedWfId);
 
   return (
-    <div className="min-h-screen bg-dark-950 pb-16">
+    <div className="min-h-screen bg-transparent pb-16 selection:bg-purple-600 selection:text-white">
       <Navbar
         onOpenSidebar={() => setSidebarOpen(true)}
         title={`${activeTeam?.name || 'Team'} Automations`}
@@ -169,21 +169,21 @@ export const AutomationsPage = () => {
               setEditingRule(null);
               setIsModalOpen(true);
             }}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-glow-brand transition-all"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-brand-500/25 transition-all"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>+ Create Rule</span>
+            <span>Create Rule</span>
           </button>
         }
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* Header Summary */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/10">
           <div>
             <div className="flex items-center space-x-2">
               <Zap className="w-5 h-5 text-indigo-400" />
-              <h2 className="text-base font-bold text-slate-100">
+              <h2 className="text-base font-bold text-white">
                 {activeTeam?.name} Smart Automations ({rules.length})
               </h2>
             </div>
@@ -193,12 +193,12 @@ export const AutomationsPage = () => {
           </div>
 
           {/* Tab Selector */}
-          <div className="flex items-center space-x-1 p-1 bg-dark-900 border border-slate-800 rounded-xl">
+          <div className="flex items-center space-x-1 p-1 bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl">
             <button
               onClick={() => setActiveTab('rules')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'rules'
-                  ? 'bg-brand-600 text-white shadow-glow-brand'
+                  ? 'bg-gradient-to-r from-brand-600 to-indigo-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -206,9 +206,9 @@ export const AutomationsPage = () => {
             </button>
             <button
               onClick={() => setActiveTab('logs')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'logs'
-                  ? 'bg-brand-600 text-white shadow-glow-brand'
+                  ? 'bg-gradient-to-r from-brand-600 to-indigo-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -218,16 +218,16 @@ export const AutomationsPage = () => {
         </div>
 
         {/* Workflow Filter */}
-        <div className="flex items-center space-x-3 p-3 rounded-2xl bg-dark-900 border border-slate-800">
+        <div className="flex items-center space-x-3 p-3.5 rounded-2xl bg-white/[0.03] backdrop-blur-xl border border-white/10">
           <span className="text-xs text-slate-400 font-medium">Filter by Workflow:</span>
           <select
             value={selectedWfId}
             onChange={(e) => setSelectedWfId(e.target.value)}
-            className="px-3 py-1.5 bg-dark-850 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500"
+            className="px-3 py-1.5 bg-[#111827] border border-white/10 hover:border-white/16 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500"
           >
-            <option value="ALL">All Workflows ({rules.length} rules)</option>
+            <option value="ALL" className="bg-[#111827]">All Workflows ({rules.length} rules)</option>
             {workflows.map((wf) => (
-              <option key={wf.id} value={wf.id}>
+              <option key={wf.id} value={wf.id} className="bg-[#111827]">
                 {wf.name}
               </option>
             ))}
@@ -242,10 +242,10 @@ export const AutomationsPage = () => {
         ) : activeTab === 'rules' ? (
           /* Rules List */
           filteredRules.length === 0 ? (
-            <div className="p-12 text-center rounded-2xl bg-dark-900 border border-slate-800 space-y-3">
+            <div className="p-12 text-center rounded-3xl bg-white/[0.03] backdrop-blur-xl border border-white/10 space-y-3">
               <Zap className="w-10 h-10 text-slate-600 mx-auto" />
-              <h3 className="text-sm font-bold text-slate-200">No automation rules configured</h3>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              <h3 className="text-sm font-bold text-white">No automation rules configured</h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
                 Set up trigger-condition-action automations to automatically progress tasks and notify team members.
               </p>
             </div>
@@ -254,7 +254,7 @@ export const AutomationsPage = () => {
               {filteredRules.map((rule) => (
                 <div
                   key={rule.id}
-                  className="p-4 rounded-2xl bg-dark-900 border border-slate-800 hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  className="p-4 rounded-2xl bg-[#0D1220]/80 backdrop-blur-xl border border-white/10 hover:border-brand-500/30 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
                 >
                   <div className="flex items-start space-x-3.5 flex-1">
                     <button
@@ -271,18 +271,18 @@ export const AutomationsPage = () => {
 
                     <div>
                       <div className="flex items-center space-x-2">
-                        <h4 className="text-xs font-bold text-slate-200">{rule.name}</h4>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-dark-800 text-slate-400 border border-slate-700">
+                        <h4 className="text-xs font-bold text-white">{rule.name}</h4>
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-slate-400 border border-white/10">
                           {rule.workflowName || 'Workflow'}
                         </span>
                       </div>
 
                       <div className="flex items-center space-x-2 mt-2 text-[11px] text-slate-400 flex-wrap gap-y-1">
-                        <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-mono">
+                        <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 font-mono">
                           WHEN: {rule.trigger}
                         </span>
                         <ArrowRight className="w-3 h-3 text-slate-600" />
-                        <span className="px-2 py-0.5 rounded bg-brand-500/10 text-brand-300 font-mono">
+                        <span className="px-2 py-0.5 rounded-md bg-brand-500/10 text-brand-300 font-mono">
                           THEN: {rule.action?.type}
                         </span>
                         <span className="text-slate-500 ml-2">
@@ -295,7 +295,7 @@ export const AutomationsPage = () => {
                   <div className="flex items-center space-x-2 self-end md:self-center">
                     <button
                       onClick={() => handleDeleteRule(rule)}
-                      className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-dark-800 rounded-lg transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors"
                       title="Delete Rule"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -308,13 +308,13 @@ export const AutomationsPage = () => {
         ) : (
           /* Execution Logs */
           logs.length === 0 ? (
-            <div className="p-12 text-center rounded-2xl bg-dark-900 border border-slate-800 text-xs text-slate-500">
+            <div className="p-12 text-center rounded-3xl bg-white/[0.03] backdrop-blur-xl border border-white/10 text-xs text-slate-400">
               No automation execution logs recorded yet.
             </div>
           ) : (
-            <div className="rounded-2xl bg-dark-900 border border-slate-800 overflow-x-auto">
+            <div className="rounded-2xl bg-[#0D1220]/80 backdrop-blur-xl border border-white/10 overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-300 min-w-[500px]">
-                <thead className="bg-dark-850 border-b border-slate-800 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <thead className="bg-white/5 border-b border-white/10 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   <tr>
                     <th className="py-2.5 px-4">Status</th>
                     <th className="py-2.5 px-4">Rule Name</th>
@@ -324,9 +324,9 @@ export const AutomationsPage = () => {
                     <th className="py-2.5 px-4">Time</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80">
+                <tbody className="divide-y divide-white/5">
                   {logs.map((log) => (
-                    <tr key={log.id} className="hover:bg-dark-850/60 transition-colors">
+                    <tr key={log.id} className="hover:bg-white/5 transition-colors">
                       <td className="py-3 px-4">
                         <span
                           className={`inline-block w-2 h-2 rounded-full ${
@@ -334,7 +334,7 @@ export const AutomationsPage = () => {
                           }`}
                         />
                       </td>
-                      <td className="py-3 px-4 font-semibold text-slate-200">{log.ruleName}</td>
+                      <td className="py-3 px-4 font-semibold text-white">{log.ruleName}</td>
                       <td className="py-3 px-4 font-mono text-[11px] text-indigo-300">{log.trigger}</td>
                       <td className="py-3 px-4 font-mono text-[11px] text-brand-300">{log.actionType}</td>
                       <td className="py-3 px-4 text-slate-400 text-[11px]">{log.details}</td>

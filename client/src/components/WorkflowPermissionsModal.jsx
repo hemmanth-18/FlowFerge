@@ -212,25 +212,28 @@ export const WorkflowPermissionsModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-950/80 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080B12]/80 backdrop-blur-md animate-fadeIn"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="w-full max-w-2xl bg-dark-900 border border-slate-800 rounded-2xl shadow-card-dark overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-2xl bg-[#0D1220]/95 backdrop-blur-2xl border border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] relative"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Top edge specular highlight */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-dark-850">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20">
+            <div className="p-2.5 rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20 shadow-inner">
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-100 flex items-center space-x-2">
+              <h3 className="text-base font-bold text-white flex items-center space-x-2">
                 <span>Workflow Access & Roles</span>
-                <span className="text-xs px-2 py-0.5 rounded-md bg-dark-800 border border-slate-700 text-brand-300 font-medium">
+                <span className="text-xs px-2 py-0.5 rounded-md bg-white/[0.06] border border-white/10 text-brand-300 font-medium">
                   {workflowName}
                 </span>
               </h3>
@@ -241,7 +244,7 @@ export const WorkflowPermissionsModal = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 text-slate-400 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -252,10 +255,10 @@ export const WorkflowPermissionsModal = ({
           {/* Status Message */}
           {message.text && (
             <div
-              className={`p-3 rounded-xl border text-xs flex items-center space-x-2 ${
+              className={`p-3.5 rounded-xl border text-xs flex items-center space-x-2.5 ${
                 message.type === 'success'
-                  ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-300'
-                  : 'bg-rose-950/40 border-rose-800/60 text-rose-300'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
               }`}
             >
               {message.type === 'success' ? (
@@ -268,16 +271,16 @@ export const WorkflowPermissionsModal = ({
           )}
 
           {/* Section 8: Access Restriction Toggle Card */}
-          <div className="p-4 rounded-xl bg-dark-850 border border-slate-800 flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-white/[0.035] border border-white/10 flex items-center justify-between gap-4">
             <div className="flex items-start space-x-3">
-              <div className={`p-2 rounded-xl border ${workflow?.isRestricted ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'}`}>
+              <div className={`p-2.5 rounded-xl border shadow-inner ${workflow?.isRestricted ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'}`}>
                 {workflow?.isRestricted ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
               </div>
               <div>
-                <h4 className="text-xs font-bold text-slate-200">
+                <h4 className="text-xs font-bold text-white">
                   {workflow?.isRestricted ? 'Restricted Access Workflow' : 'All Team Members Have Access'}
                 </h4>
-                <p className="text-[11px] text-slate-400 mt-0.5 max-w-md">
+                <p className="text-[11px] text-slate-400 mt-0.5 max-w-md leading-relaxed">
                   {workflow?.isRestricted
                     ? 'Only Team Admins, Managers, and members explicitly added below can view and work on this workflow.'
                     : 'All members of ' + (activeTeam?.name || 'the team') + ' can view this workflow by default.'}
@@ -289,10 +292,10 @@ export const WorkflowPermissionsModal = ({
               <button
                 onClick={handleToggleRestriction}
                 disabled={savingRestriction}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all disabled:opacity-50 ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all disabled:opacity-50 flex-shrink-0 ${
                   workflow?.isRestricted
-                    ? 'bg-dark-800 hover:bg-dark-750 text-slate-300 border-slate-700'
-                    : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30'
+                    ? 'bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border-white/15'
+                    : 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border-amber-500/30'
                 }`}
               >
                 {savingRestriction ? (
@@ -308,8 +311,8 @@ export const WorkflowPermissionsModal = ({
 
           {/* Section 9: Add Team Member to Workflow Form */}
           {canManage && (
-            <div className="p-4 rounded-xl bg-dark-850 border border-slate-800 space-y-3">
-              <div className="flex items-center space-x-2 text-xs font-bold text-slate-200 uppercase tracking-wider">
+            <div className="p-4 rounded-2xl bg-white/[0.035] border border-white/10 space-y-3">
+              <div className="flex items-center space-x-2 text-xs font-bold text-white uppercase tracking-wider">
                 <UserPlus className="w-4 h-4 text-brand-400" />
                 <span>Add Team Member to Workflow</span>
               </div>
@@ -319,11 +322,11 @@ export const WorkflowPermissionsModal = ({
                     value={selectedUserId}
                     onChange={(e) => setSelectedUserId(e.target.value)}
                     required
-                    className="w-full px-3 py-2 bg-dark-800 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-brand-500"
+                    className="w-full px-3.5 py-2.5 bg-[#111827] border border-white/15 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-brand-500"
                   >
-                    <option value="">Select team member...</option>
+                    <option value="" className="bg-[#111827] text-slate-400">Select team member...</option>
                     {availableTeamMembers.map((m) => (
-                      <option key={m.id} value={m.id}>
+                      <option key={m.id} value={m.id} className="bg-[#111827] text-slate-100">
                         {m.name} ({m.role.replace('TEAM_', '')}) - {m.email}
                       </option>
                     ))}
@@ -334,17 +337,17 @@ export const WorkflowPermissionsModal = ({
                   <select
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value)}
-                    className="w-full px-3 py-2 bg-dark-800 border border-slate-700 rounded-xl text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-500"
+                    className="w-full px-3.5 py-2.5 bg-[#111827] border border-white/15 rounded-xl text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-500"
                   >
-                    <option value="WORKFLOW_MEMBER">Workflow Member</option>
-                    <option value="WORKFLOW_MANAGER">Workflow Manager</option>
+                    <option value="WORKFLOW_MEMBER" className="bg-[#111827] text-slate-100">Workflow Member</option>
+                    <option value="WORKFLOW_MANAGER" className="bg-[#111827] text-slate-100">Workflow Manager</option>
                   </select>
                 </div>
 
                 <button
                   type="submit"
                   disabled={addingMember || !selectedUserId}
-                  className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-xl shadow-glow-brand transition-all flex items-center justify-center space-x-1.5 disabled:opacity-50 flex-shrink-0"
+                  className="px-4 py-2.5 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-500/25 transition-all flex items-center justify-center space-x-1.5 disabled:opacity-50 flex-shrink-0"
                 >
                   {addingMember ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -365,7 +368,7 @@ export const WorkflowPermissionsModal = ({
             </div>
           )}
 
-          {/* Pending Invitations Section (Requested by user: "also in access option i should see pending") */}
+          {/* Pending Invitations Section */}
           {pendingInvitations.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
@@ -375,19 +378,19 @@ export const WorkflowPermissionsModal = ({
                 </h4>
               </div>
 
-              <div className="divide-y divide-amber-900/30 border border-amber-800/50 rounded-xl overflow-hidden bg-amber-950/20 shadow-sm">
+              <div className="divide-y divide-white/5 border border-amber-500/20 rounded-2xl overflow-hidden bg-amber-500/5 shadow-sm">
                 {pendingInvitations.map((inv) => (
                   <div
                     key={inv.id}
-                    className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-amber-950/30 transition-colors"
+                    className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.02] transition-colors"
                   >
                     <div className="flex items-center space-x-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-xs font-bold text-amber-300 flex-shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-xs font-bold text-amber-300 flex-shrink-0 shadow-inner">
                         {inv.invitedUser?.name ? inv.invitedUser.name[0].toUpperCase() : 'U'}
                       </div>
                       <div className="truncate">
                         <div className="flex items-center space-x-2">
-                          <span className="text-xs font-bold text-slate-100 truncate">
+                          <span className="text-xs font-bold text-white truncate">
                             {inv.invitedUser?.name || 'Collaborator'}
                           </span>
                           <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold">
@@ -402,7 +405,7 @@ export const WorkflowPermissionsModal = ({
                     </div>
 
                     <div className="flex items-center space-x-2 self-end sm:self-auto">
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-dark-800 border border-slate-700 text-slate-300">
+                      <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/[0.04] border border-white/10 text-slate-300">
                         Role: {inv.role}
                       </span>
                       {canManage && (
@@ -411,14 +414,14 @@ export const WorkflowPermissionsModal = ({
                           onClick={() => handleCancelInvite(inv.id, inv.invitedUser?.name || 'collaborator')}
                           disabled={cancellingInviteId === inv.id}
                           title="Revoke / Cancel this pending invitation"
-                          className="px-2.5 py-1 text-xs font-semibold text-rose-300 hover:text-white bg-rose-950/50 hover:bg-rose-900/60 border border-rose-800/60 rounded-lg transition-all flex items-center space-x-1 disabled:opacity-50"
+                          className="px-2.5 py-1 text-xs font-semibold text-rose-300 hover:text-white bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl transition-all flex items-center space-x-1 disabled:opacity-50"
                         >
                           {cancellingInviteId === inv.id ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
                           ) : (
                             <X className="w-3 h-3" />
                           )}
-                          <span>Cancel Invite</span>
+                          <span>Cancel</span>
                         </button>
                       )}
                     </div>
@@ -442,11 +445,11 @@ export const WorkflowPermissionsModal = ({
                 <span>Loading workflow members...</span>
               </div>
             ) : workflowMembers.length === 0 ? (
-              <div className="p-4 text-center rounded-xl bg-dark-850 border border-slate-800 text-xs text-slate-400">
+              <div className="p-4 text-center rounded-2xl bg-white/[0.025] border border-white/10 text-xs text-slate-400">
                 No explicit members assigned yet. {workflow?.isRestricted ? 'Add members above to grant access.' : 'All team members currently have access.'}
               </div>
             ) : (
-              <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl overflow-hidden bg-dark-850">
+              <div className="divide-y divide-white/5 border border-white/10 rounded-2xl overflow-hidden bg-white/[0.025]">
                 {workflowMembers.map((member) => {
                   const role = (member.role || 'WORKFLOW_MEMBER').toUpperCase();
                   const isSelf = member.id === user?.id;
@@ -454,15 +457,15 @@ export const WorkflowPermissionsModal = ({
                   return (
                     <div
                       key={member.id}
-                      className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-dark-800/40 transition-colors"
+                      className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.03] transition-colors"
                     >
                       <div className="flex items-center space-x-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-dark-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-200 flex-shrink-0">
+                        <div className="w-8 h-8 rounded-xl bg-white/[0.06] border border-white/10 flex items-center justify-center text-xs font-bold text-slate-200 flex-shrink-0">
                           {member.name ? member.name[0].toUpperCase() : 'U'}
                         </div>
                         <div className="truncate">
                           <div className="flex items-center space-x-2">
-                            <span className="text-xs font-bold text-slate-200 truncate">
+                            <span className="text-xs font-bold text-white truncate">
                               {member.name}
                             </span>
                             {isSelf && (
@@ -489,16 +492,16 @@ export const WorkflowPermissionsModal = ({
                             <select
                               value={role === 'MANAGER' || role === 'WORKFLOW_MANAGER' ? 'WORKFLOW_MANAGER' : 'WORKFLOW_MEMBER'}
                               onChange={(e) => handleRoleChange(member.id, e.target.value)}
-                              className="px-2.5 py-1.5 bg-dark-800 border border-slate-700 rounded-lg text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-500"
+                              className="px-3 py-1.5 bg-[#111827] border border-white/15 rounded-xl text-xs font-semibold text-slate-200 focus:outline-none focus:border-brand-500"
                             >
-                              <option value="WORKFLOW_MEMBER">Workflow Member</option>
-                              <option value="WORKFLOW_MANAGER">Workflow Manager</option>
+                              <option value="WORKFLOW_MEMBER" className="bg-[#111827] text-slate-100">Workflow Member</option>
+                              <option value="WORKFLOW_MANAGER" className="bg-[#111827] text-slate-100">Workflow Manager</option>
                             </select>
 
                             <button
                               onClick={() => handleRemoveMember(member.id, member.name)}
                               title="Remove member from workflow"
-                              className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -529,10 +532,10 @@ export const WorkflowPermissionsModal = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-end px-6 py-3 border-t border-slate-800 bg-dark-850">
+        <div className="flex items-center justify-end px-6 py-3 border-t border-white/10 bg-white/[0.02]">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 text-xs font-semibold text-slate-300 hover:text-white bg-dark-800 hover:bg-dark-750 border border-slate-700 rounded-xl transition-colors"
+            className="px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-xl transition-colors"
           >
             Close
           </button>

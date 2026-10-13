@@ -46,20 +46,20 @@ export const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dark-950 text-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative selection:bg-brand-500 selection:text-white overflow-x-hidden w-full max-w-full">
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] max-w-full h-[350px] bg-brand-600/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-[#080B12] text-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative selection:bg-brand-500 selection:text-white overflow-x-hidden w-full max-w-full">
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] max-w-full h-[400px] bg-brand-600/10 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center">
         <Link to="/" className="inline-flex items-center space-x-3 mb-6 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-glow-brand group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-sky-400 flex items-center justify-center shadow-lg shadow-brand-500/25 group-hover:scale-105 transition-transform">
             <Zap className="w-6 h-6 text-white fill-white" />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-white uppercase">FlowForge</span>
+          <span className="text-2xl font-black tracking-tight text-white uppercase">FlowForge</span>
         </Link>
-        <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400">
+        <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-400">
           <KeyRound className="w-6 h-6" />
         </div>
-        <h2 className="text-center text-xl sm:text-2xl font-bold tracking-tight text-slate-100">
+        <h2 className="text-center text-xl sm:text-2xl font-black tracking-tight text-white">
           Reset your password
         </h2>
         <p className="mt-2 text-center text-xs sm:text-sm text-slate-400">
@@ -68,7 +68,7 @@ export const ForgotPasswordPage = () => {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4 sm:px-0">
-        <div className="bg-dark-900/90 backdrop-blur-xl py-8 px-6 sm:px-10 border border-slate-800 rounded-2xl shadow-card-dark">
+        <div className="bg-[#0D1220]/85 backdrop-blur-2xl py-8 px-6 sm:px-10 border border-white/10 rounded-3xl shadow-2xl shadow-black/80">
           {error && (
             <div className="mb-5 p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-xs text-rose-300 flex items-start space-x-2">
               <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
@@ -78,23 +78,23 @@ export const ForgotPasswordPage = () => {
 
           {success ? (
             <div className="space-y-5 text-center">
-              <div className="w-14 h-14 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <div className="w-14 h-14 mx-auto rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                 <CheckCircle className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-100 mb-1">Instructions Issued</h3>
+                <h3 className="text-base font-bold text-white mb-1">Instructions Issued</h3>
                 <p className="text-xs sm:text-sm text-slate-400">
-                  Password reset instructions have been issued for <span className="text-slate-200 font-semibold">{email}</span>.
+                  Password reset instructions have been issued for <span className="text-white font-semibold">{email}</span>.
                 </p>
               </div>
 
               {resetToken && (
-                <div className="p-3.5 bg-brand-950/40 border border-brand-800/50 rounded-xl text-left text-xs text-slate-300 space-y-1.5">
+                <div className="p-3.5 bg-brand-950/40 border border-brand-800/50 rounded-2xl text-left text-xs text-slate-300 space-y-1.5">
                   <div className="font-semibold text-brand-400 flex items-center space-x-1.5">
                     <KeyRound className="w-3.5 h-3.5 text-brand-400" />
                     <span>Development Reset Token</span>
                   </div>
-                  <p className="text-[11px] text-slate-400 font-mono break-all bg-dark-950 p-2 rounded-lg border border-slate-800">
+                  <p className="text-[11px] text-slate-400 font-mono break-all bg-[#080B12] p-2 rounded-xl border border-white/10">
                     {resetToken}
                   </p>
                   <Link
@@ -109,7 +109,7 @@ export const ForgotPasswordPage = () => {
               <div className="pt-2">
                 <Link
                   to="/login"
-                  className="w-full inline-flex items-center justify-center px-4 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-500 rounded-xl transition-all shadow-glow-brand"
+                  className="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 rounded-xl transition-all shadow-lg shadow-brand-500/25"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Return to Sign In
@@ -132,7 +132,7 @@ export const ForgotPasswordPage = () => {
                     placeholder="Enter your registered email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-dark-800 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white/[0.045] hover:bg-white/[0.065] focus:bg-white/[0.08] border border-white/10 hover:border-white/16 focus:border-brand-500 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500 text-sm transition-all"
                   />
                 </div>
               </div>
@@ -140,7 +140,7 @@ export const ForgotPasswordPage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 inline-flex items-center justify-center px-4 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-500 rounded-xl transition-all shadow-glow-brand disabled:opacity-50"
+                className="w-full mt-2 inline-flex items-center justify-center px-4 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 rounded-xl transition-all shadow-lg shadow-brand-500/25 disabled:opacity-50"
               >
                 {loading ? (
                   <>
