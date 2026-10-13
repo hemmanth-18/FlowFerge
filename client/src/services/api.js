@@ -1,13 +1,20 @@
 import axiosInstance from 'axios';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL !== undefined && import.meta.env.VITE_API_URL !== ''
-    ? import.meta.env.VITE_API_URL
-    : (import.meta.env.PROD ? '' : 'http://localhost:5000');
-
+// Get API base URL with graceful fallback to production Render backend
+const getBaseUrl = () => {
+  const envUrl = (import.meta.env.VITE_API_URL || '').trim();
+  if (envUrl) {
+    const stripped = envUrl.replace(/\/+$/, '');
+    return stripped.endsWith('/api') ? stripped : `${stripped}/api`;
+  }
+  if (import.meta.env.PROD) {
+    return 'https://flowferge-backend.onrender.com/api';
+  }
+  return 'http://localhost:5000/api';
+};
 
 export const api = axiosInstance.create({
-  baseURL: `${API_BASE_URL}/api`,
+  baseURL: getBaseUrl(),
   withCredentials: true, // Send HTTP-only session cookies with every request
   headers: {
     'Content-Type': 'application/json',
