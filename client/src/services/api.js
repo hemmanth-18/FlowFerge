@@ -16,6 +16,7 @@ const getBaseUrl = () => {
 export const api = axiosInstance.create({
   baseURL: getBaseUrl(),
   withCredentials: true, // Send HTTP-only session cookies with every request
+  timeout: 25000, // 25s timeout to prevent infinite UI hangs on slow networks
   headers: {
     'Content-Type': 'application/json',
   },

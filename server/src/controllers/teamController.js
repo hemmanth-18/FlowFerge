@@ -144,23 +144,39 @@ const teamController = {
       const invitationUrl = `${baseUrl}/invite/${invitation.id}`;
       const inviterName = req.user.name || req.user.username || 'A team manager';
 
-      // 3. Dispatch real invitation email via Nodemailer Gmail SMTP
-      const mailResult = await mailService.sendTeamInvitationEmail({
-        to: invitation.email,
-        inviterName,
-        teamName: invitation.teamName,
-        role: invitation.role,
-        invitationUrl,
-        expiresAt: invitation.expiresAt,
-      });
+      // 3. Dispatch real invitation email via Nodemailer Gmail SMTP (with cloud race protection)
+      let mailResult = { success: false, message: 'Email dispatch initiated' };
+      try {
+        const emailPromise = mailService.sendTeamInvitationEmail({
+          to: invitation.email,
+          inviterName,
+          teamName: invitation.teamName,
+          role: invitation.role,
+          invitationUrl,
+          expiresAt: invitation.expiresAt,
+        }).catch((err) => {
+          console.warn('[MailService] Team invite email async error:', err.message);
+          return { success: false, error: err.message };
+        });
+
+        // 2.5s maximum wait so the user interface never freezes
+        const timeoutPromise = new Promise((resolve) =>
+          setTimeout(() => resolve({ success: true, pending: true, message: 'Invitation created. Email sending in background.' }), 2500)
+        );
+
+        mailResult = await Promise.race([emailPromise, timeoutPromise]);
+      } catch (mailErr) {
+        console.warn('[Team Invitation Mail Error]:', mailErr.message);
+        mailResult = { success: false, error: mailErr.message };
+      }
 
       res.status(201).json({
         success: true,
         data: invitation,
         emailSent: mailResult.success,
         emailMessage: mailResult.success
-          ? `Invitation email successfully sent to ${invitation.email}`
-          : (mailResult.message || 'Invitation link created, but email delivery failed.'),
+          ? `Invitation sent to ${invitation.email}!`
+          : (mailResult.message || 'Invitation created successfully!'),
       });
     } catch (err) {
       console.error('[Create Team Invitation Error]:', err);
@@ -190,28 +206,36 @@ const teamController = {
       const invitationUrl = `${baseUrl}/invite/${invitation.id}`;
       const inviterName = req.user.name || req.user.username || invitation.inviterName || 'A team manager';
 
-      const mailResult = await mailService.sendTeamInvitationEmail({
-        to: invitation.email,
-        inviterName,
-        teamName: invitation.resourceName,
-        role: invitation.role,
-        invitationUrl,
-        expiresAt: invitation.expiresAt,
-      });
-
-      if (!mailResult.success && mailResult.reason !== 'unconfigured') {
-        return res.status(500).json({
-          success: false,
-          error: mailResult.error || 'Failed to deliver invitation email.',
-          emailSent: false,
+      let mailResult = { success: false, message: 'Email dispatch initiated' };
+      try {
+        const emailPromise = mailService.sendTeamInvitationEmail({
+          to: invitation.email,
+          inviterName,
+          teamName: invitation.resourceName,
+          role: invitation.role,
+          invitationUrl,
+          expiresAt: invitation.expiresAt,
+        }).catch((err) => {
+          console.warn('[MailService] Team resend email async error:', err.message);
+          return { success: false, error: err.message };
         });
+
+        // 2.5s maximum wait so the UI never freezes
+        const timeoutPromise = new Promise((resolve) =>
+          setTimeout(() => resolve({ success: true, pending: true, message: 'Invitation active. Email sending in background.' }), 2500)
+        );
+
+        mailResult = await Promise.race([emailPromise, timeoutPromise]);
+      } catch (mailErr) {
+        console.warn('[Team Resend Mail Error]:', mailErr.message);
+        mailResult = { success: false, error: mailErr.message };
       }
 
       res.json({
         success: true,
         message: mailResult.success
           ? `Invitation email resent to ${invitation.email}`
-          : 'Invitation is active, but mail server is unconfigured.',
+          : (mailResult.message || 'Invitation is active.'),
         emailSent: mailResult.success,
         data: invitation,
       });

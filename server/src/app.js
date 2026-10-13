@@ -20,6 +20,7 @@ const teamRoutes = require('./routes/teamRoutes');
 const auditRoutes = require('./routes/auditRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const SupabaseService = require('./services/supabaseService');
+const mailService = require('./services/mailService');
 
 const app = express();
 
@@ -70,6 +71,8 @@ app.get('/api/health', async (req, res) => {
     tablesReady: conn.tablesReady,
     connected: conn.connected,
     auth: 'Supabase Auth & Session Engine',
+    mailConfigured: mailService.isConfigured(),
+    mailSender: process.env.MAIL_USER || 'hemmanthguna@gmail.com',
     timestamp: new Date().toISOString(),
   });
 });

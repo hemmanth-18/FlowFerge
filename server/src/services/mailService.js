@@ -23,8 +23,9 @@ class MailService {
    */
   isConfigured() {
     const user = process.env.MAIL_USER || 'hemmanthguna@gmail.com';
-    const pass = process.env.MAIL_APP_PASSWORD;
-    return Boolean(user && pass && pass.trim().length > 0);
+    const rawPass = process.env.MAIL_APP_PASSWORD;
+    const pass = (rawPass || '').replace(/\s+/g, '');
+    return Boolean(user && pass && pass.length > 0);
   }
 
   /**
@@ -41,20 +42,44 @@ class MailService {
       : port === 465;
 
     const user = process.env.MAIL_USER || 'hemmanthguna@gmail.com';
-    const pass = process.env.MAIL_APP_PASSWORD || '';
+    // Remove all whitespace/spaces that Google displays in 16-character App Passwords
+    const pass = (process.env.MAIL_APP_PASSWORD || '').replace(/\s+/g, '');
 
-    this.transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: isSecure,
-      auth: {
-        user,
-        pass,
-      },
-      tls: {
-        rejectUnauthorized: process.env.NODE_ENV === 'production',
-      },
-    });
+    const commonTimeouts = {
+      connectionTimeout: 5000, // 5s max to establish TCP connection
+      greetingTimeout: 5000,   // 5s max to receive SMTP banner
+      socketTimeout: 8000,     // 8s max socket inactivity
+      dnsTimeout: 5000,
+    };
+
+    if (host === 'smtp.gmail.com' && !process.env.MAIL_PORT) {
+      // Use Nodemailer's built-in Gmail service optimization
+      this.transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user,
+          pass,
+        },
+        ...commonTimeouts,
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
+    } else {
+      this.transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: isSecure,
+        auth: {
+          user,
+          pass,
+        },
+        ...commonTimeouts,
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
+    }
 
     return this.transporter;
   }
