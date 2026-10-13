@@ -63,7 +63,7 @@ export const TeamPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeTeam, isManager, toast]);
+  }, [activeTeam?.id, isManager]);
 
   useEffect(() => {
     fetchTeamMembersAndInvites();

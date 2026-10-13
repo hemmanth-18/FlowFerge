@@ -68,7 +68,7 @@ export const DashboardPage = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [activeTeam, toast]);
+  }, [activeTeam?.id]);
 
   useEffect(() => {
     fetchDashboardData();

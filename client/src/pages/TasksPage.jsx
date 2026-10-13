@@ -75,7 +75,7 @@ export const TasksPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeTeam, currentView]);
+  }, [activeTeam?.id, currentView]);
 
   useEffect(() => {
     fetchTasksAndWorkflows();
