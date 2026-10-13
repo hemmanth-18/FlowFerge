@@ -25,10 +25,11 @@ const workflowController = {
         return res.status(404).json({ success: false, error: 'Workflow not found' });
       }
 
+      const metrics = SupabaseService.calculateWorkflowMetrics(workflow);
       const tasks = await SupabaseService.getTasksByWorkflow(id);
-      const totalTasks = tasks.length;
-      const completedTasks = tasks.filter((t) => t.status === 'COMPLETED').length;
-      const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+      const totalTasks = metrics.totalTasks > 0 ? metrics.totalTasks : tasks.length;
+      const completedTasks = metrics.completedTasks;
+      const progress = metrics.progress;
 
       let team = null;
       if (workflow.teamId) {

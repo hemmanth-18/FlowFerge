@@ -384,13 +384,29 @@ export const DashboardPage = () => {
                         </p>
                       </div>
 
-                      <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
-                        <div className="flex items-center justify-between text-[10px] text-slate-400">
-                          <span>Progress: {wf.completedTasks}/{wf.totalTasks} Tasks</span>
-                          <span className="font-mono font-bold text-slate-300">{wf.progress}%</span>
-                        </div>
-                        <ProgressBar progress={wf.progress} />
-                      </div>
+                      {(() => {
+                        const parsedNodes = Array.isArray(wf.nodes) ? wf.nodes : (typeof wf.nodes === 'string' ? (() => { try { return JSON.parse(wf.nodes); } catch (e) { return []; } })() : []);
+                        const totalCount = wf.totalTasks !== undefined && wf.totalTasks !== null && wf.totalTasks > 0 ? wf.totalTasks : parsedNodes.length;
+                        const completedCount = wf.completedTasks !== undefined && wf.completedTasks !== null && wf.completedTasks > 0
+                          ? wf.completedTasks
+                          : parsedNodes.filter(n => {
+                              const s = (n?.data?.task?.status || n?.data?.status || n?.status || '').toUpperCase();
+                              return s === 'COMPLETED';
+                            }).length;
+                        const currentProgress = wf.progress !== undefined && wf.progress !== null && wf.progress > 0
+                          ? wf.progress
+                          : (totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0);
+
+                        return (
+                          <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
+                            <div className="flex items-center justify-between text-[10px] text-slate-400">
+                              <span>Progress: {completedCount}/{totalCount} Tasks</span>
+                              <span className="font-mono font-bold text-slate-300">{currentProgress}%</span>
+                            </div>
+                            <ProgressBar progress={currentProgress} />
+                          </div>
+                        );
+                      })()}
                     </Link>
                   ))}
                 </div>

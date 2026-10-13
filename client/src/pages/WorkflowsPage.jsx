@@ -438,17 +438,33 @@ export const WorkflowsPage = () => {
                   </div>
 
                   {/* Progress & Stats */}
-                  <div className="space-y-2 pt-3 border-t border-slate-800/80">
-                    <div className="flex items-center justify-between text-xs text-slate-400">
-                      <span>
-                        {wf.completedTasks || 0}/{wf.totalTasks || 0} Tasks
-                      </span>
-                      <span className="font-mono font-bold text-slate-200">
-                        {wf.progress || 0}%
-                      </span>
-                    </div>
-                    <ProgressBar progress={wf.progress || 0} />
-                  </div>
+                  {(() => {
+                    const parsedNodes = Array.isArray(wf.nodes) ? wf.nodes : (typeof wf.nodes === 'string' ? (() => { try { return JSON.parse(wf.nodes); } catch (e) { return []; } })() : []);
+                    const totalCount = wf.totalTasks !== undefined && wf.totalTasks !== null && wf.totalTasks > 0 ? wf.totalTasks : parsedNodes.length;
+                    const completedCount = wf.completedTasks !== undefined && wf.completedTasks !== null && wf.completedTasks > 0
+                      ? wf.completedTasks
+                      : parsedNodes.filter(n => {
+                          const s = (n?.data?.task?.status || n?.data?.status || n?.status || '').toUpperCase();
+                          return s === 'COMPLETED';
+                        }).length;
+                    const currentProgress = wf.progress !== undefined && wf.progress !== null && wf.progress > 0
+                      ? wf.progress
+                      : (totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0);
+
+                    return (
+                      <div className="space-y-2 pt-3 border-t border-slate-800/80">
+                        <div className="flex items-center justify-between text-xs text-slate-400">
+                          <span>
+                            {completedCount}/{totalCount} Tasks
+                          </span>
+                          <span className="font-mono font-bold text-slate-200">
+                            {currentProgress}%
+                          </span>
+                        </div>
+                        <ProgressBar progress={currentProgress} />
+                      </div>
+                    );
+                  })()}
 
                   {/* Card Actions (Section 5, 6, 9) */}
                   <div className="flex items-center justify-between pt-2 gap-1 border-t border-slate-800/60">

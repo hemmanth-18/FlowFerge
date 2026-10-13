@@ -1063,18 +1063,23 @@ const SupabaseService = {
 
     const members = await this.getTeamMembers(teamId);
     const recentActivity = await this.getTeamActivity(teamId, 10);
-    const activeWorkflowsList = workflows.filter(w => w.status === 'ACTIVE');
+
+    const enrichedWorkflows = workflows.map((wf) => ({
+      ...wf,
+      ...this.calculateWorkflowMetrics(wf),
+    }));
+    const activeWorkflowsList = enrichedWorkflows.filter((w) => w.status === 'ACTIVE');
 
     return {
       team,
       stats: {
         activeWorkflows: activeWorkflowsList.length,
-        totalWorkflows: workflows.length,
-        pendingTasks: tasks.filter(t => t.status !== 'COMPLETED').length,
-        completedTasks: tasks.filter(t => t.status === 'COMPLETED').length,
+        totalWorkflows: enrichedWorkflows.length,
+        pendingTasks: tasks.filter((t) => t.status !== 'COMPLETED').length,
+        completedTasks: tasks.filter((t) => t.status === 'COMPLETED').length,
         memberCount: members.length,
       },
-      workflows,
+      workflows: enrichedWorkflows,
       activeWorkflows: activeWorkflowsList,
       recentTasks: tasks.slice(0, 5),
       recentActivity,
@@ -1220,11 +1225,61 @@ const SupabaseService = {
     return null;
   },
 
+  calculateWorkflowMetrics(wf) {
+    if (!wf) return { totalTasks: 0, completedTasks: 0, progress: 0 };
+
+    // 1. Gather all tasks linked to this workflow from memoryDb.tasks
+    const dbTasks = [];
+    for (const t of memoryDb.tasks.values()) {
+      if (t.workflowId === wf.id) dbTasks.push(t);
+    }
+
+    // 2. Also inspect wf.nodes from the canvas
+    const nodeTasks = [];
+    let parsedNodes = wf.nodes;
+    if (typeof parsedNodes === 'string') {
+      try { parsedNodes = JSON.parse(parsedNodes); } catch (e) { parsedNodes = []; }
+    }
+
+    if (Array.isArray(parsedNodes)) {
+      for (const n of parsedNodes) {
+        if (!n) continue;
+        const taskData = n.data?.task || n.data || n;
+        if (taskData) {
+          nodeTasks.push({
+            id: n.id || taskData.id,
+            status: (taskData.status || n.status || 'TODO').toUpperCase(),
+          });
+        }
+      }
+    }
+
+    // Combine tasks (preferring status from either source)
+    const taskMap = new Map();
+    for (const t of dbTasks) {
+      taskMap.set(t.id, (t.status || 'TODO').toUpperCase());
+    }
+    for (const nt of nodeTasks) {
+      if (!taskMap.has(nt.id) || nt.status === 'COMPLETED') {
+        taskMap.set(nt.id, nt.status);
+      }
+    }
+
+    const totalTasks = taskMap.size;
+    let completedTasks = 0;
+    for (const status of taskMap.values()) {
+      if (status === 'COMPLETED') completedTasks++;
+    }
+
+    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    return { totalTasks, completedTasks, progress };
+  },
+
   async getWorkflowsForUser(userId, { filter = 'all', teamId = null } = {}) {
     const cacheKey = `${userId}:${filter}:${teamId || 'none'}`;
     const now = Date.now();
     const cached = workflowCache.get(cacheKey);
-    if (cached && now - cached.timestamp < 6000) {
+    if (cached && now - cached.timestamp < 3000) {
       return cached.data;
     }
 
@@ -1237,20 +1292,53 @@ const SupabaseService = {
         const { data } = await query;
         if (data && data.length > 0) {
           for (const row of data) {
+            let parsedNodes = row.nodes || [];
+            if (typeof parsedNodes === 'string') {
+              try { parsedNodes = JSON.parse(parsedNodes); } catch (e) { parsedNodes = []; }
+            }
+            let parsedDeps = row.dependencies || [];
+            if (typeof parsedDeps === 'string') {
+              try { parsedDeps = JSON.parse(parsedDeps); } catch (e) { parsedDeps = []; }
+            }
+
             const wf = {
               id: row.id,
               name: row.name,
               description: row.description,
               teamId: row.team_id,
               status: row.status,
+              isRestricted: row.is_restricted || false,
               ownerId: row.owner_id || row.created_by,
               createdBy: row.created_by,
-              nodes: row.nodes || [],
-              dependencies: row.dependencies || [],
+              nodes: parsedNodes,
+              dependencies: parsedDeps,
               createdAt: row.created_at,
               updatedAt: row.updated_at,
             };
             memoryDb.workflows.set(wf.id, wf);
+          }
+        }
+      } catch (e) {}
+
+      // Synchronize tasks from Supabase
+      try {
+        const { data: dbTasks } = await supabase.from('tasks').select('*');
+        if (dbTasks) {
+          for (const t of dbTasks) {
+            memoryDb.tasks.set(t.id, {
+              id: t.id,
+              workflowId: t.workflow_id,
+              teamId: t.team_id,
+              title: t.title,
+              description: t.description,
+              status: t.status,
+              priority: t.priority,
+              assignedTo: t.assigned_to,
+              dueDate: t.due_date,
+              position: t.position,
+              createdAt: t.created_at,
+              updatedAt: t.updated_at,
+            });
           }
         }
       } catch (e) {}
@@ -1279,7 +1367,23 @@ const SupabaseService = {
       if (filter === 'owned' && !isOwner) continue;
       if (filter === 'shared' && isOwner) continue;
 
-      results.push({ ...wf, userRole: role || 'VIEWER' });
+      const metrics = this.calculateWorkflowMetrics(wf);
+
+      let teamName = null;
+      let teamIcon = null;
+      if (wf.teamId) {
+        const team = memoryDb.teams.get(wf.teamId);
+        teamName = team?.name || null;
+        teamIcon = team?.icon || null;
+      }
+
+      results.push({
+        ...wf,
+        ...metrics,
+        teamName,
+        teamIcon,
+        userRole: role || 'VIEWER',
+      });
     }
 
     workflowCache.set(cacheKey, { timestamp: now, data: results });
