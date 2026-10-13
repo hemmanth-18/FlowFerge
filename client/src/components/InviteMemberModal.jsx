@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, UserPlus, Shield, User, Send, Check, Info } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, UserPlus, Shield, User, Send, Check, Info, Search, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
 import { useTeam } from '../context/TeamContext';
 import { useToast } from '../context/ToastContext';
@@ -11,6 +11,46 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
   const [role, setRole] = useState('TEAM_MEMBER');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setEmail('');
+      setSearchResults([]);
+      setShowDropdown(false);
+      setError(null);
+      return;
+    }
+  }, [isOpen]);
+
+  // Debounced search when typing email or username
+  useEffect(() => {
+    const query = email.trim();
+    if (!query || query.length < 1) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setSearching(true);
+        const res = await api.get(`/users/search?q=${encodeURIComponent(query)}`);
+        if (res.data?.success && Array.isArray(res.data.data)) {
+          setSearchResults(res.data.data);
+          setShowDropdown(res.data.data.length > 0);
+        }
+      } catch (err) {
+        console.error('Failed to search users for invite:', err);
+      } finally {
+        setSearching(false);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [email]);
 
   if (!isOpen || !activeTeam) return null;
 
@@ -35,6 +75,7 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
       }
       setEmail('');
       setRole('TEAM_MEMBER');
+      setShowDropdown(false);
       onClose();
       if (onSuccess) onSuccess(res.data.data);
     } catch (err) {
@@ -42,6 +83,12 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSelectUser = (u) => {
+    setEmail(u.email);
+    setShowDropdown(false);
+    setSearchResults([]);
   };
 
   return (
@@ -77,18 +124,67 @@ export const InviteMemberModal = ({ isOpen, onClose, onSuccess }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          <div className="relative">
             <label className="block text-xs font-medium text-slate-300 mb-1.5">
               Invitee Email Address
             </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="colleague@flowforge.dev"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-dark-850 border border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm text-slate-100 placeholder-slate-500 outline-none transition-all"
-              required
-            />
+            <div className="relative">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setShowDropdown(true);
+                }}
+                onFocus={() => {
+                  if (searchResults.length > 0) setShowDropdown(true);
+                }}
+                placeholder="Search user or enter colleague@flowforge.dev"
+                className="w-full px-3.5 py-2.5 pr-9 rounded-xl bg-dark-850 border border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm text-slate-100 placeholder-slate-500 outline-none transition-all"
+                required
+              />
+              {searching && (
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <Loader2 className="w-4 h-4 text-brand-400 animate-spin" />
+                </div>
+              )}
+            </div>
+
+            {/* Down Search Results Dropdown */}
+            {showDropdown && searchResults.length > 0 && (
+              <div className="absolute left-0 right-0 mt-1.5 max-h-48 overflow-y-auto rounded-xl bg-dark-800 border border-slate-700 divide-y divide-slate-750 shadow-2xl z-50">
+                <div className="p-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider bg-dark-850/90 border-b border-slate-750">
+                  Matching Registered Users ({searchResults.length})
+                </div>
+                {searchResults.map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => handleSelectUser(u)}
+                    className="w-full p-2.5 flex items-center space-x-3 text-left hover:bg-dark-750 transition-colors cursor-pointer group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30 flex items-center justify-center font-bold text-xs flex-shrink-0 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+                      {(u.name || u.username || 'U')[0].toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="text-xs font-semibold text-slate-100 truncate">
+                          {u.name || u.username}
+                        </span>
+                        {u.username && (
+                          <span className="text-[10px] font-mono text-slate-400">
+                            @{u.username}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-brand-400 font-mono truncate block">
+                        {u.email}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>

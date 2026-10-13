@@ -120,11 +120,7 @@ export const WorkflowTransitionModal = ({
         formData.append('file', file);
       }
 
-      const res = await api.put(`/workflows/${workflow.id}/status`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const res = await api.put(`/workflows/${workflow.id}/status`, formData);
 
       if (res.data?.success) {
         toast.success(

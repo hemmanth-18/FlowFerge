@@ -3,7 +3,7 @@ const SupabaseService = require('./services/supabaseService');
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, async () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log('--------------------------------------------------');
   console.log(`🚀 FlowForge API Server running on port ${PORT}`);
   console.log(`🔗 Health Check: http://localhost:${PORT}/api/health`);

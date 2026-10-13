@@ -32,3 +32,5 @@ Thumbs.db
 .idea/
 .sessions.json
 server/src/.sessions.json
+.documents.json
+server/src/.documents.json

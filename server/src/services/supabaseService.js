@@ -258,6 +258,67 @@ const SupabaseService = {
     return null;
   },
 
+  async searchUsers(query = '', currentUserId = null, limit = 20) {
+    const clean = (query || '').trim().toLowerCase().replace(/^@/, '');
+    const results = new Map();
+
+    // 1. Search memoryDb first
+    for (const u of memoryDb.users.values()) {
+      if (currentUserId && u.id === currentUserId) continue;
+      if (!clean) {
+        results.set(u.id, this.sanitizeUser(u));
+      } else {
+        const emailMatch = u.email && u.email.toLowerCase().includes(clean);
+        const nameMatch = u.name && u.name.toLowerCase().includes(clean);
+        const usernameMatch = u.username && u.username.toLowerCase().includes(clean);
+        if (emailMatch || nameMatch || usernameMatch) {
+          results.set(u.id, this.sanitizeUser(u));
+        }
+      }
+      if (results.size >= limit) break;
+    }
+
+    // 2. Query Supabase users table
+    if (await areTablesReady()) {
+      try {
+        let sbQuery = supabase.from('users').select('id, name, username, email, avatar, role, created_at, last_login');
+        if (clean) {
+          sbQuery = sbQuery.or(`email.ilike.%${clean}%,name.ilike.%${clean}%,username.ilike.%${clean}%`);
+        }
+        if (currentUserId) {
+          sbQuery = sbQuery.neq('id', currentUserId);
+        }
+        sbQuery = sbQuery.limit(limit);
+
+        const { data, error } = await sbQuery;
+        if (data && !error) {
+          for (const row of data) {
+            if (!results.has(row.id)) {
+              const mapped = {
+                id: row.id,
+                name: row.name,
+                username: row.username || row.email?.split('@')[0],
+                email: row.email,
+                avatar: row.avatar,
+                role: row.role || 'MEMBER',
+                createdAt: row.created_at,
+                lastLogin: row.last_login,
+              };
+              results.set(row.id, mapped);
+              if (!memoryDb.users.has(row.id)) {
+                memoryDb.users.set(row.id, mapped);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[Supabase searchUsers error]:', err.message);
+      }
+    }
+
+    return Array.from(results.values()).slice(0, limit);
+  },
+
   async getOrCreateUser(userId, userData = {}) {
     let existing = await this.getUserById(userId);
     const now = new Date().toISOString();

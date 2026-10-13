@@ -92,9 +92,7 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
         formData.append('description', description.trim());
       }
 
-      const res = await api.post(`/workflows/${workflowId}/documents`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const res = await api.post(`/workflows/${workflowId}/documents`, formData);
 
       if (res.data?.success) {
         toast.success('Document uploaded successfully!');

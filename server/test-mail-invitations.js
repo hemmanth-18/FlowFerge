@@ -25,6 +25,10 @@ async function runTests() {
   assert(typeof mailService.isConfigured === 'function', 'mailService.isConfigured is a function');
   assert(typeof mailService.sendTeamInvitationEmail === 'function', 'sendTeamInvitationEmail is a function');
 
+  // Temporarily unset MAIL_APP_PASSWORD to test unconfigured behavior
+  const originalPass = process.env.MAIL_APP_PASSWORD;
+  delete process.env.MAIL_APP_PASSWORD;
+
   // Verify graceful unconfigured response without throwing
   const unconfiguredResult = await mailService.sendTeamInvitationEmail({
     to: 'test.colleague@example.com',
@@ -37,6 +41,9 @@ async function runTests() {
   assert(unconfiguredResult.success === false, 'Returns success: false when unconfigured');
   assert(unconfiguredResult.reason === 'unconfigured', 'Indicates reason: unconfigured');
   assert(typeof unconfiguredResult.message === 'string', 'Provides clear informational message');
+
+  // Restore password
+  if (originalPass) process.env.MAIL_APP_PASSWORD = originalPass;
 
   // TEST 2: Email validation prevents sending to empty recipient
   console.log('\n--- Test 2: Validation of Recipient Address ---');

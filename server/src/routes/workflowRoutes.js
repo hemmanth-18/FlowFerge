@@ -21,6 +21,15 @@ const upload = multer({
   },
 });
 
+const uploadSingleFile = (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
+    next();
+  });
+};
+
 router.use(authMiddleware);
 
 // Workflows list & create
@@ -33,11 +42,11 @@ router.put('/:id', rbac.requireWorkflowManager(), workflowController.updateWorkf
 router.delete('/:id', rbac.requireWorkflowOwner(), workflowController.deleteWorkflow);
 
 // Status Lifecycle Transition (with optional / mandatory attachments)
-router.put('/:id/status', rbac.requireWorkflowManager(), upload.single('file'), workflowController.updateWorkflowStatus);
+router.put('/:id/status', rbac.requireWorkflowManager(), uploadSingleFile, workflowController.updateWorkflowStatus);
 
 // Shared Workflow Documents (Section 11)
 router.get('/:id/documents', rbac.requireWorkflowAccess(), workflowController.getWorkflowDocuments);
-router.post('/:id/documents', rbac.requireWorkflowAccess(), upload.single('file'), workflowController.uploadWorkflowDocument);
+router.post('/:id/documents', rbac.requireWorkflowAccess(), uploadSingleFile, workflowController.uploadWorkflowDocument);
 router.get('/:id/documents/:docId/download', rbac.requireWorkflowAccess(), workflowController.downloadWorkflowDocument);
 router.delete('/:id/documents/:docId', rbac.requireWorkflowManager(), workflowController.deleteWorkflowDocument);
 

@@ -34,6 +34,14 @@ api.interceptors.request.use(
       config.headers['x-team-id'] = activeTeamId;
     }
 
+    // When sending FormData, remove Content-Type so Axios/browser computes multipart boundary
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+      if (typeof config.headers?.delete === 'function') {
+        config.headers.delete('Content-Type');
+      }
+    }
+
     return config;
   },
   (error) => Promise.reject(error)

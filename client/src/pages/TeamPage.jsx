@@ -20,6 +20,7 @@ import {
   Copy,
   RotateCw,
   Link as LinkIcon,
+  Search,
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { InviteMemberModal } from '../components/InviteMemberModal';
@@ -40,6 +41,7 @@ export const TeamPage = () => {
   usePageMeta('Team & Members', 'Manage workspace members, role assignments, and pending invitations.');
 
   const [members, setMembers] = useState([]);
+  const [memberSearch, setMemberSearch] = useState('');
   const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -265,14 +267,32 @@ export const TeamPage = () => {
 
         {/* 5. Team Members Table */}
         <div className="rounded-2xl bg-dark-900 border border-slate-800 overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-100 flex items-center space-x-2">
+          <div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center space-x-2">
               <Users className="w-4 h-4 text-brand-400" />
-              <span>Team Members List</span>
-            </h3>
-            <span className="text-xs text-slate-400">
-              {isAdmin ? 'Admin controls enabled' : 'View only permissions'}
-            </span>
+              <h3 className="text-sm font-bold text-slate-100">Team Members List</h3>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-dark-800 text-slate-400 font-mono">
+                {members.length}
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-3 w-full sm:w-auto">
+              {/* Member Search Bar */}
+              <div className="relative flex-1 sm:w-64">
+                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Filter by name, email, or role..."
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 bg-dark-850 border border-slate-800 focus:border-brand-500 rounded-xl text-xs text-slate-200 placeholder-slate-500 outline-none transition-all"
+                />
+              </div>
+
+              <span className="text-xs text-slate-400 hidden md:inline">
+                {isAdmin ? 'Admin controls enabled' : 'View only permissions'}
+              </span>
+            </div>
           </div>
 
           {loading ? (
@@ -293,7 +313,15 @@ export const TeamPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/80">
-                  {members.map((member) => {
+                  {members.filter((m) => {
+                    if (!memberSearch.trim()) return true;
+                    const q = memberSearch.toLowerCase();
+                    return (
+                      (m.name && m.name.toLowerCase().includes(q)) ||
+                      (m.email && m.email.toLowerCase().includes(q)) ||
+                      (m.role && m.role.toLowerCase().includes(q))
+                    );
+                  }).map((member) => {
                     const isSelf = member.id === user?.id;
                     const isTeamAdmin = member.role === 'TEAM_ADMIN';
 
