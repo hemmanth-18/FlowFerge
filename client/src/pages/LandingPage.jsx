@@ -26,6 +26,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { usePageMeta } from '../hooks/usePageMeta';
+import TechText from '../components/TechText';
+import MicroSlats from '../components/MicroSlats';
 
 export const LandingPage = () => {
   const { user } = useAuth();
@@ -243,23 +245,59 @@ export const LandingPage = () => {
 
       {/* Main Content Container */}
       <main className="flex-1 w-full max-w-full">
-        {/* Hero Section */}
-        <section className="relative pt-16 pb-16 sm:pt-24 sm:pb-24 overflow-hidden">
-          {/* Subtle Ambient Background Gradients */}
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] max-w-full h-[400px] bg-gradient-to-tr from-brand-600/15 to-sky-500/10 rounded-full blur-[140px] pointer-events-none" />
-          <div className="absolute top-1/3 right-1/4 w-[350px] max-w-full h-[280px] bg-brand-500/10 rounded-full blur-[120px] pointer-events-none" />
+        {/* Continuous Interactive MicroSlats Wave Canvas spanning entire landing page until enquiry section */}
+        <div className="relative overflow-hidden">
+          {/* Ambient MicroSlats Fluid Waves Canvas */}
+          <div className="absolute inset-0 z-0 opacity-25 pointer-events-none overflow-hidden">
+            <MicroSlats
+              preset="swell"
+              color="#A855F7"
+              glintColor="#ffffff"
+              backgroundColor="transparent"
+              slatWidth={10}
+              slatHeight={24}
+              gap={3}
+              roundness={0.75}
+              interactive={true}
+              cursorStrength={1.2}
+              cursorSize={45}
+              swirl={0.1}
+              trail={1.4}
+              lean={0.2}
+              intro={true}
+            />
+          </div>
 
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center relative z-10">
+          {/* Hero Section */}
+          <section className="relative pt-16 pb-16 sm:pt-24 sm:pb-24 overflow-hidden">
+            {/* Subtle Ambient Background Gradients */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] max-w-full h-[400px] bg-gradient-to-tr from-brand-600/15 to-sky-500/10 rounded-full blur-[140px] pointer-events-none" />
+            <div className="absolute top-1/3 right-1/4 w-[350px] max-w-full h-[280px] bg-brand-500/10 rounded-full blur-[120px] pointer-events-none" />
+
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center relative z-10">
             {/* Pill Tag */}
             <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-300 text-xs font-medium mb-6 animate-pulse-subtle">
               <Sparkles className="w-3.5 h-3.5 text-brand-400" />
               <span>Smart Workflow Management Platform</span>
             </div>
 
-            {/* Hero Heading */}
-            <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white mb-4">
-              FlowForge
-            </h1>
+            {/* TechText Interactive Wordmark — FLOWFERGE */}
+            <div className="w-full h-36 sm:h-48 md:h-56 relative flex items-center justify-center my-2 max-w-4xl mx-auto">
+              <TechText
+                text="FLOWFERGE"
+                fontWeight={800}
+                fontSize={120}
+                reveal="letter"
+                dashLength={4}
+                dashGap={2}
+                specks={15}
+                color="#ffffff"
+                accentColor="#A855F7"
+                speed={1.2}
+              />
+              <h1 className="sr-only">FLOWFERGE — FlowForge Workflow Management Platform</h1>
+            </div>
+
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-cyan-400 to-indigo-300 mb-6">
               Build. Collaborate. Automate.
             </h2>
@@ -372,7 +410,7 @@ export const LandingPage = () => {
         </section>
 
         {/* Feature Grid */}
-        <section id="features" className="py-16 sm:py-20 border-t border-white/10 bg-[#080B12]">
+        <section id="features" className="relative z-10 py-16 sm:py-20 border-t border-white/10 bg-transparent">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-12">
               <span className="text-xs font-mono uppercase tracking-wider text-brand-400 font-semibold block mb-2">
@@ -421,7 +459,7 @@ export const LandingPage = () => {
         </section>
 
         {/* Security & Solutions Section */}
-        <section id="solutions" className="py-16 sm:py-20 border-t border-white/10 bg-[#080B12]">
+        <section id="solutions" className="relative z-10 py-16 sm:py-20 border-t border-white/10 bg-transparent">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
               <div className="space-y-4">
@@ -465,6 +503,7 @@ export const LandingPage = () => {
             </div>
           </div>
         </section>
+        </div>
 
         {/* Contact & Support Section */}
         <section id="contact" className="py-16 sm:py-20 border-t border-white/10 bg-[#080B12]">
