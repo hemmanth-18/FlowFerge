@@ -23,6 +23,7 @@ import {
   Mail,
   User,
   Share2,
+  FileText,
   X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -103,6 +104,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'My Workflows', path: '/workflows?filter=owned', icon: FolderGit2 },
     { label: 'Shared With Me', path: '/workflows?filter=shared', icon: Share2 },
+    { label: 'Documents', path: '/documents', icon: FileText },
     { label: 'My Tasks', path: '/tasks', icon: CheckSquare },
     { label: 'Automations', path: '/automations', icon: Sparkles },
     { label: 'Teams', path: '/team', icon: Building2 },

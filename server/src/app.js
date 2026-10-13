@@ -18,6 +18,7 @@ const automationRoutes = require('./routes/automationRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const teamRoutes = require('./routes/teamRoutes');
 const auditRoutes = require('./routes/auditRoutes');
+const documentRoutes = require('./routes/documentRoutes');
 const SupabaseService = require('./services/supabaseService');
 
 const app = express();
@@ -86,6 +87,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/team', teamRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/documents', documentRoutes);
 
 // 404 Handler
 app.use((req, res) => {

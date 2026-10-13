@@ -31,7 +31,8 @@ import {
 import { Navbar } from '../components/Navbar';
 import { InviteMemberModal } from '../components/InviteMemberModal';
 import { ArchiveTeamModal } from '../components/ArchiveTeamModal';
-import { SendTeamDocumentModal } from '../components/SendTeamDocumentModal';
+import { DocumentShareModal } from '../components/DocumentShareModal';
+import { DocumentPreviewModal } from '../components/DocumentPreviewModal';
 import { TeamIcon } from '../components/TeamIcon';
 import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
@@ -56,6 +57,8 @@ export const TeamPage = () => {
   const [isSendDocModalOpen, setIsSendDocModalOpen] = useState(false);
   const [teamDocuments, setTeamDocuments] = useState([]);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [resendingId, setResendingId] = useState(null);
   const [selectedProfileUser, setSelectedProfileUser] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -666,16 +669,16 @@ export const TeamPage = () => {
                         </span>
                         {/* Privacy label */}
                         <span
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase flex items-center space-x-1 ${
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-semibold flex items-center space-x-1 ${
                             doc.isPrivate
-                              ? 'bg-amber-500/15 border border-amber-500/30 text-amber-300'
+                              ? 'bg-purple-500/15 border border-purple-500/30 text-purple-300'
                               : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
                           }`}
                         >
                           {doc.isPrivate ? (
                             <>
-                              <Lock className="w-3 h-3 text-amber-400" />
-                              <span>Private</span>
+                              <Lock className="w-3 h-3 text-purple-400" />
+                              <span className="truncate max-w-[140px]">{doc.visibilityLabel || 'Private'}</span>
                             </>
                           ) : (
                             <>
@@ -701,6 +704,17 @@ export const TeamPage = () => {
                   </div>
 
                   <div className="flex items-center space-x-1.5 self-end sm:self-auto flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewDoc(doc);
+                        setPreviewModalOpen(true);
+                      }}
+                      className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 hover:text-white border border-white/10 transition-colors cursor-pointer"
+                      title="Preview document"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleDownloadDoc(doc)}
@@ -751,15 +765,26 @@ export const TeamPage = () => {
         )}
       </div>
 
-      {/* Send Team Document to Workflows Modal */}
+      {/* Secure Document Sharing Wizard Modal */}
       {activeTeam && (
-        <SendTeamDocumentModal
+        <DocumentShareModal
           isOpen={isSendDocModalOpen}
           onClose={() => setIsSendDocModalOpen(false)}
-          team={activeTeam}
+          initialTeamId={activeTeam.id}
           onSuccess={() => fetchTeamDocuments()}
         />
       )}
+
+      {/* Document In-App Preview Modal */}
+      <DocumentPreviewModal
+        isOpen={previewModalOpen}
+        onClose={() => {
+          setPreviewModalOpen(false);
+          setPreviewDoc(null);
+        }}
+        documentId={previewDoc?.id}
+        documentData={previewDoc}
+      />
 
       {/* Invite Member Modal */}
       <InviteMemberModal

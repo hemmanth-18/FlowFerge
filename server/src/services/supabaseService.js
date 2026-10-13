@@ -27,6 +27,7 @@ if (supabaseUrl && supabaseKey) {
 
 const SESSIONS_FILE = path.join(__dirname, '..', '.sessions.json');
 const DOCUMENTS_FILE = path.join(__dirname, '..', '.documents.json');
+const DOCUMENT_RECIPIENTS_FILE = path.join(__dirname, '..', '.document_recipients.json');
 
 // In-memory store for high performance and fallback synchronization
 const memoryDb = {
@@ -40,6 +41,7 @@ const memoryDb = {
   workflowMembers: new Map(), // `${workflowId}:${userId}` -> { id, workflowId, userId, role, joinedAt }
   workflowInvitations: new Map(), // invitationId -> invitation
   workflowDocuments: new Map(), // docId -> document metadata
+  documentRecipients: new Map(), // recId -> recipient entry
   tasks: new Map(),
   automations: new Map(),
   automationLogs: [],
@@ -97,7 +99,21 @@ function loadPersistedDocuments() {
         for (const doc of data) {
           if (doc && doc.id) {
             doc.isPrivate = Boolean(doc.isPrivate);
+            doc.visibility = doc.visibility || (doc.isPrivate ? 'PRIVATE' : 'PUBLIC');
             memoryDb.workflowDocuments.set(doc.id, doc);
+          }
+        }
+      }
+    }
+  } catch (e) {}
+
+  try {
+    if (fs.existsSync(DOCUMENT_RECIPIENTS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(DOCUMENT_RECIPIENTS_FILE, 'utf8'));
+      if (Array.isArray(data)) {
+        for (const r of data) {
+          if (r && r.id) {
+            memoryDb.documentRecipients.set(r.id, r);
           }
         }
       }
@@ -109,6 +125,11 @@ function savePersistedDocuments() {
   try {
     const list = Array.from(memoryDb.workflowDocuments.values());
     fs.writeFileSync(DOCUMENTS_FILE, JSON.stringify(list, null, 2), 'utf8');
+  } catch (e) {}
+
+  try {
+    const recs = Array.from(memoryDb.documentRecipients.values());
+    fs.writeFileSync(DOCUMENT_RECIPIENTS_FILE, JSON.stringify(recs, null, 2), 'utf8');
   } catch (e) {}
 }
 
@@ -2024,7 +2045,26 @@ const SupabaseService = {
       });
     }
 
-    // 4. Resolve full user details
+    // 4. Also include team members if workflow belongs to an open team
+    if (wf.teamId && !wf.isRestricted) {
+      try {
+        const teamMems = await this.getTeamMembers(wf.teamId);
+        for (const tm of teamMems) {
+          if (!memberMap.has(tm.id)) {
+            let wfRole = 'MEMBER';
+            if (tm.role === 'TEAM_ADMIN') wfRole = 'OWNER';
+            else if (tm.role === 'TEAM_MANAGER') wfRole = 'MANAGER';
+            memberMap.set(tm.id, {
+              userId: tm.id,
+              role: wfRole,
+              joinedAt: tm.joinedAt || wf.createdAt,
+            });
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 5. Resolve full user details
     const members = [];
     for (const m of memberMap.values()) {
       const u = await this.getUserById(m.userId);
@@ -3708,15 +3748,108 @@ const SupabaseService = {
     return null;
   },
 
+  // Helper: Get recipients for a document
+  getDocumentRecipients(documentId) {
+    const list = [];
+    for (const r of memoryDb.documentRecipients.values()) {
+      if (r.documentId === documentId) list.push(r);
+    }
+    return list;
+  },
+
   // Document management methods
-  async saveWorkflowDocument({ workflowId, file, uploadedBy, description, isPrivate = false }) {
+  async saveWorkflowDocument({
+    workflowId,
+    file,
+    uploadedBy,
+    description,
+    recipientIds = [],
+    shareWithEntireWorkflow = false,
+    isPrivate = false,
+  }) {
     if (!workflowId) throw new Error('Workflow ID is required');
     if (!file) throw new Error('File is required');
 
+    // 1. File Type & Size Validation (PDF, DOC, DOCX)
     const ext = path.extname(file.originalname).toLowerCase();
-    const allowed = ['.pdf', '.doc', '.docx', '.txt', '.png', '.jpg', '.jpeg', '.csv', '.xlsx', '.xls', '.zip', '.ppt', '.pptx'];
+    const allowed = ['.pdf', '.doc', '.docx'];
     if (!allowed.includes(ext)) {
-      throw new Error(`Unsupported file type (${ext}). Only PDF, Word, Excel, CSV, PPT, TXT, images, and ZIP files are allowed.`);
+      throw new Error(`Unsupported file type (${ext}). Only PDF (.pdf) and Word documents (.doc, .docx) are allowed.`);
+    }
+
+    if (file.size > 25 * 1024 * 1024) {
+      throw new Error('File size exceeds the 25MB limit.');
+    }
+
+    // Magic bytes header verification
+    if (file.buffer && file.buffer.length >= 4) {
+      const b0 = file.buffer[0];
+      const b1 = file.buffer[1];
+      const b2 = file.buffer[2];
+      const b3 = file.buffer[3];
+      if (ext === '.pdf') {
+        const isPdf = b0 === 0x25 && b1 === 0x50 && b2 === 0x44 && b3 === 0x46;
+        if (!isPdf) throw new Error('Invalid or corrupted PDF file header.');
+      } else if (ext === '.docx') {
+        const isDocx = b0 === 0x50 && b1 === 0x4b && (b2 === 0x03 || b2 === 0x05 || b2 === 0x07);
+        if (!isDocx) throw new Error('Invalid or corrupted Word (.docx) file signature.');
+      } else if (ext === '.doc') {
+        const isDoc = b0 === 0xd0 && b1 === 0xcf && b2 === 0x11 && b3 === 0xe0;
+        if (!isDoc) throw new Error('Invalid or corrupted Word (.doc) file signature.');
+      }
+    }
+
+    const wf = await this.getWorkflowById(workflowId);
+    if (!wf) throw new Error('Workflow not found');
+
+    // 2. Check Sender Authorization
+    const senderRole = await this.getWorkflowMemberRole(workflowId, uploadedBy);
+    const isAuthorizedSender =
+      senderRole === 'OWNER' ||
+      senderRole === 'MANAGER' ||
+      senderRole === 'WORKFLOW_MANAGER' ||
+      senderRole === 'ADMIN';
+
+    if (!isAuthorizedSender) {
+      throw new Error('Access denied: You must be a workflow manager, owner, or administrator to send documents.');
+    }
+
+    // 3. Normalize recipientIds
+    let cleanRecipientIds = [];
+    if (Array.isArray(recipientIds)) {
+      cleanRecipientIds = recipientIds.filter(Boolean);
+    } else if (typeof recipientIds === 'string' && recipientIds.trim()) {
+      cleanRecipientIds = recipientIds.split(',').map((id) => id.trim()).filter(Boolean);
+    }
+
+    // 4. Determine Visibility Automatically
+    const isPublicExplicit = shareWithEntireWorkflow === true || shareWithEntireWorkflow === 'true';
+    let visibility = 'PUBLIC';
+    let privateDelivery = false;
+
+    if (cleanRecipientIds.length > 0) {
+      visibility = 'PRIVATE';
+      privateDelivery = true;
+    } else if (isPublicExplicit) {
+      visibility = 'PUBLIC';
+      privateDelivery = false;
+    } else if (isPrivate === true || isPrivate === 'true') {
+      throw new Error('Please select at least one recipient for private document delivery or choose Share with Entire Workflow.');
+    } else {
+      visibility = 'PUBLIC';
+      privateDelivery = false;
+    }
+
+    // 5. If private delivery, validate all recipients belong to this workflow
+    const eligibleMembers = await this.getWorkflowMembers(workflowId);
+    const eligibleMap = new Map(eligibleMembers.map((m) => [m.id, m]));
+
+    if (privateDelivery) {
+      for (const rid of cleanRecipientIds) {
+        if (!eligibleMap.has(rid)) {
+          throw new Error(`Recipient ${rid} is not an authorized member of workflow "${wf.name}".`);
+        }
+      }
     }
 
     const docId = `doc_${uuidv4().replace(/-/g, '').substring(0, 10)}`;
@@ -3739,10 +3872,14 @@ const SupabaseService = {
     }
 
     const uploader = await this.getUserById(uploadedBy);
+    const team = wf.teamId ? await this.getTeamById(wf.teamId) : null;
 
     const doc = {
       id: docId,
       workflowId,
+      workflowName: wf.name,
+      teamId: wf.teamId || null,
+      teamName: team?.name || null,
       fileName: file.originalname,
       storagePath,
       fileType: ext.replace('.', '').toUpperCase(),
@@ -3750,15 +3887,92 @@ const SupabaseService = {
       fileSize: file.size,
       uploadedBy,
       uploaderName: uploader?.name || 'Team Member',
+      uploaderUsername: uploader?.username || 'member',
       description: description || '',
-      isPrivate: Boolean(isPrivate),
+      visibility,
+      isPrivate: privateDelivery,
       createdAt: now,
+      updatedAt: now,
     };
 
     memoryDb.workflowDocuments.set(docId, doc);
+
+    // Save individual recipient records for private delivery
+    const recipientRecords = [];
+    if (privateDelivery) {
+      for (const rid of cleanRecipientIds) {
+        const targetMember = eligibleMap.get(rid) || (await this.getUserById(rid));
+        const recId = `drec_${uuidv4().replace(/-/g, '').substring(0, 10)}`;
+        const recEntry = {
+          id: recId,
+          documentId: docId,
+          workflowId,
+          recipientUserId: rid,
+          recipientUsername: targetMember?.username || 'member',
+          recipientName: targetMember?.name || 'Member',
+          recipientEmail: targetMember?.email || '',
+          sentAt: now,
+          status: 'DELIVERED',
+        };
+
+        memoryDb.documentRecipients.set(recId, recEntry);
+        recipientRecords.push(recEntry);
+
+        // Sync to Supabase table if available
+        if (supabase) {
+          try {
+            await supabase.from('document_recipients').upsert({
+              id: recId,
+              document_id: docId,
+              workflow_id: workflowId,
+              recipient_user_id: rid,
+              recipient_username: targetMember?.username || 'member',
+              recipient_name: targetMember?.name || 'Member',
+              recipient_email: targetMember?.email || '',
+              sent_at: now,
+              status: 'DELIVERED',
+            });
+          } catch (e) {}
+        }
+
+        // Private in-app notification to this recipient only
+        await this.createNotification(rid, {
+          title: 'Private Document Received',
+          message: `${uploader?.name || 'Manager'} sent you a private document: "${file.originalname}" in workflow "${wf.name}".`,
+          type: 'DOCUMENT_RECEIVED',
+          link: `/documents?tab=received&docId=${docId}`,
+        });
+
+        // Individual private email (no shared recipient list)
+        if (targetMember?.email) {
+          mailService.sendPrivateDocumentEmail({
+            to: targetMember.email,
+            recipientName: targetMember.name,
+            senderName: uploader?.name || 'Workflow Manager',
+            documentName: file.originalname,
+            workflowName: wf.name,
+            teamName: team?.name || '',
+            documentUrl: `https://flow-ferge.vercel.app/documents?tab=received&docId=${docId}`,
+          }).catch(() => {});
+        }
+      }
+    } else {
+      // Public document: notify workflow members
+      for (const m of eligibleMembers) {
+        if (m.id !== uploadedBy) {
+          await this.createNotification(m.id, {
+            title: 'New Workflow Document',
+            message: `${uploader?.name || 'Member'} shared "${file.originalname}" with workflow "${wf.name}".`,
+            type: 'DOCUMENT_SHARED',
+            link: `/workflows/${workflowId}`,
+          });
+        }
+      }
+    }
+
     savePersistedDocuments();
 
-    // Sync to Supabase table if table exists
+    // Sync document to Supabase table
     if (supabase) {
       try {
         await supabase.from('workflow_documents').upsert({
@@ -3772,42 +3986,247 @@ const SupabaseService = {
           uploaded_by: uploadedBy,
           uploader_name: uploader?.name || 'Team Member',
           description: description || '',
-          is_private: Boolean(isPrivate),
+          visibility,
+          is_private: privateDelivery,
           created_at: now,
+          updated_at: now,
         });
-      } catch (err) {
-        // Handled gracefully if table/column does not exist yet
-      }
+      } catch (err) {}
     }
 
-    // Log activity
+    // Log team activity without leaking private recipients or sensitive filenames
     await this.logTeamActivity(null, {
       action: 'DOCUMENT_UPLOADED',
-      details: `Document "${file.originalname}" (${isPrivate ? 'Private' : 'Public'}) attached to workflow`,
+      details: privateDelivery
+        ? `Uploaded a private document to workflow "${wf.name}"`
+        : `Shared document "${file.originalname}" with workflow "${wf.name}"`,
       userId: uploadedBy,
       workflowId,
     });
 
-    return doc;
+    const primaryRecipient = recipientRecords[0]?.recipientUsername || 'recipient';
+    const visibilityLabel = privateDelivery
+      ? recipientRecords.length > 1
+        ? `Private — ${primaryRecipient} + ${recipientRecords.length - 1}`
+        : `Private — ${primaryRecipient}`
+      : 'Public';
+
+    return {
+      ...doc,
+      visibilityLabel,
+      recipients: recipientRecords.map((r) => ({
+        id: r.recipientUserId,
+        username: r.recipientUsername,
+        name: r.recipientName,
+      })),
+    };
   },
 
-  async getWorkflowDocuments(workflowId) {
+  async getWorkflowDocuments(workflowId, userId) {
+    if (!workflowId) return [];
+    const wf = await this.getWorkflowById(workflowId);
+    if (!wf) return [];
+
+    const role = await this.getWorkflowMemberRole(workflowId, userId);
+    if (!role) return [];
+
+    const isAdminOrManager =
+      role === 'OWNER' ||
+      role === 'MANAGER' ||
+      role === 'WORKFLOW_MANAGER' ||
+      role === 'ADMIN';
+
     const list = [];
     for (const doc of memoryDb.workflowDocuments.values()) {
-      if (doc.workflowId === workflowId) {
-        list.push(doc);
+      if (doc.workflowId !== workflowId) continue;
+
+      const isPublic = doc.visibility === 'PUBLIC' || !doc.isPrivate;
+      if (isPublic) {
+        list.push({
+          ...doc,
+          workflowName: wf.name,
+          visibility: 'PUBLIC',
+          visibilityLabel: 'Public',
+          canDelete: isAdminOrManager || doc.uploadedBy === userId,
+        });
+        continue;
+      }
+
+      // Private document authorization
+      const recs = this.getDocumentRecipients(doc.id);
+      const isSender = doc.uploadedBy === userId;
+      const userRecipient = recs.find((r) => r.recipientUserId === userId);
+      const isRecipient = Boolean(userRecipient);
+
+      if (isSender || isAdminOrManager) {
+        const primary = recs[0]?.recipientUsername || 'recipient';
+        const label =
+          recs.length > 1
+            ? `Private — ${primary} + ${recs.length - 1}`
+            : `Private — ${primary}`;
+
+        list.push({
+          ...doc,
+          workflowName: wf.name,
+          visibility: 'PRIVATE',
+          visibilityLabel: label,
+          recipients: recs.map((r) => ({
+            id: r.recipientUserId,
+            username: r.recipientUsername,
+            name: r.recipientName,
+          })),
+          canDelete: isSender || isAdminOrManager,
+        });
+      } else if (isRecipient) {
+        // Intended recipient: only see their own delivery without exposing other recipients
+        list.push({
+          ...doc,
+          workflowName: wf.name,
+          visibility: 'PRIVATE',
+          visibilityLabel: `Private — ${userRecipient.recipientUsername || 'you'}`,
+          recipients: [{
+            id: userId,
+            username: userRecipient.recipientUsername,
+            name: userRecipient.recipientName,
+          }],
+          canDelete: false,
+        });
+      }
+      // Ordinary members: totally omitted (zero leak)
+    }
+
+    return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  },
+
+  async getReceivedDocuments(userId) {
+    if (!userId) return [];
+    const received = [];
+
+    for (const rec of memoryDb.documentRecipients.values()) {
+      if (rec.recipientUserId === userId) {
+        const doc = memoryDb.workflowDocuments.get(rec.documentId);
+        if (doc) {
+          received.push({
+            ...doc,
+            visibility: 'PRIVATE',
+            visibilityLabel: `Private — ${rec.recipientUsername || 'you'}`,
+            receivedAt: rec.sentAt,
+            deliveryStatus: rec.status,
+            recipients: [{
+              id: userId,
+              username: rec.recipientUsername,
+              name: rec.recipientName,
+            }],
+            canDelete: false,
+          });
+        }
       }
     }
-    return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return received.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  },
+
+  async getMyUploadedDocuments(userId) {
+    if (!userId) return [];
+    const myDocs = [];
+
+    for (const doc of memoryDb.workflowDocuments.values()) {
+      if (doc.uploadedBy === userId) {
+        const isPrivate = doc.visibility === 'PRIVATE' || doc.isPrivate;
+        let visibilityLabel = 'Public';
+        let recipients = [];
+
+        if (isPrivate) {
+          const recs = this.getDocumentRecipients(doc.id);
+          const primary = recs[0]?.recipientUsername || 'recipient';
+          visibilityLabel =
+            recs.length > 1
+              ? `Private — ${primary} + ${recs.length - 1}`
+              : `Private — ${primary}`;
+          recipients = recs.map((r) => ({
+            id: r.recipientUserId,
+            username: r.recipientUsername,
+            name: r.recipientName,
+          }));
+        }
+
+        myDocs.push({
+          ...doc,
+          visibility: isPrivate ? 'PRIVATE' : 'PUBLIC',
+          visibilityLabel,
+          recipients,
+          canDelete: true,
+        });
+      }
+    }
+
+    return myDocs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  },
+
+  async getAllAccessibleDocuments(userId, { teamId = null, workflowId = null, view = 'workflow' } = {}) {
+    if (!userId) return [];
+
+    if (view === 'received') {
+      return this.getReceivedDocuments(userId);
+    }
+    if (view === 'my') {
+      return this.getMyUploadedDocuments(userId);
+    }
+    if (workflowId) {
+      return this.getWorkflowDocuments(workflowId, userId);
+    }
+
+    // Team-scoped document retrieval
+    if (teamId) {
+      const teamWorkflows = await this.getWorkflowsByTeam(teamId, userId);
+      const allDocs = [];
+      for (const wf of teamWorkflows || []) {
+        const docs = await this.getWorkflowDocuments(wf.id, userId);
+        allDocs.push(...docs);
+      }
+      return allDocs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    return this.getReceivedDocuments(userId);
   },
 
   async getDocumentDownloadUrl(docId, userId) {
     const doc = memoryDb.workflowDocuments.get(docId);
     if (!doc) throw new Error('Document not found');
 
-    const isUploader = doc.uploadedBy === userId;
     const role = await this.getWorkflowMemberRole(doc.workflowId, userId);
-    if (!role && !isUploader) throw new Error('Access denied: You are not authorized to view documents for this workflow.');
+    const isSender = doc.uploadedBy === userId;
+    const recs = this.getDocumentRecipients(doc.id);
+    const isRecipient = recs.some((r) => r.recipientUserId === userId);
+    const isAdminOrManager =
+      role === 'OWNER' ||
+      role === 'MANAGER' ||
+      role === 'WORKFLOW_MANAGER' ||
+      role === 'ADMIN';
+
+    const isPrivate = doc.visibility === 'PRIVATE' || doc.isPrivate;
+
+    if (isPrivate) {
+      if (!isSender && !isRecipient && !isAdminOrManager) {
+        // Return 404/not found so unauthorized user cannot infer existence
+        throw new Error('Document not found');
+      }
+
+      // Audit administrator access to private documents
+      if (isAdminOrManager && !isSender && !isRecipient) {
+        await this.logAudit({
+          teamId: doc.teamId,
+          userId,
+          action: 'ADMIN_PRIVATE_DOCUMENT_ACCESS',
+          reason: `Administrator accessed private document ${doc.fileName} (${doc.id})`,
+          result: 'SUCCESS',
+        });
+      }
+    } else {
+      if (!role && !isSender) {
+        throw new Error('Document not found');
+      }
+    }
 
     // Generate signed URL if Supabase storage is active
     if (supabase) {
@@ -3824,16 +4243,26 @@ const SupabaseService = {
     return { url: null, doc };
   },
 
+  async getDocumentPreview(docId, userId) {
+    const downloadData = await this.getDocumentDownloadUrl(docId, userId);
+    return {
+      doc: downloadData.doc,
+      previewUrl: downloadData.url,
+      isPdf: downloadData.doc?.fileType === 'PDF',
+      isWord: ['DOC', 'DOCX'].includes(downloadData.doc?.fileType),
+    };
+  },
+
   async deleteWorkflowDocument(docId, userId) {
     const doc = memoryDb.workflowDocuments.get(docId);
     if (!doc) throw new Error('Document not found');
 
     const role = await this.getWorkflowMemberRole(doc.workflowId, userId);
-    const isOwnerOrManager = role === 'OWNER' || role === 'MANAGER';
+    const isOwnerOrManager = role === 'OWNER' || role === 'MANAGER' || role === 'ADMIN';
     const isUploader = doc.uploadedBy === userId;
 
     if (!isOwnerOrManager && !isUploader) {
-      throw new Error('Access denied: Only workflow managers or the uploader can delete this document.');
+      throw new Error('Access denied: Only workflow managers, owners, or the uploader can delete this document.');
     }
 
     if (supabase) {
@@ -3843,6 +4272,16 @@ const SupabaseService = {
       try {
         await supabase.from('workflow_documents').delete().eq('id', docId);
       } catch (e) {}
+      try {
+        await supabase.from('document_recipients').delete().eq('document_id', docId);
+      } catch (e) {}
+    }
+
+    // Delete recipient records
+    for (const [key, rec] of memoryDb.documentRecipients.entries()) {
+      if (rec.documentId === docId) {
+        memoryDb.documentRecipients.delete(key);
+      }
     }
 
     memoryDb.workflowDocuments.delete(docId);

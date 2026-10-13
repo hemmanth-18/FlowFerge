@@ -1,0 +1,57 @@
+[
+  {
+    "id": "drec_52bb8881b4",
+    "documentId": "doc_f19875e16c",
+    "workflowId": "wf_d8211d3c",
+    "recipientUserId": "user_50e419226222",
+    "recipientUsername": "hemmanth18",
+    "recipientName": "Hemmanth-g",
+    "recipientEmail": "hemmanth18@gmail.com",
+    "sentAt": "2026-10-13T17:36:15.273Z",
+    "status": "DELIVERED"
+  },
+  {
+    "id": "drec_e9942e9ccb",
+    "documentId": "doc_43e4264dc0",
+    "workflowId": "wf_dc78c090",
+    "recipientUserId": "user_ravi",
+    "recipientUsername": "ravi",
+    "recipientName": "Ravi",
+    "recipientEmail": "ravi@example.com",
+    "sentAt": "2026-10-13T17:39:06.477Z",
+    "status": "DELIVERED"
+  },
+  {
+    "id": "drec_ad2e0878e0",
+    "documentId": "doc_a76871e897",
+    "workflowId": "wf_2363c863",
+    "recipientUserId": "user_ravi",
+    "recipientUsername": "ravi",
+    "recipientName": "Ravi",
+    "recipientEmail": "ravi@example.com",
+    "sentAt": "2026-10-13T17:39:41.806Z",
+    "status": "DELIVERED"
+  },
+  {
+    "id": "drec_b3431c0013",
+    "documentId": "doc_a76871e897",
+    "workflowId": "wf_2363c863",
+    "recipientUserId": "user_kumar",
+    "recipientUsername": "kumar",
+    "recipientName": "Kumar",
+    "recipientEmail": "kumar@example.com",
+    "sentAt": "2026-10-13T17:39:41.806Z",
+    "status": "DELIVERED"
+  },
+  {
+    "id": "drec_712e726eec",
+    "documentId": "doc_dc451adbd1",
+    "workflowId": "wf_2363c863",
+    "recipientUserId": "user_kumar",
+    "recipientUsername": "kumar",
+    "recipientName": "Kumar",
+    "recipientEmail": "kumar@example.com",
+    "sentAt": "2026-10-13T17:39:46.899Z",
+    "status": "DELIVERED"
+  }
+]

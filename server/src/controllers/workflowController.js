@@ -276,7 +276,8 @@ const workflowController = {
   async getWorkflowDocuments(req, res) {
     try {
       const { id } = req.params;
-      const documents = await SupabaseService.getWorkflowDocuments(id);
+      const userId = req.user?.id;
+      const documents = await SupabaseService.getWorkflowDocuments(id, userId);
       return res.json({ success: true, data: documents });
     } catch (err) {
       console.error('[Get Workflow Documents Error]:', err);
@@ -288,8 +289,9 @@ const workflowController = {
   async uploadWorkflowDocument(req, res) {
     try {
       const { id } = req.params;
-      const userId = req.user.id;
-      const { description, isPrivate } = req.body;
+      const userId = req.user?.id;
+      const file = req.file;
+      const { description, isPrivate, recipientIds, shareWithEntireWorkflow } = req.body;
 
       if (!file) {
         return res.status(400).json({ success: false, error: 'No document file provided' });
@@ -300,6 +302,8 @@ const workflowController = {
         file,
         uploadedBy: userId,
         description,
+        recipientIds,
+        shareWithEntireWorkflow: shareWithEntireWorkflow === 'true' || shareWithEntireWorkflow === true,
         isPrivate: isPrivate === 'true' || isPrivate === true,
       });
 

@@ -13,6 +13,7 @@ import { WorkflowBuilderPage } from './pages/WorkflowBuilderPage';
 import { TasksPage } from './pages/TasksPage';
 import { AutomationsPage } from './pages/AutomationsPage';
 import { TeamPage } from './pages/TeamPage';
+import { DocumentsPage } from './pages/DocumentsPage';
 import { ActivityPage } from './pages/ActivityPage';
 import { AuditLogsPage } from './pages/AuditLogsPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -66,6 +67,7 @@ export const App = () => {
         <Route path="workflows" element={<WorkflowsPage />} />
         <Route path="workflows/:id" element={<WorkflowBuilderPage />} />
         <Route path="tasks" element={<TasksPage />} />
+        <Route path="documents" element={<DocumentsPage />} />
         <Route path="automations" element={<AutomationsPage />} />
         <Route path="team" element={<TeamPage />} />
         <Route path="people" element={<PeoplePage />} />
