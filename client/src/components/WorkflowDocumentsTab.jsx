@@ -12,9 +12,13 @@ import {
   Plus,
   CheckCircle2,
   AlertCircle,
+  X,
+  Paperclip,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
+
+const ALLOWED_EXTS = ['.pdf', '.doc', '.docx', '.txt', '.png', '.jpg', '.jpeg', '.csv', '.xlsx', '.xls', '.zip', '.ppt', '.pptx'];
 
 export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
   const toast = useToast();
@@ -25,6 +29,7 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
 
   const fetchDocuments = async () => {
     if (!workflowId) return;
@@ -70,6 +75,29 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
     }
   };
 
+  const handleFileDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) {
+      handleFileSelected(file);
+    }
+  };
+
+  const handleFileSelected = (file) => {
+    setError('');
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    if (!ALLOWED_EXTS.includes(ext)) {
+      setError(`Unsupported file type (${ext}). Supported: PDF, DOC, DOCX, TXT, images (PNG, JPG), spreadsheets.`);
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      setError('File size exceeds the 25MB limit.');
+      return;
+    }
+    setSelectedFile(file);
+  };
+
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -79,8 +107,8 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
     }
 
     const ext = selectedFile.name.substring(selectedFile.name.lastIndexOf('.')).toLowerCase();
-    if (!['.pdf', '.doc', '.docx'].includes(ext)) {
-      setError('Only PDF, DOC, and DOCX documents are accepted.');
+    if (!ALLOWED_EXTS.includes(ext)) {
+      setError(`Unsupported file format (${ext}). Supported: PDF, DOC, DOCX, TXT, images, and spreadsheets.`);
       return;
     }
 
@@ -127,8 +155,12 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
 
         <button
           type="button"
-          onClick={() => setUploadModalOpen(true)}
-          className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-brand-500/20 transition-all self-start sm:self-auto"
+          onClick={() => {
+            setError('');
+            setSelectedFile(null);
+            setUploadModalOpen(true);
+          }}
+          className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-brand-500/20 transition-all self-start sm:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Upload Document</span>
@@ -152,8 +184,12 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
           </p>
           <button
             type="button"
-            onClick={() => setUploadModalOpen(true)}
-            className="mt-4 px-4 py-2 rounded-xl bg-brand-600/30 hover:bg-brand-600/50 border border-brand-500/40 text-brand-200 text-xs font-semibold transition-colors"
+            onClick={() => {
+              setError('');
+              setSelectedFile(null);
+              setUploadModalOpen(true);
+            }}
+            className="mt-4 px-4 py-2 rounded-xl bg-brand-600/30 hover:bg-brand-600/50 border border-brand-500/40 text-brand-200 text-xs font-semibold transition-colors cursor-pointer"
           >
             Attach First Document
           </button>
@@ -209,7 +245,7 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
                   <button
                     type="button"
                     onClick={() => handleDownload(doc)}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white transition-colors"
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white transition-colors cursor-pointer"
                     title="Download document"
                   >
                     <Download className="w-4 h-4" />
@@ -218,7 +254,7 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
                     <button
                       type="button"
                       onClick={() => handleDelete(doc.id)}
-                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors"
+                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
                       title="Delete document"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -233,8 +269,8 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
 
       {/* Upload Document Modal */}
       {uploadModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-md bg-[#0D1220]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-black/80 relative my-auto max-h-[92vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto animate-fadeIn">
+          <div className="w-full max-w-md bg-[#0D1220]/95 backdrop-blur-2xl border border-white/15 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-black/80 relative my-auto max-h-[92vh] overflow-y-auto">
             <button
               type="button"
               onClick={() => {
@@ -242,18 +278,18 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
                 setSelectedFile(null);
                 setError('');
               }}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white"
+              className="absolute top-5 right-5 text-slate-400 hover:text-white transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             <h3 className="text-lg font-bold text-white mb-1">Upload Workflow Document</h3>
             <p className="text-xs text-slate-400 mb-4">
-              Add supporting specifications, architecture diagrams, or progress documents.
+              Add specifications, architecture diagrams, requirements, or progress documents.
             </p>
 
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-xs text-rose-300 flex items-center space-x-2">
+              <div className="mb-4 p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-xs text-rose-300 flex items-center space-x-2 animate-fadeIn">
                 <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
                 <span>{error}</span>
               </div>
@@ -264,14 +300,69 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
                 <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
                   File Attachment *
                 </label>
-                <input
-                  type="file"
-                  required
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) => setSelectedFile(e.target.files?.[0])}
-                  className="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-600 file:text-white hover:file:bg-brand-500 cursor-pointer"
-                />
-                <p className="text-[11px] text-slate-500 mt-1">Supported formats: PDF, DOC, DOCX (Max 25MB)</p>
+
+                {/* Drag and Drop Zone */}
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={handleFileDrop}
+                  className={`border-2 border-dashed rounded-2xl p-5 text-center transition-all ${
+                    isDragging
+                      ? 'border-brand-500 bg-brand-500/10'
+                      : selectedFile
+                      ? 'border-emerald-500/40 bg-emerald-500/5'
+                      : 'border-white/15 bg-white/[0.02] hover:border-white/25 hover:bg-white/[0.04]'
+                  }`}
+                >
+                  {selectedFile ? (
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.05] border border-white/10">
+                      <div className="flex items-center space-x-2.5 overflow-hidden">
+                        <File className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                        <div className="text-left overflow-hidden">
+                          <p className="text-xs font-semibold text-white truncate max-w-[220px]">
+                            {selectedFile.name}
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-mono">
+                            {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFile(null)}
+                        className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                        title="Remove file"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <UploadCloud className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                      <p className="text-xs text-slate-200 font-medium">
+                        Drag and drop your document here, or{' '}
+                        <label className="text-brand-400 hover:text-brand-300 underline cursor-pointer">
+                          browse
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.csv,.xlsx,.xls,.zip,.ppt,.pptx"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) handleFileSelected(f);
+                            }}
+                          />
+                        </label>
+                      </p>
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        PDF, Word, Excel, CSV, Images, or TXT (Max 25MB)
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -291,14 +382,14 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
                 <button
                   type="button"
                   onClick={() => setUploadModalOpen(false)}
-                  className="px-3 py-2 text-xs font-semibold text-slate-300 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10"
+                  className="px-3 py-2 text-xs font-semibold text-slate-300 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={uploading}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-500 rounded-xl shadow-glow-brand flex items-center space-x-1.5 disabled:opacity-50"
+                  disabled={uploading || !selectedFile}
+                  className="px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-500 rounded-xl shadow-glow-brand flex items-center space-x-1.5 disabled:opacity-50 transition-all cursor-pointer"
                 >
                   {uploading ? (
                     <>
@@ -306,7 +397,10 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
                       <span>Uploading...</span>
                     </>
                   ) : (
-                    <span>Upload</span>
+                    <>
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      <span>Upload Document</span>
+                    </>
                   )}
                 </button>
               </div>

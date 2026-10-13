@@ -3704,8 +3704,9 @@ const SupabaseService = {
     if (!file) throw new Error('File is required');
 
     const ext = path.extname(file.originalname).toLowerCase();
-    if (!['.pdf', '.doc', '.docx'].includes(ext)) {
-      throw new Error(`Unsupported file type (${ext}). Only PDF, DOC, and DOCX files are allowed.`);
+    const allowed = ['.pdf', '.doc', '.docx', '.txt', '.png', '.jpg', '.jpeg', '.csv', '.xlsx', '.xls', '.zip', '.ppt', '.pptx'];
+    if (!allowed.includes(ext)) {
+      throw new Error(`Unsupported file type (${ext}). Only PDF, Word, Excel, CSV, PPT, TXT, images, and ZIP files are allowed.`);
     }
 
     const docId = `doc_${uuidv4().replace(/-/g, '').substring(0, 10)}`;

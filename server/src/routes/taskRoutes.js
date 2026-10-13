@@ -11,10 +11,11 @@ const upload = multer({
   limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB max limit
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    if (['.pdf', '.doc', '.docx'].includes(ext)) {
+    const allowed = ['.pdf', '.doc', '.docx', '.txt', '.png', '.jpg', '.jpeg', '.csv', '.xlsx', '.xls', '.zip', '.ppt', '.pptx'];
+    if (allowed.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid format: Only PDF, DOC, and DOCX documents are accepted.'));
+      cb(new Error('Invalid format: Only PDF, Word, Excel, CSV, PPT, TXT, images, and ZIP files are accepted.'));
     }
   },
 });
