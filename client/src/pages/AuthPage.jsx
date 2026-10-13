@@ -228,10 +228,10 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
         {/* LEFT COLUMN: Sign In Form Area (Desktop 50%, Mobile 100%) */}
         {/* ========================================================================= */}
         <div
-          className={`w-full md:w-1/2 h-full flex flex-col justify-center px-6 sm:px-10 lg:px-12 transition-all duration-500 ${
+          className={`w-full md:w-1/2 h-full flex flex-col justify-center px-6 sm:px-10 lg:px-12 transition-opacity duration-300 ${
             mode === 'signin'
               ? 'opacity-100 pointer-events-auto z-10'
-              : 'md:opacity-20 md:pointer-events-none hidden md:flex'
+              : 'opacity-0 pointer-events-none select-none invisible md:visible'
           }`}
         >
           <div className="max-w-md w-full mx-auto">
@@ -366,10 +366,10 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
         {/* RIGHT COLUMN: Create Account Form Area (Desktop 50%, Mobile 100%) */}
         {/* ========================================================================= */}
         <div
-          className={`w-full md:w-1/2 h-full flex flex-col justify-center px-6 sm:px-10 lg:px-12 transition-all duration-500 ${
+          className={`w-full md:w-1/2 h-full flex flex-col justify-center px-6 sm:px-10 lg:px-12 transition-opacity duration-300 ${
             mode === 'signup'
               ? 'opacity-100 pointer-events-auto z-10'
-              : 'md:opacity-20 md:pointer-events-none hidden md:flex'
+              : 'opacity-0 pointer-events-none select-none invisible md:visible'
           }`}
         >
           <div className="max-w-md w-full mx-auto">
