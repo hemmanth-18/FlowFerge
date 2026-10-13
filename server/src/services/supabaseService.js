@@ -2392,11 +2392,15 @@ const SupabaseService = {
     const id = `auto_${uuidv4().replace(/-/g, '').substring(0, 8)}`;
     const now = new Date().toISOString();
 
+    const wf = await this.getWorkflowById(workflowId);
+    const teamId = wf?.teamId || null;
+
     const auto = {
       id,
       workflowId,
+      teamId,
       name,
-      enabled,
+      enabled: enabled !== undefined ? enabled : true,
       trigger,
       condition,
       action,
@@ -2406,10 +2410,88 @@ const SupabaseService = {
       updatedAt: now,
     };
     memoryDb.automations.set(id, auto);
+
+    if (await areTablesReady()) {
+      try {
+        await supabase.from('automations').insert([{
+          id,
+          workflow_id: workflowId,
+          team_id: teamId,
+          name,
+          enabled: auto.enabled,
+          trigger,
+          condition,
+          action,
+          execution_count: 0,
+          created_by: userId,
+          created_at: now,
+          updated_at: now,
+        }]);
+      } catch (err) {
+        console.warn('Failed to insert automation into Supabase:', err.message);
+      }
+    }
+
     return auto;
   },
 
+  async getAutomationById(automationId) {
+    if (!automationId) return null;
+    let auto = memoryDb.automations.get(automationId);
+    if (!auto && (await areTablesReady())) {
+      try {
+        const { data } = await supabase.from('automations').select('*').eq('id', automationId).maybeSingle();
+        if (data) {
+          auto = {
+            id: data.id,
+            workflowId: data.workflow_id,
+            teamId: data.team_id,
+            name: data.name,
+            enabled: data.enabled,
+            trigger: data.trigger,
+            condition: data.condition,
+            action: data.action,
+            executionCount: data.execution_count || 0,
+            lastExecutedAt: data.last_executed_at,
+            createdBy: data.created_by,
+            createdAt: data.created_at,
+            updatedAt: data.updated_at,
+          };
+          memoryDb.automations.set(auto.id, auto);
+        }
+      } catch (e) {}
+    }
+    return auto || null;
+  },
+
   async getAutomationsByWorkflow(workflowId) {
+    if (!workflowId) return [];
+
+    if (await areTablesReady()) {
+      try {
+        const { data } = await supabase.from('automations').select('*').eq('workflow_id', workflowId);
+        if (data) {
+          for (const row of data) {
+            memoryDb.automations.set(row.id, {
+              id: row.id,
+              workflowId: row.workflow_id,
+              teamId: row.team_id,
+              name: row.name,
+              enabled: row.enabled,
+              trigger: row.trigger,
+              condition: row.condition,
+              action: row.action,
+              executionCount: row.execution_count || 0,
+              lastExecutedAt: row.last_executed_at,
+              createdBy: row.created_by,
+              createdAt: row.created_at,
+              updatedAt: row.updated_at,
+            });
+          }
+        }
+      } catch (e) {}
+    }
+
     const list = [];
     for (const a of memoryDb.automations.values()) {
       if (a.workflowId === workflowId) list.push(a);
@@ -2418,33 +2500,126 @@ const SupabaseService = {
   },
 
   async getTeamAutomations(teamId) {
-    return Array.from(memoryDb.automations.values());
+    if (!teamId) return [];
+    if (await areTablesReady()) {
+      try {
+        const { data } = await supabase.from('automations').select('*').eq('team_id', teamId);
+        if (data) {
+          for (const row of data) {
+            memoryDb.automations.set(row.id, {
+              id: row.id,
+              workflowId: row.workflow_id,
+              teamId: row.team_id,
+              name: row.name,
+              enabled: row.enabled,
+              trigger: row.trigger,
+              condition: row.condition,
+              action: row.action,
+              executionCount: row.execution_count || 0,
+              lastExecutedAt: row.last_executed_at,
+              createdBy: row.created_by,
+              createdAt: row.created_at,
+              updatedAt: row.updated_at,
+            });
+          }
+        }
+      } catch (e) {}
+    }
+    return Array.from(memoryDb.automations.values()).filter(a => a.teamId === teamId);
   },
 
   async updateAutomation(automationId, updates, userId) {
-    const auto = memoryDb.automations.get(automationId);
+    let auto = await this.getAutomationById(automationId);
     if (!auto) throw new Error('Automation not found');
-    Object.assign(auto, updates, { updatedAt: new Date().toISOString() });
+    const now = new Date().toISOString();
+    Object.assign(auto, updates, { updatedAt: now });
+
+    if (await areTablesReady()) {
+      try {
+        const dbUpdates = {
+          updated_at: now,
+        };
+        if (updates.name !== undefined) dbUpdates.name = updates.name;
+        if (updates.enabled !== undefined) dbUpdates.enabled = updates.enabled;
+        if (updates.trigger !== undefined) dbUpdates.trigger = updates.trigger;
+        if (updates.condition !== undefined) dbUpdates.condition = updates.condition;
+        if (updates.action !== undefined) dbUpdates.action = updates.action;
+        if (updates.executionCount !== undefined) dbUpdates.execution_count = updates.executionCount;
+        if (updates.lastExecutedAt !== undefined) dbUpdates.last_executed_at = updates.lastExecutedAt;
+
+        await supabase.from('automations').update(dbUpdates).eq('id', automationId);
+      } catch (e) {}
+    }
+
     return auto;
   },
 
   async deleteAutomation(automationId, userId) {
     memoryDb.automations.delete(automationId);
+    if (await areTablesReady()) {
+      try {
+        await supabase.from('automations').delete().eq('id', automationId);
+      } catch (e) {}
+    }
     return true;
   },
 
   async logAutomationExecution(workflowId, details) {
+    const id = `autolog_${uuidv4().replace(/-/g, '').substring(0, 8)}`;
+    const now = new Date().toISOString();
+    const wf = await this.getWorkflowById(workflowId);
     const entry = {
-      id: `autolog_${uuidv4().replace(/-/g, '').substring(0, 8)}`,
+      id,
       workflowId,
+      teamId: wf?.teamId || null,
       ...details,
-      timestamp: new Date().toISOString(),
+      timestamp: now,
     };
     memoryDb.automationLogs.unshift(entry);
+
+    if (await areTablesReady()) {
+      try {
+        await supabase.from('automation_logs').insert([{
+          id,
+          workflow_id: workflowId,
+          team_id: wf?.teamId || null,
+          rule_name: details.ruleName || null,
+          trigger: details.trigger || null,
+          action_type: details.actionType || null,
+          status: details.status || 'SUCCESS',
+          details: details.details || null,
+          timestamp: now,
+        }]);
+      } catch (e) {}
+    }
+
     return entry;
   },
 
   async getAutomationLogs(workflowId, limit = 50) {
+    if (await areTablesReady() && workflowId) {
+      try {
+        const { data } = await supabase
+          .from('automation_logs')
+          .select('*')
+          .eq('workflow_id', workflowId)
+          .order('timestamp', { ascending: false })
+          .limit(limit);
+        if (data && data.length > 0) {
+          return data.map(d => ({
+            id: d.id,
+            workflowId: d.workflow_id,
+            teamId: d.team_id,
+            ruleName: d.rule_name,
+            trigger: d.trigger,
+            actionType: d.action_type,
+            status: d.status,
+            details: d.details,
+            timestamp: d.timestamp,
+          }));
+        }
+      } catch (e) {}
+    }
     return memoryDb.automationLogs.filter(l => l.workflowId === workflowId).slice(0, limit);
   },
 

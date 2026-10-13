@@ -311,10 +311,10 @@ const rbac = {
     return async (req, res, next) => {
       try {
         const autoId = req.params.id || req.params.autoId;
-        let workflowId = req.params.workflowId;
+        let workflowId = req.params.workflowId || req.body?.workflowId || req.query?.workflowId;
 
         if (autoId && !workflowId) {
-          const auto = await SupabaseService.getAutomationById?.(autoId);
+          const auto = await SupabaseService.getAutomationById(autoId);
           if (auto) workflowId = auto.workflowId;
         }
 
@@ -323,9 +323,12 @@ const rbac = {
         }
 
         req.params.workflowId = workflowId;
-        req.params.id = workflowId;
+        const origId = req.params.id;
         const verifyManager = rbac.requireWorkflowManager();
-        await verifyManager(req, res, next);
+        await verifyManager(req, res, () => {
+          if (origId) req.params.id = origId;
+          next();
+        });
       } catch (err) {
         res.status(500).json({ success: false, error: 'Automation permission check failed' });
       }

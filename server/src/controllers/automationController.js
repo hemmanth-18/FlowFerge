@@ -19,7 +19,8 @@ const automationController = {
 
       // Check team role: TEAM_MEMBER cannot view or manage automations
       const teamRole = await SupabaseService.getTeamMemberRole(targetTeamId, userId);
-      if (teamRole !== 'TEAM_ADMIN' && teamRole !== 'TEAM_MANAGER') {
+      const isAllowed = teamRole === 'TEAM_ADMIN' || teamRole === 'TEAM_MANAGER' || teamRole === 'OWNER' || teamRole === 'ADMIN';
+      if (!isAllowed) {
         return res.status(403).json({
           success: false,
           error: 'Forbidden: Team Members do not have access to automation rules.',

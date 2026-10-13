@@ -5,16 +5,18 @@ export const AutomationModal = ({
   isOpen,
   onClose,
   onSave,
+  onSubmit,
   initialData = null,
   workflows = [],
   selectedWorkflowId = null,
+  teamMembers = [],
 }) => {
   const [name, setName] = useState('');
   const [workflowId, setWorkflowId] = useState(selectedWorkflowId || '');
   const [trigger, setTrigger] = useState('TASK_COMPLETED');
-  const [conditionField, setConditionField] = useState('title');
+  const [conditionField, setConditionField] = useState('status');
   const [conditionOperator, setConditionOperator] = useState('equals');
-  const [conditionValue, setConditionValue] = useState('');
+  const [conditionValue, setConditionValue] = useState('COMPLETED');
   const [actionType, setActionType] = useState('ACTIVATE_NEXT_TASK');
   const [targetAssignee, setTargetAssignee] = useState('');
   const [newStatus, setNewStatus] = useState('IN_PROGRESS');
@@ -25,9 +27,9 @@ export const AutomationModal = ({
     if (isOpen) {
       if (initialData) {
         setName(initialData.name || '');
-        setWorkflowId(initialData.workflowId || selectedWorkflowId || '');
+        setWorkflowId(initialData.workflowId || selectedWorkflowId || (workflows[0]?.id || ''));
         setTrigger(initialData.trigger || 'TASK_COMPLETED');
-        setConditionField(initialData.condition?.field || 'title');
+        setConditionField(initialData.condition?.field || 'status');
         setConditionOperator(initialData.condition?.operator || 'equals');
         setConditionValue(initialData.condition?.value || '');
         setActionType(initialData.action?.type || 'ACTIVATE_NEXT_TASK');
@@ -37,16 +39,16 @@ export const AutomationModal = ({
         setName('');
         setWorkflowId(selectedWorkflowId || (workflows[0]?.id || ''));
         setTrigger('TASK_COMPLETED');
-        setConditionField('title');
+        setConditionField('status');
         setConditionOperator('equals');
-        setConditionValue('');
+        setConditionValue('COMPLETED');
         setActionType('ACTIVATE_NEXT_TASK');
-        setTargetAssignee('Ravi (Member)');
+        setTargetAssignee('');
         setNewStatus('IN_PROGRESS');
       }
       setError('');
     }
-  }, [isOpen, initialData, selectedWorkflowId]);
+  }, [isOpen, initialData, selectedWorkflowId, workflows]);
 
   if (!isOpen) return null;
 
@@ -91,7 +93,8 @@ export const AutomationModal = ({
 
       onClose();
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Failed to save automation rule');
+      const msg = err.response?.data?.error || err.message || 'Failed to save automation rule';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -99,21 +102,32 @@ export const AutomationModal = ({
 
   // Human readable preview generator
   const getSummary = () => {
-    const triggerText = trigger.replace(/_/g, ' ').toLowerCase();
-    const condText = conditionValue ? `IF ${conditionField} ${conditionOperator} "${conditionValue}"` : '';
-    let actionText = '';
+    const triggerLabels = {
+      TASK_COMPLETED: 'Task is completed',
+      TASK_STATUS_CHANGED: 'Task status changes',
+      TASK_CREATED: 'New task is created',
+      TASK_OVERDUE: 'Task becomes overdue',
+      WORKFLOW_COMPLETED: 'Entire workflow completes',
+    };
+    const triggerText = triggerLabels[trigger] || trigger;
 
-    if (actionType === 'ACTIVATE_NEXT_TASK') {
-      actionText = `THEN Activate Next Task in graph${targetAssignee ? ` & assign to ${targetAssignee}` : ''}`;
-    } else if (actionType === 'ASSIGN_TASK') {
-      actionText = `THEN Assign Task to ${targetAssignee || 'User'}`;
-    } else if (actionType === 'CHANGE_STATUS') {
-      actionText = `THEN Change Status to ${newStatus}`;
-    } else {
-      actionText = `THEN Send Notification`;
+    let condText = '';
+    if (conditionValue) {
+      condText = `IF ${conditionField} ${conditionOperator} "${conditionValue}"`;
     }
 
-    return `WHEN Task is ${triggerText} ${condText} ${actionText}`;
+    let actionText = '';
+    if (actionType === 'ACTIVATE_NEXT_TASK') {
+      actionText = `THEN Activate next downstream task in DAG${targetAssignee ? ` & assign to ${targetAssignee}` : ''}`;
+    } else if (actionType === 'ASSIGN_TASK') {
+      actionText = `THEN Assign task to ${targetAssignee || 'selected member'}`;
+    } else if (actionType === 'CHANGE_STATUS') {
+      actionText = `THEN Change task status to ${newStatus}`;
+    } else {
+      actionText = `THEN Send in-app notification`;
+    }
+
+    return `WHEN ${triggerText} ${condText ? `${condText} ` : ''}${actionText}`;
   };
 
   return (
@@ -175,14 +189,14 @@ export const AutomationModal = ({
               type="text"
               required
               autoFocus
-              placeholder="e.g. Activate Testing & Assign to QA"
+              placeholder="e.g. Activate Next Task & Assign to QA"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-3.5 py-2.5 bg-dark-800 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 text-sm"
             />
           </div>
 
-          {!selectedWorkflowId && workflows.length > 0 && (
+          {workflows.length > 0 && (
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
                 Target Workflow <span className="text-brand-400">*</span>
@@ -208,7 +222,14 @@ export const AutomationModal = ({
             </div>
             <select
               value={trigger}
-              onChange={(e) => setTrigger(e.target.value)}
+              onChange={(e) => {
+                const newTrig = e.target.value;
+                setTrigger(newTrig);
+                if (newTrig === 'TASK_COMPLETED') {
+                  setConditionField('status');
+                  setConditionValue('COMPLETED');
+                }
+              }}
               className="w-full px-3 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-200 focus:border-brand-500"
             >
               <option value="TASK_COMPLETED">Task is Marked as Completed</option>
@@ -227,32 +248,80 @@ export const AutomationModal = ({
             <div className="grid grid-cols-3 gap-2">
               <select
                 value={conditionField}
-                onChange={(e) => setConditionField(e.target.value)}
-                className="px-2.5 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-200"
+                onChange={(e) => {
+                  const f = e.target.value;
+                  setConditionField(f);
+                  if (f === 'status') setConditionValue('COMPLETED');
+                  else if (f === 'priority') setConditionValue('HIGH');
+                  else if (f === 'assignedTo') setConditionValue(teamMembers[0]?.name || '');
+                  else setConditionValue('');
+                }}
+                className="px-2.5 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-200 focus:border-brand-500"
               >
-                <option value="title">Task Title</option>
                 <option value="status">Task Status</option>
                 <option value="priority">Priority</option>
+                <option value="title">Task Title</option>
                 <option value="assignedTo">Assignee</option>
               </select>
 
               <select
                 value={conditionOperator}
                 onChange={(e) => setConditionOperator(e.target.value)}
-                className="px-2.5 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-200"
+                className="px-2.5 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-200 focus:border-brand-500"
               >
                 <option value="equals">equals</option>
                 <option value="not_equals">not equals</option>
                 <option value="contains">contains</option>
               </select>
 
-              <input
-                type="text"
-                placeholder="e.g. Requirements"
-                value={conditionValue}
-                onChange={(e) => setConditionValue(e.target.value)}
-                className="px-2.5 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-100 placeholder-slate-500"
-              />
+              {conditionField === 'status' ? (
+                <select
+                  value={conditionValue}
+                  onChange={(e) => setConditionValue(e.target.value)}
+                  className="px-2.5 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-100 focus:border-brand-500"
+                >
+                  <option value="COMPLETED">COMPLETED</option>
+                  <option value="IN_PROGRESS">IN_PROGRESS</option>
+                  <option value="IN_REVIEW">IN_REVIEW</option>
+                  <option value="TODO">TODO</option>
+                  <option value="BLOCKED">BLOCKED</option>
+                </select>
+              ) : conditionField === 'priority' ? (
+                <select
+                  value={conditionValue}
+                  onChange={(e) => setConditionValue(e.target.value)}
+                  className="px-2.5 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-100 focus:border-brand-500"
+                >
+                  <option value="URGENT">URGENT</option>
+                  <option value="HIGH">HIGH</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="LOW">LOW</option>
+                </select>
+              ) : conditionField === 'assignedTo' && teamMembers.length > 0 ? (
+                <select
+                  value={conditionValue}
+                  onChange={(e) => setConditionValue(e.target.value)}
+                  className="px-2.5 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-100 focus:border-brand-500"
+                >
+                  <option value="">Any Assignee</option>
+                  {teamMembers.map((m) => {
+                    const val = m.name || m.username || m.email;
+                    return (
+                      <option key={m.id || m.userId || val} value={val}>
+                        {val}
+                      </option>
+                    );
+                  })}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="e.g. Requirements"
+                  value={conditionValue}
+                  onChange={(e) => setConditionValue(e.target.value)}
+                  className="px-2.5 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-100 placeholder-slate-500 focus:border-brand-500"
+                />
+              )}
             </div>
           </div>
 
@@ -276,15 +345,54 @@ export const AutomationModal = ({
             {(actionType === 'ACTIVATE_NEXT_TASK' || actionType === 'ASSIGN_TASK') && (
               <div className="pt-2">
                 <label className="block text-[11px] text-slate-400 mb-1">
-                  Assign To Member
+                  Assign To Member {actionType === 'ASSIGN_TASK' && <span className="text-brand-400">*</span>}
                 </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Ravi (Member) or Kumar (Member)"
-                  value={targetAssignee}
-                  onChange={(e) => setTargetAssignee(e.target.value)}
-                  className="w-full px-3 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-100 placeholder-slate-500"
-                />
+                {teamMembers.length > 0 ? (
+                  <select
+                    value={targetAssignee}
+                    onChange={(e) => setTargetAssignee(e.target.value)}
+                    className="w-full px-3 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-brand-500"
+                  >
+                    <option value="">Leave Unassigned / Default</option>
+                    {teamMembers.map((m) => {
+                      const displayName = m.name || m.username || m.email;
+                      const roleText = m.role ? m.role.replace('TEAM_', '') : 'Member';
+                      return (
+                        <option key={m.id || m.userId || displayName} value={displayName}>
+                          {displayName} ({roleText})
+                        </option>
+                      );
+                    })}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder="e.g. Member name or email"
+                    value={targetAssignee}
+                    onChange={(e) => setTargetAssignee(e.target.value)}
+                    className="w-full px-3 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-100 placeholder-slate-500 focus:border-brand-500"
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Change Status selector */}
+            {actionType === 'CHANGE_STATUS' && (
+              <div className="pt-2">
+                <label className="block text-[11px] text-slate-400 mb-1">
+                  New Task Status <span className="text-brand-400">*</span>
+                </label>
+                <select
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value)}
+                  className="w-full px-3 py-2 bg-dark-800 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-brand-500"
+                >
+                  <option value="TODO">To Do (TODO)</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="IN_REVIEW">In Review</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="BLOCKED">Blocked</option>
+                </select>
               </div>
             )}
           </div>

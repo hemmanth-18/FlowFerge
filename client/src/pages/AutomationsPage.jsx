@@ -28,7 +28,7 @@ import { api } from '../services/api';
 export const AutomationsPage = () => {
   const { setSidebarOpen } = useOutletContext() || {};
   const { user } = useAuth();
-  const { activeTeam, activeRole, isAdmin, isManager } = useTeam();
+  const { activeTeam, activeRole, isAdmin, isManager, teamMembers } = useTeam();
   const toast = useToast();
 
   usePageMeta('Automations & Triggers', 'Trigger automatic status transitions, dependency resolutions, and task assignments.');
@@ -128,7 +128,9 @@ export const AutomationsPage = () => {
       fetchData();
       setEditingRule(null);
     } catch (err) {
-      toast.error(err.message || 'Failed to save automation rule');
+      const msg = err.response?.data?.error || err.message || 'Failed to save automation rule';
+      toast.error(msg);
+      throw err;
     }
   };
 
@@ -348,10 +350,16 @@ export const AutomationsPage = () => {
 
       <AutomationModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingRule(null);
+        }}
         onSubmit={handleSaveRule}
+        onSave={handleSaveRule}
         initialData={editingRule}
         workflows={workflows}
+        selectedWorkflowId={selectedWfId === 'ALL' ? (workflows[0]?.id || '') : selectedWfId}
+        teamMembers={teamMembers || []}
       />
     </div>
   );
