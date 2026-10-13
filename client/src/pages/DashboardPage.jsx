@@ -44,8 +44,8 @@ import { api } from '../services/api';
 
 export const DashboardPage = () => {
   const { setSidebarOpen } = useOutletContext() || {};
-  const { user } = useAuth();
-  const { activeTeam, activeRole, isAdmin, isManager } = useTeam();
+  const { user, loading: authLoading } = useAuth();
+  const { activeTeam, activeRole, isAdmin, isManager, isOwner, loadingTeams, teams } = useTeam();
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -58,16 +58,25 @@ export const DashboardPage = () => {
   const [isWfModalOpen, setIsWfModalOpen] = useState(false);
   const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [dashboardError, setDashboardError] = useState(null);
 
   const fetchDashboardData = useCallback(async (isManual = false) => {
+    // If teams are still resolving, do not conclude loading prematurely!
+    if (loadingTeams) return;
     if (!activeTeam) {
       setLoading(false);
       return;
     }
     try {
       if (isManual) setRefreshing(true);
+      else setLoading(true);
+      setDashboardError(null);
+
       const [dashRes, wfRes] = await Promise.all([
-        api.get(`/teams/${activeTeam.id}/dashboard`).catch(() => ({ data: { data: null } })),
+        api.get(`/teams/${activeTeam.id}/dashboard`).catch((err) => {
+          console.warn('Dashboard telemetry fetch notice:', err.message);
+          return { data: { data: null } };
+        }),
         api.get('/workflows').catch(() => ({ data: { data: [] } })),
       ]);
 
@@ -80,15 +89,20 @@ export const DashboardPage = () => {
       }
     } catch (err) {
       console.error('Failed to load dashboard:', err);
+      setDashboardError(err.message || 'Failed to load dashboard telemetry');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [activeTeam?.id]);
+  }, [activeTeam?.id, loadingTeams]);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+    if (activeTeam?.id) {
+      fetchDashboardData();
+    } else if (!loadingTeams && teams.length === 0) {
+      setLoading(false);
+    }
+  }, [fetchDashboardData, activeTeam?.id, loadingTeams, teams.length]);
 
   const handleCreateWorkflow = async (workflowData) => {
     if (!activeTeam) return;
@@ -117,7 +131,18 @@ export const DashboardPage = () => {
     year: 'numeric',
   });
 
-  if (loading) {
+  // State 1 & 2: Authenticating or Resolving Workspace Membership
+  if (authLoading || loadingTeams) {
+    return (
+      <div className="min-h-[85vh] flex flex-col items-center justify-center space-y-3 bg-[#080B12]">
+        <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
+        <p className="text-xs text-slate-400">Loading FlowForge workspace...</p>
+      </div>
+    );
+  }
+
+  // State 3: Workspace resolved, fetching dashboard telemetry
+  if (activeTeam && loading) {
     return (
       <div className="min-h-[85vh] flex flex-col items-center justify-center space-y-3 bg-[#080B12]">
         <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
@@ -126,7 +151,28 @@ export const DashboardPage = () => {
     );
   }
 
-  if (!activeTeam) {
+  // State 4: Recoverable Error UI with Retry
+  if (dashboardError && activeTeam && !data) {
+    return (
+      <div className="min-h-[85vh] flex flex-col items-center justify-center space-y-4 bg-[#080B12] p-6 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400">
+          <AlertTriangle className="w-6 h-6" />
+        </div>
+        <h3 className="text-lg font-bold text-white">Unable to load dashboard</h3>
+        <p className="text-xs text-slate-400 max-w-sm">{dashboardError}</p>
+        <button
+          onClick={() => fetchDashboardData(true)}
+          className="inline-flex items-center space-x-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-xl shadow-glow-brand transition-all"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span>Retry</span>
+        </button>
+      </div>
+    );
+  }
+
+  // State 5: Genuinely empty workspace (Loading finished AND user has 0 teams)
+  if (!loadingTeams && (!activeTeam || teams.length === 0)) {
     return (
       <div className="min-h-screen bg-[#080B12] p-6 flex flex-col items-center justify-center">
         <div className="max-w-md w-full p-8 rounded-3xl bg-[#10141D] border border-white/10 text-center space-y-4 shadow-2xl">

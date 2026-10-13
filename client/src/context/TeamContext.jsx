@@ -51,7 +51,9 @@ export const TeamProvider = ({ children }) => {
 
       if (current) {
         setActiveTeam(current);
-        setActiveRole(current.userRole || 'TEAM_MEMBER');
+        const isTeamCreator = current.createdBy === user.id || current.ownerId === user.id;
+        const role = isTeamCreator ? 'TEAM_ADMIN' : (current.userRole || 'TEAM_MEMBER');
+        setActiveRole(role);
         localStorage.setItem('flowforge_active_team_id', current.id);
       } else {
         setActiveTeam(null);
@@ -86,12 +88,14 @@ export const TeamProvider = ({ children }) => {
     const target = teams.find((t) => t.id === teamId);
     if (target) {
       setActiveTeam(target);
-      setActiveRole(target.userRole || 'TEAM_MEMBER');
+      const isTeamCreator = target.createdBy === user?.id || target.ownerId === user?.id;
+      const role = isTeamCreator ? 'TEAM_ADMIN' : (target.userRole || 'TEAM_MEMBER');
+      setActiveRole(role);
       localStorage.setItem('flowforge_active_team_id', target.id);
       // Dispatch custom event so pages can optionally listen or reload
       window.dispatchEvent(new CustomEvent('flowforge_team_switched', { detail: target }));
     }
-  }, [teams]);
+  }, [teams, user?.id]);
 
   // Create Team
   const createTeam = async ({ name, description, icon }) => {
@@ -109,11 +113,14 @@ export const TeamProvider = ({ children }) => {
     return updated;
   };
 
-  // Archive Team
+  // Archive / Delete Team
   const archiveTeam = async (teamId) => {
-    const res = await api.delete(`/teams/${teamId}`);
+    const targetId = teamId || activeTeam?.id;
+    if (!targetId) return;
+    const res = await api.delete(`/teams/${targetId}`);
+    localStorage.removeItem('flowforge_active_team_id');
     await fetchTeams();
-    return res.data.data;
+    return res.data?.data;
   };
 
   // Accept Invitation
@@ -131,9 +138,12 @@ export const TeamProvider = ({ children }) => {
     await fetchMyInvitations();
   };
 
-  const isAdmin = activeRole === 'TEAM_ADMIN';
-  const isManager = activeRole === 'TEAM_ADMIN' || activeRole === 'TEAM_MANAGER';
-  const isMember = activeRole === 'TEAM_MEMBER';
+  const isOwner = Boolean(
+    activeTeam && (activeTeam.createdBy === user?.id || activeTeam.ownerId === user?.id || activeRole === 'TEAM_ADMIN' || activeRole === 'OWNER')
+  );
+  const isAdmin = Boolean(isOwner || activeRole === 'TEAM_ADMIN' || activeRole === 'ADMIN');
+  const isManager = Boolean(isAdmin || activeRole === 'TEAM_MANAGER' || activeRole === 'MANAGER');
+  const isMember = Boolean(activeRole === 'TEAM_MEMBER' || activeRole === 'MEMBER');
 
   return (
     <TeamContext.Provider
@@ -142,6 +152,7 @@ export const TeamProvider = ({ children }) => {
         activeTeam,
         activeRole,
         teamMembers,
+        isOwner,
         isAdmin,
         isManager,
         isMember,
@@ -151,8 +162,11 @@ export const TeamProvider = ({ children }) => {
         createTeam,
         updateTeam,
         archiveTeam,
+        deleteTeam: archiveTeam,
         acceptInvitation,
         declineInvitation,
+        fetchTeams,
+        fetchMyInvitations,
         refreshTeams: fetchTeams,
         refreshInvitations: fetchMyInvitations,
       }}

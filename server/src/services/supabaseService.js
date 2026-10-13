@@ -653,7 +653,7 @@ const SupabaseService = {
   async getUserTeams(userId) {
     const now = Date.now();
     const cached = teamCache.get(userId);
-    if (cached && now - cached.timestamp < 8000) {
+    if (cached && now - cached.timestamp < 4000) {
       return cached.data;
     }
 
@@ -661,47 +661,83 @@ const SupabaseService = {
 
     if (await areTablesReady()) {
       try {
-        const { data: memberRows } = await supabase
-          .from('team_members')
-          .select('team_id, role')
-          .eq('user_id', userId);
+        // Query both memberships and teams created by the user
+        const [memberRes, createdRes] = await Promise.all([
+          supabase.from('team_members').select('team_id, role').eq('user_id', userId),
+          supabase.from('teams').select('*').eq('created_by', userId).neq('status', 'ARCHIVED'),
+        ]);
+
+        const memberRows = memberRes.data || [];
+        const createdTeams = createdRes.data || [];
+
+        // Pre-populate created teams with TEAM_ADMIN role
+        for (const ct of createdTeams) {
+          const mapped = {
+            id: ct.id,
+            name: ct.name,
+            description: ct.description,
+            icon: ct.icon,
+            createdBy: ct.created_by,
+            status: ct.status,
+            createdAt: ct.created_at,
+            updatedAt: ct.updated_at,
+            userRole: 'TEAM_ADMIN',
+          };
+          memoryDb.teams.set(mapped.id, mapped);
+          teamMap.set(mapped.id, mapped);
+        }
 
         if (memberRows && memberRows.length > 0) {
-          const teamIds = memberRows.map((m) => m.team_id);
+          const teamIds = memberRows.map((m) => m.team_id).filter((id) => !teamMap.has(id));
           const roleMap = new Map(memberRows.map((m) => [m.team_id, m.role]));
 
-          const { data: teamRecords } = await supabase
-            .from('teams')
-            .select('*')
-            .in('id', teamIds)
-            .neq('status', 'ARCHIVED');
+          if (teamIds.length > 0) {
+            const { data: teamRecords } = await supabase
+              .from('teams')
+              .select('*')
+              .in('id', teamIds)
+              .neq('status', 'ARCHIVED');
 
-          if (teamRecords) {
-            for (const row of teamRecords) {
-              const mapped = {
-                id: row.id,
-                name: row.name,
-                description: row.description,
-                icon: row.icon,
-                createdBy: row.created_by,
-                status: row.status,
-                createdAt: row.created_at,
-                updatedAt: row.updated_at,
-                userRole: roleMap.get(row.id) || 'TEAM_MEMBER',
-              };
-              memoryDb.teams.set(mapped.id, mapped);
-              teamMap.set(mapped.id, mapped);
+            if (teamRecords) {
+              for (const row of teamRecords) {
+                const isCreator = row.created_by === userId;
+                const mapped = {
+                  id: row.id,
+                  name: row.name,
+                  description: row.description,
+                  icon: row.icon,
+                  createdBy: row.created_by,
+                  status: row.status,
+                  createdAt: row.created_at,
+                  updatedAt: row.updated_at,
+                  userRole: isCreator ? 'TEAM_ADMIN' : (roleMap.get(row.id) || 'TEAM_MEMBER'),
+                };
+                memoryDb.teams.set(mapped.id, mapped);
+                teamMap.set(mapped.id, mapped);
+              }
             }
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Error fetching Supabase user teams:', e.message);
+      }
+    }
+
+    // Also scan memoryDb
+    for (const [teamId, t] of memoryDb.teams.entries()) {
+      if (t.status !== 'ARCHIVED' && (t.createdBy === userId || !t.createdBy)) {
+        if (!teamMap.has(teamId)) {
+          teamMap.set(teamId, { ...t, userRole: 'TEAM_ADMIN' });
+        }
+      }
     }
 
     for (const [key, mem] of memoryDb.teamMembers.entries()) {
       if (mem.userId === userId) {
         let t = memoryDb.teams.get(mem.teamId);
         if (t && t.status !== 'ARCHIVED' && !teamMap.has(t.id)) {
-          teamMap.set(t.id, { ...t, userRole: mem.role });
+          const isCreator = t.createdBy === userId;
+          teamMap.set(t.id, { ...t, userRole: isCreator ? 'TEAM_ADMIN' : mem.role });
         }
       }
     }
@@ -744,18 +780,30 @@ const SupabaseService = {
     const team = await this.getTeamById(teamId);
     if (!team) throw new Error('Team not found');
 
+    const role = await this.getTeamMemberRole(teamId, userId);
+    const isOwner = team.createdBy === userId || team.ownerId === userId || role === 'TEAM_ADMIN';
+    if (!isOwner) {
+      throw new Error('Forbidden: Only the team owner or admin can delete this team.');
+    }
+
     team.status = 'ARCHIVED';
     team.updatedAt = new Date().toISOString();
+    memoryDb.teams.set(teamId, team);
 
     if (await areTablesReady()) {
       try {
-        await supabase.from('teams').update({ status: 'ARCHIVED' }).eq('id', teamId);
+        await supabase.from('teams').update({ status: 'ARCHIVED', updated_at: team.updatedAt }).eq('id', teamId);
       } catch (e) {}
     }
 
+    // Completely clear team caches
+    teamCache.clear();
+    invalidateTeamCache(userId);
+    invalidateTeamCache(team.createdBy);
+
     await this.logTeamActivity(teamId, {
       action: 'ARCHIVED_TEAM',
-      details: `Team archived`,
+      details: `Team "${team.name}" archived/deleted`,
       userId,
     });
 
@@ -799,9 +847,9 @@ const SupabaseService = {
       } catch (e) {}
     }
 
-    // 3. Ensure team creator / owner is present as TEAM_ADMIN
+    // 3. Ensure team creator / owner is always present as TEAM_ADMIN
     const team = await this.getTeamById(teamId);
-    if (team?.createdBy && !memberMap.has(team.createdBy)) {
+    if (team?.createdBy) {
       memberMap.set(team.createdBy, {
         userId: team.createdBy,
         role: 'TEAM_ADMIN',
@@ -862,11 +910,7 @@ const SupabaseService = {
   async getTeamMemberRole(teamId, userId) {
     if (!teamId || !userId) return null;
 
-    // 1. Check in-memory DB first
-    const mem = memoryDb.teamMembers.get(`${teamId}:${userId}`);
-    if (mem?.role) return mem.role;
-
-    // 2. Check if user is the team creator / owner
+    // 1. Check if user is the team creator / owner FIRST
     const team = await this.getTeamById(teamId);
     if (team && (team.createdBy === userId || team.ownerId === userId)) {
       memoryDb.teamMembers.set(`${teamId}:${userId}`, {
@@ -878,6 +922,10 @@ const SupabaseService = {
       });
       return 'TEAM_ADMIN';
     }
+
+    // 2. Check in-memory DB
+    const mem = memoryDb.teamMembers.get(`${teamId}:${userId}`);
+    if (mem?.role) return mem.role;
 
     // 3. Query Supabase team_members table
     if (await areTablesReady()) {

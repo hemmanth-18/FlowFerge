@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { InviteMemberModal } from '../components/InviteMemberModal';
+import { ArchiveTeamModal } from '../components/ArchiveTeamModal';
 import { TeamIcon } from '../components/TeamIcon';
 import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
@@ -30,7 +31,7 @@ import { api } from '../services/api';
 export const TeamPage = () => {
   const { setSidebarOpen } = useOutletContext() || {};
   const { user } = useAuth();
-  const { activeTeam, activeRole, isAdmin, isManager, myInvitations, acceptInvitation, declineInvitation } = useTeam();
+  const { activeTeam, activeRole, isAdmin, isManager, isOwner, myInvitations, acceptInvitation, declineInvitation } = useTeam();
   const toast = useToast();
 
   usePageMeta('Team & Members', 'Manage workspace members, role assignments, and pending invitations.');
@@ -39,6 +40,7 @@ export const TeamPage = () => {
   const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [selectedProfileUser, setSelectedProfileUser] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [userProfileData, setUserProfileData] = useState(null);
@@ -144,15 +146,28 @@ export const TeamPage = () => {
         onOpenSidebar={() => setSidebarOpen(true)}
         title={`${activeTeam?.name || 'Team'} Members & Roles`}
         actions={
-          isManager && (
-            <button
-              onClick={() => setIsInviteModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-glow-brand transition-all"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>+ Invite Member</span>
-            </button>
-          )
+          <div className="flex items-center space-x-2">
+            {isManager && (
+              <button
+                onClick={() => setIsInviteModalOpen(true)}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-glow-brand transition-all"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>+ Invite Member</span>
+              </button>
+            )}
+            {(isOwner || isAdmin) && (
+              <button
+                type="button"
+                onClick={() => setIsArchiveModalOpen(true)}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 text-xs font-semibold transition-all hover:bg-rose-600 hover:text-white"
+                title="Delete or Archive this workspace team"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Delete Team</span>
+              </button>
+            )}
+          </div>
         }
       />
 
@@ -402,6 +417,30 @@ export const TeamPage = () => {
             )}
           </div>
         )}
+
+        {/* Danger Zone: Delete / Archive Team (Owner / Admin Only) */}
+        {(isOwner || isAdmin) && activeTeam && (
+          <div className="p-6 rounded-2xl bg-dark-900 border border-rose-900/40 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-bold text-rose-400 flex items-center space-x-2">
+                  <Trash2 className="w-4 h-4 text-rose-500" />
+                  <span>Danger Zone &bull; Delete Workspace Team</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Permanently archive "{activeTeam.name}". This soft-deletes the team, revoking member access and hiding team workflows.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsArchiveModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-rose-600/30 hover:bg-rose-600 text-rose-200 hover:text-white border border-rose-500/40 text-xs font-semibold shadow-sm transition-all whitespace-nowrap self-start sm:self-auto cursor-pointer"
+              >
+                Delete Team
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Invite Member Modal */}
@@ -410,6 +449,15 @@ export const TeamPage = () => {
         onClose={() => setIsInviteModalOpen(false)}
         onSuccess={() => fetchTeamMembersAndInvites()}
       />
+
+      {/* Archive / Delete Team Modal */}
+      {isArchiveModalOpen && activeTeam && (
+        <ArchiveTeamModal
+          isOpen={isArchiveModalOpen}
+          onClose={() => setIsArchiveModalOpen(false)}
+          team={activeTeam}
+        />
+      )}
 
       {/* Member Profile Modal (Section 24) */}
       {selectedProfileUser && (
