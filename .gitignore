@@ -30,3 +30,5 @@ yarn-error.log*
 Thumbs.db
 .vscode/
 .idea/
+.sessions.json
+server/src/.sessions.json

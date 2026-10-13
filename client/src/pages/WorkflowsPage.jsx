@@ -480,6 +480,18 @@ export const WorkflowsPage = () => {
                         </button>
                       )}
 
+                      {/* Access & Members Button (Owner & Manager) */}
+                      {isManagerOrOwner && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedWfForPerms(wf)}
+                          className="p-1.5 text-slate-400 hover:text-brand-300 hover:bg-dark-800 rounded-lg transition-colors"
+                          title="Manage Workflow Access & Members"
+                        >
+                          <Users className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
                       {/* Edit Button */}
                       {isManagerOrOwner && (
                         <button

@@ -183,6 +183,25 @@ const workflowController = {
     }
   },
 
+  // POST /api/workflows/:id/members
+  async addWorkflowMember(req, res) {
+    try {
+      const { id: workflowId } = req.params;
+      const { userId: targetUserId, role = 'MEMBER' } = req.body;
+
+      if (!targetUserId) {
+        return res.status(400).json({ success: false, error: 'Target user ID is required' });
+      }
+
+      const normalizedRole = role.replace(/^WORKFLOW_/, '');
+      const member = await SupabaseService.addWorkflowMember(workflowId, targetUserId, normalizedRole);
+      return res.status(201).json({ success: true, data: member });
+    } catch (err) {
+      console.error('[Add Workflow Member Error]:', err);
+      return res.status(400).json({ success: false, error: err.message || 'Failed to add workflow member' });
+    }
+  },
+
   // PUT /api/workflows/:id/members/:userId/role
   async updateWorkflowMemberRole(req, res) {
     try {
@@ -190,7 +209,8 @@ const workflowController = {
       const { role } = req.body;
       const executorUserId = req.user.id;
 
-      const result = await SupabaseService.updateWorkflowMemberRole(workflowId, targetUserId, role, executorUserId);
+      const normalizedRole = (role || 'MEMBER').replace(/^WORKFLOW_/, '');
+      const result = await SupabaseService.updateWorkflowMemberRole(workflowId, targetUserId, normalizedRole, executorUserId);
       return res.json({ success: true, data: result });
     } catch (err) {
       return res.status(400).json({ success: false, error: err.message || 'Failed to update workflow member' });

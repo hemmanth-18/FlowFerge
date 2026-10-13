@@ -28,9 +28,10 @@ router.put('/:id/graph', rbac.requireWorkflowAccess(), graphController.saveWorkf
 // Workflow Granular Members & Roles
 router.get('/:id/members', rbac.requireWorkflowAccess(), workflowController.getWorkflowMembers);
 router.get('/:id/invitations', rbac.requireWorkflowAccess(), workflowController.getWorkflowInvitations);
-router.put('/:id/members/:userId', rbac.requireWorkflowOwner(), workflowController.updateWorkflowMemberRole);
-router.put('/:id/members/:userId/role', rbac.requireWorkflowOwner(), workflowController.updateWorkflowMemberRole);
-router.delete('/:id/members/:userId', rbac.requireWorkflowOwner(), workflowController.removeWorkflowMember);
+router.post('/:id/members', rbac.requireWorkflowManager(), workflowController.addWorkflowMember);
+router.put('/:id/members/:userId', rbac.requireWorkflowManager(), workflowController.updateWorkflowMemberRole);
+router.put('/:id/members/:userId/role', rbac.requireWorkflowManager(), workflowController.updateWorkflowMemberRole);
+router.delete('/:id/members/:userId', rbac.requireWorkflowManager(), workflowController.removeWorkflowMember);
 
 // Workflow Tasks Nesting
 router.get('/:workflowId/tasks', rbac.requireWorkflowAccess(), taskController.getTasksByWorkflow);

@@ -718,21 +718,72 @@ const SupabaseService = {
   },
 
   async getTeamMembers(teamId) {
-    const members = [];
+    if (!teamId) return [];
+    const memberMap = new Map();
+
+    // 1. Load from memoryDb
     for (const [key, mem] of memoryDb.teamMembers.entries()) {
       if (mem.teamId === teamId) {
-        const u = await this.getUserById(mem.userId);
-        if (u) {
-          members.push({
-            id: u.id,
-            name: u.name,
-            email: u.email,
-            username: u.username,
-            avatar: u.avatar,
-            role: mem.role,
-            joinedAt: mem.joinedAt,
-          });
+        memberMap.set(mem.userId, { userId: mem.userId, role: mem.role, joinedAt: mem.joinedAt });
+      }
+    }
+
+    // 2. Load from Supabase team_members table
+    if (await areTablesReady()) {
+      try {
+        const { data: dbMembers } = await supabase
+          .from('team_members')
+          .select('user_id, role, joined_at')
+          .eq('team_id', teamId);
+
+        if (dbMembers) {
+          for (const row of dbMembers) {
+            memberMap.set(row.user_id, {
+              userId: row.user_id,
+              role: row.role,
+              joinedAt: row.joined_at,
+            });
+            memoryDb.teamMembers.set(`${teamId}:${row.user_id}`, {
+              teamId,
+              userId: row.user_id,
+              role: row.role,
+              joinedAt: row.joined_at,
+            });
+          }
         }
+      } catch (e) {}
+    }
+
+    // 3. Ensure team creator / owner is present as TEAM_ADMIN
+    const team = await this.getTeamById(teamId);
+    if (team?.createdBy && !memberMap.has(team.createdBy)) {
+      memberMap.set(team.createdBy, {
+        userId: team.createdBy,
+        role: 'TEAM_ADMIN',
+        joinedAt: team.createdAt || new Date().toISOString(),
+      });
+      memoryDb.teamMembers.set(`${teamId}:${team.createdBy}`, {
+        teamId,
+        userId: team.createdBy,
+        role: 'TEAM_ADMIN',
+        joinedAt: team.createdAt || new Date().toISOString(),
+      });
+    }
+
+    // 4. Resolve user records
+    const members = [];
+    for (const m of memberMap.values()) {
+      const u = await this.getUserById(m.userId);
+      if (u) {
+        members.push({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          username: u.username,
+          avatar: u.avatar,
+          role: m.role,
+          joinedAt: m.joinedAt,
+        });
       }
     }
     return members;
@@ -765,8 +816,47 @@ const SupabaseService = {
 
   async getTeamMemberRole(teamId, userId) {
     if (!teamId || !userId) return null;
+
+    // 1. Check in-memory DB first
     const mem = memoryDb.teamMembers.get(`${teamId}:${userId}`);
-    return mem?.role || null;
+    if (mem?.role) return mem.role;
+
+    // 2. Check if user is the team creator / owner
+    const team = await this.getTeamById(teamId);
+    if (team && (team.createdBy === userId || team.ownerId === userId)) {
+      memoryDb.teamMembers.set(`${teamId}:${userId}`, {
+        id: `tm_${teamId}_${userId}`,
+        teamId,
+        userId,
+        role: 'TEAM_ADMIN',
+        joinedAt: team.createdAt || new Date().toISOString(),
+      });
+      return 'TEAM_ADMIN';
+    }
+
+    // 3. Query Supabase team_members table
+    if (await areTablesReady()) {
+      try {
+        const { data: dbMem } = await supabase
+          .from('team_members')
+          .select('role')
+          .match({ team_id: teamId, user_id: userId })
+          .maybeSingle();
+
+        if (dbMem?.role) {
+          memoryDb.teamMembers.set(`${teamId}:${userId}`, {
+            id: `tm_${teamId}_${userId}`,
+            teamId,
+            userId,
+            role: dbMem.role,
+            joinedAt: new Date().toISOString(),
+          });
+          return dbMem.role;
+        }
+      } catch (e) {}
+    }
+
+    return null;
   },
 
   async updateTeamMemberRole(teamId, targetUserId, newRole, executorUserId) {
@@ -898,15 +988,78 @@ const SupabaseService = {
 
   async getTeamDashboard(teamId, userId) {
     const team = await this.getTeamById(teamId);
-    const workflows = [];
-    for (const wf of memoryDb.workflows.values()) {
-      if (wf.teamId === teamId && wf.status !== 'ARCHIVED') workflows.push(wf);
-    }
 
-    const tasks = [];
-    for (const t of memoryDb.tasks.values()) {
-      if (t.teamId === teamId) tasks.push(t);
+    // 1. Collect workflows (from memoryDb + Supabase)
+    const workflowMap = new Map();
+    for (const wf of memoryDb.workflows.values()) {
+      if (wf.teamId === teamId && wf.status !== 'ARCHIVED') {
+        workflowMap.set(wf.id, wf);
+      }
     }
+    if (await areTablesReady()) {
+      try {
+        const { data: dbWfs } = await supabase
+          .from('workflows')
+          .select('*')
+          .eq('team_id', teamId)
+          .neq('status', 'ARCHIVED');
+        if (dbWfs) {
+          for (const d of dbWfs) {
+            const mapped = {
+              id: d.id,
+              name: d.name,
+              description: d.description,
+              teamId: d.team_id,
+              status: d.status,
+              isRestricted: d.is_restricted || false,
+              ownerId: d.owner_id || d.created_by,
+              createdBy: d.created_by,
+              nodes: d.nodes || [],
+              dependencies: d.dependencies || [],
+              createdAt: d.created_at,
+              updatedAt: d.updated_at,
+            };
+            workflowMap.set(mapped.id, mapped);
+            memoryDb.workflows.set(mapped.id, mapped);
+          }
+        }
+      } catch (e) {}
+    }
+    const workflows = Array.from(workflowMap.values());
+
+    // 2. Collect tasks (from memoryDb + Supabase)
+    const taskMap = new Map();
+    for (const t of memoryDb.tasks.values()) {
+      if (t.teamId === teamId) taskMap.set(t.id, t);
+    }
+    if (await areTablesReady()) {
+      try {
+        const { data: dbTasks } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('team_id', teamId);
+        if (dbTasks) {
+          for (const t of dbTasks) {
+            const mapped = {
+              id: t.id,
+              title: t.title,
+              description: t.description,
+              workflowId: t.workflow_id,
+              teamId: t.team_id,
+              status: t.status,
+              priority: t.priority,
+              assignedTo: t.assigned_to,
+              dueDate: t.due_date,
+              createdAt: t.created_at,
+              updatedAt: t.updated_at,
+            };
+            taskMap.set(mapped.id, mapped);
+            memoryDb.tasks.set(mapped.id, mapped);
+          }
+        }
+      } catch (e) {}
+    }
+    const tasks = Array.from(taskMap.values());
 
     const members = await this.getTeamMembers(teamId);
     const recentActivity = await this.getTeamActivity(teamId, 10);
@@ -1220,21 +1373,75 @@ const SupabaseService = {
   },
 
   async getWorkflowMembers(workflowId) {
-    const members = [];
+    if (!workflowId) return [];
+    const wf = await this.getWorkflowById(workflowId);
+    if (!wf) return [];
+
+    const memberMap = new Map();
+
+    // 1. In-memory workflow members
     for (const [key, mem] of memoryDb.workflowMembers.entries()) {
       if (mem.workflowId === workflowId) {
-        const u = await this.getUserById(mem.userId);
-        if (u) {
-          members.push({
-            id: u.id,
-            name: u.name,
-            email: u.email,
-            username: u.username,
-            avatar: u.avatar,
-            role: mem.role,
-            joinedAt: mem.joinedAt,
-          });
+        memberMap.set(mem.userId, { userId: mem.userId, role: mem.role, joinedAt: mem.joinedAt });
+      }
+    }
+
+    // 2. Supabase workflow_members
+    if (await areTablesReady()) {
+      try {
+        const { data: dbMembers } = await supabase
+          .from('workflow_members')
+          .select('user_id, role, joined_at')
+          .eq('workflow_id', workflowId);
+
+        if (dbMembers) {
+          for (const row of dbMembers) {
+            memberMap.set(row.user_id, {
+              userId: row.user_id,
+              role: row.role,
+              joinedAt: row.joined_at,
+            });
+            memoryDb.workflowMembers.set(`${workflowId}:${row.user_id}`, {
+              workflowId,
+              userId: row.user_id,
+              role: row.role,
+              joinedAt: row.joined_at,
+            });
+          }
         }
+      } catch (e) {}
+    }
+
+    // 3. Ensure workflow owner / creator is present as OWNER
+    const ownerId = wf.ownerId || wf.createdBy;
+    if (ownerId && !memberMap.has(ownerId)) {
+      memberMap.set(ownerId, {
+        userId: ownerId,
+        role: 'OWNER',
+        joinedAt: wf.createdAt || new Date().toISOString(),
+      });
+      memoryDb.workflowMembers.set(`${workflowId}:${ownerId}`, {
+        workflowId,
+        userId: ownerId,
+        role: 'OWNER',
+        joinedAt: wf.createdAt || new Date().toISOString(),
+      });
+    }
+
+    // 4. Resolve full user details
+    const members = [];
+    for (const m of memberMap.values()) {
+      const u = await this.getUserById(m.userId);
+      if (u) {
+        members.push({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          username: u.username,
+          avatar: u.avatar,
+          role: m.role,
+          joinedAt: m.joinedAt,
+        });
       }
     }
     return members;
@@ -1257,14 +1464,31 @@ const SupabaseService = {
   },
 
   async updateWorkflowMemberRole(workflowId, targetUserId, newRole, executorUserId) {
-    const mem = memoryDb.workflowMembers.get(`${workflowId}:${targetUserId}`);
-    if (!mem) throw new Error('User is not a collaborator in this workflow');
+    let mem = memoryDb.workflowMembers.get(`${workflowId}:${targetUserId}`);
+    const now = new Date().toISOString();
+    if (!mem) {
+      mem = { workflowId, userId: targetUserId, role: newRole, joinedAt: now };
+      memoryDb.workflowMembers.set(`${workflowId}:${targetUserId}`, mem);
+    } else {
+      mem.role = newRole;
+    }
 
-    mem.role = newRole;
+    if (await areTablesReady()) {
+      try {
+        await supabase
+          .from('workflow_members')
+          .upsert([{
+            workflow_id: workflowId,
+            user_id: targetUserId,
+            role: newRole,
+            joined_at: mem.joinedAt || now,
+          }], { onConflict: 'workflow_id,user_id' });
+      } catch (e) {}
+    }
 
     await this.createNotification(targetUserId, {
       title: 'Workflow Role Updated',
-      message: `Your role was updated to ${newRole} in workflow.`,
+      message: `Your role was updated to ${newRole.replace('WORKFLOW_', '')} in workflow.`,
       type: 'ROLE_CHANGE',
       link: `/workflows/${workflowId}`,
     });
@@ -1274,6 +1498,14 @@ const SupabaseService = {
 
   async removeWorkflowMember(workflowId, targetUserId, executorUserId) {
     memoryDb.workflowMembers.delete(`${workflowId}:${targetUserId}`);
+    if (await areTablesReady()) {
+      try {
+        await supabase
+          .from('workflow_members')
+          .delete()
+          .match({ workflow_id: workflowId, user_id: targetUserId });
+      } catch (e) {}
+    }
     return true;
   },
 
@@ -1290,15 +1522,23 @@ const SupabaseService = {
     memoryDb.workflowMembers.set(`${workflowId}:${userId}`, mem);
     if (await areTablesReady()) {
       try {
-        await supabase.from('workflow_members').insert([{
+        await supabase.from('workflow_members').upsert([{
           id: memId,
           workflow_id: workflowId,
           user_id: userId,
           role,
           joined_at: now,
-        }]);
+        }], { onConflict: 'workflow_id,user_id' });
       } catch (e) {}
     }
+
+    await this.createNotification(userId, {
+      title: 'Added to Workflow',
+      message: `You were granted ${role.replace('WORKFLOW_', '')} access to a workflow.`,
+      type: 'INVITATION_ACCEPTED',
+      link: `/workflows/${workflowId}`,
+    });
+
     return mem;
   },
 
