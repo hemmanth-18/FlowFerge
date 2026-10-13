@@ -66,8 +66,26 @@ const documentController = {
         return res.status(400).json({ success: false, error: 'Workflow ID is required' });
       }
 
+      const wf = await SupabaseService.getWorkflowById(workflowId);
+      if (!wf) {
+        return res.status(404).json({ success: false, error: 'Workflow not found' });
+      }
+
+      const userObj = await SupabaseService.getUserById(userId);
+      const isGlobalAdmin = userObj?.role === 'ADMIN' || userObj?.isAdmin === true;
+      let teamRole = null;
+      if (wf.teamId) {
+        teamRole = await SupabaseService.getTeamMemberRole(wf.teamId, userId);
+      }
       const role = await SupabaseService.getWorkflowMemberRole(workflowId, userId);
-      if (!role) {
+      const hasAccess =
+        role ||
+        isGlobalAdmin ||
+        teamRole === 'TEAM_ADMIN' ||
+        teamRole === 'TEAM_MANAGER' ||
+        teamRole === 'OWNER';
+
+      if (!hasAccess) {
         return res.status(403).json({ success: false, error: 'Access denied: You do not have access to this workflow' });
       }
 

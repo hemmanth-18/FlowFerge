@@ -3803,15 +3803,40 @@ const SupabaseService = {
     if (!wf) throw new Error('Workflow not found');
 
     // 2. Check Sender Authorization
+    const uploader = await this.getUserById(uploadedBy);
+    const team = wf.teamId ? await this.getTeamById(wf.teamId) : null;
+    let teamRole = null;
+    if (wf.teamId) {
+      teamRole = await this.getTeamMemberRole(wf.teamId, uploadedBy);
+    }
     const senderRole = await this.getWorkflowMemberRole(workflowId, uploadedBy);
+    const isGlobalAdmin = uploader?.role === 'ADMIN' || uploader?.isAdmin === true;
+
     const isAuthorizedSender =
+      isGlobalAdmin ||
       senderRole === 'OWNER' ||
       senderRole === 'MANAGER' ||
       senderRole === 'WORKFLOW_MANAGER' ||
-      senderRole === 'ADMIN';
+      senderRole === 'ADMIN' ||
+      teamRole === 'TEAM_ADMIN' ||
+      teamRole === 'TEAM_MANAGER' ||
+      teamRole === 'OWNER' ||
+      teamRole === 'MANAGER';
 
     if (!isAuthorizedSender) {
-      throw new Error('Access denied: You must be a workflow manager, owner, or administrator to send documents.');
+      throw new Error('Access denied: You must be a workflow manager, team manager, owner, or administrator to send documents.');
+    }
+
+    // Determine readable sender display role
+    let senderDisplayRole = 'Team Manager';
+    if (isGlobalAdmin || senderRole === 'ADMIN' || teamRole === 'TEAM_ADMIN') {
+      senderDisplayRole = 'Administrator';
+    } else if (teamRole === 'TEAM_MANAGER') {
+      senderDisplayRole = 'Team Manager';
+    } else if (senderRole === 'MANAGER' || senderRole === 'WORKFLOW_MANAGER') {
+      senderDisplayRole = 'Workflow Manager';
+    } else if (senderRole === 'OWNER' || teamRole === 'OWNER') {
+      senderDisplayRole = 'Team Owner';
     }
 
     // 3. Normalize recipientIds
@@ -3870,9 +3895,6 @@ const SupabaseService = {
         console.warn('Supabase storage upload notice:', err.message);
       }
     }
-
-    const uploader = await this.getUserById(uploadedBy);
-    const team = wf.teamId ? await this.getTeamById(wf.teamId) : null;
 
     const doc = {
       id: docId,
@@ -3935,12 +3957,24 @@ const SupabaseService = {
           } catch (e) {}
         }
 
-        // Private in-app notification to this recipient only
+        const teamName = team?.name || 'Workspace Team';
+        const workflowName = wf.name;
+
+        // Private in-app notification to this recipient with sender role, team name, and workflow name
         await this.createNotification(rid, {
-          title: 'Private Document Received',
-          message: `${uploader?.name || 'Manager'} sent you a private document: "${file.originalname}" in workflow "${wf.name}".`,
+          title: `Private Document from ${uploader?.name || 'Manager'} (${senderDisplayRole})`,
+          message: `${uploader?.name || 'A user'} (${senderDisplayRole}) sent you a private document "${file.originalname}" in team "${teamName}" for workflow "${workflowName}".`,
           type: 'DOCUMENT_RECEIVED',
           link: `/documents?tab=received&docId=${docId}`,
+          data: {
+            documentId: docId,
+            workflowId,
+            workflowName,
+            teamId: wf.teamId,
+            teamName,
+            senderName: uploader?.name || 'Manager',
+            senderRole: senderDisplayRole,
+          },
         });
 
         // Individual private email (no shared recipient list)
@@ -3948,23 +3982,34 @@ const SupabaseService = {
           mailService.sendPrivateDocumentEmail({
             to: targetMember.email,
             recipientName: targetMember.name,
-            senderName: uploader?.name || 'Workflow Manager',
+            senderName: uploader?.name || 'Manager',
+            senderRole: senderDisplayRole,
             documentName: file.originalname,
-            workflowName: wf.name,
-            teamName: team?.name || '',
+            workflowName: workflowName,
+            teamName: teamName,
             documentUrl: `https://flow-ferge.vercel.app/documents?tab=received&docId=${docId}`,
           }).catch(() => {});
         }
       }
     } else {
-      // Public document: notify workflow members
+      const teamName = team?.name || 'Workspace Team';
+      // Public document: notify workflow members with sender name, sender role, team name, workflow name
       for (const m of eligibleMembers) {
         if (m.id !== uploadedBy) {
           await this.createNotification(m.id, {
-            title: 'New Workflow Document',
-            message: `${uploader?.name || 'Member'} shared "${file.originalname}" with workflow "${wf.name}".`,
+            title: `New Document from ${uploader?.name || 'Member'} (${senderDisplayRole})`,
+            message: `${uploader?.name || 'A user'} (${senderDisplayRole}) shared "${file.originalname}" in team "${teamName}" for workflow "${wf.name}".`,
             type: 'DOCUMENT_SHARED',
-            link: `/workflows/${workflowId}`,
+            link: `/documents?tab=workflow&workflowId=${workflowId}`,
+            data: {
+              documentId: docId,
+              workflowId,
+              workflowName: wf.name,
+              teamId: wf.teamId,
+              teamName,
+              senderName: uploader?.name,
+              senderRole: senderDisplayRole,
+            },
           });
         }
       }
@@ -4027,10 +4072,23 @@ const SupabaseService = {
     const wf = await this.getWorkflowById(workflowId);
     if (!wf) return [];
 
+    const userObj = await this.getUserById(userId);
+    const isGlobalAdmin = userObj?.role === 'ADMIN' || userObj?.isAdmin === true;
+    let teamRole = null;
+    if (wf.teamId) {
+      teamRole = await this.getTeamMemberRole(wf.teamId, userId);
+    }
     const role = await this.getWorkflowMemberRole(workflowId, userId);
-    if (!role) return [];
+    const isTeamAdmin = teamRole === 'TEAM_ADMIN';
+    const isTeamManager = teamRole === 'TEAM_MANAGER';
+
+    // Must have at least workflow access or admin/manager role
+    if (!role && !isGlobalAdmin && !isTeamAdmin && !isTeamManager) return [];
 
     const isAdminOrManager =
+      isGlobalAdmin ||
+      isTeamAdmin ||
+      isTeamManager ||
       role === 'OWNER' ||
       role === 'MANAGER' ||
       role === 'WORKFLOW_MANAGER' ||
@@ -4194,11 +4252,20 @@ const SupabaseService = {
     const doc = memoryDb.workflowDocuments.get(docId);
     if (!doc) throw new Error('Document not found');
 
+    const userObj = await this.getUserById(userId);
+    const isGlobalAdmin = userObj?.role === 'ADMIN' || userObj?.isAdmin === true;
+    let teamRole = null;
+    if (doc.teamId) {
+      teamRole = await this.getTeamMemberRole(doc.teamId, userId);
+    }
     const role = await this.getWorkflowMemberRole(doc.workflowId, userId);
     const isSender = doc.uploadedBy === userId;
     const recs = this.getDocumentRecipients(doc.id);
     const isRecipient = recs.some((r) => r.recipientUserId === userId);
     const isAdminOrManager =
+      isGlobalAdmin ||
+      teamRole === 'TEAM_ADMIN' ||
+      teamRole === 'TEAM_MANAGER' ||
       role === 'OWNER' ||
       role === 'MANAGER' ||
       role === 'WORKFLOW_MANAGER' ||

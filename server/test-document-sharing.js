@@ -180,28 +180,69 @@ async function runDocumentSharingTests() {
     throw new Error('FAILED: User outside workflow accessed workflow document!');
   }
 
-  // 8. Test Admin Oversight & Audit Logging
-  console.log('\n8. Testing Admin Oversight & Audit Logging...');
-  // Create a document uploaded by Ravi privately to Kumar
-  // Arun (admin) accesses it
-  const raviToKumarDoc = await SupabaseService.saveWorkflowDocument({
+  // 8. Test Manager sending private document & Admin oversight & Notifications
+  console.log('\n8. Testing Manager sending private document, Admin oversight, and Detailed Notifications...');
+  // Promote Ravi to Workflow Manager in Website Development
+  await SupabaseService.updateWorkflowMemberRole(webWf.id, 'user_ravi', 'MANAGER');
+  const raviWfRole = await SupabaseService.getWorkflowMemberRole(webWf.id, 'user_ravi');
+  console.log(`✓ Ravi role updated to: ${raviWfRole}`);
+
+  // Manager (Ravi) sends private document to Member (Kumar)
+  const managerDoc = await SupabaseService.saveWorkflowDocument({
     workflowId: webWf.id,
     file: {
-      originalname: 'ravi_kumar_sync.pdf',
+      originalname: 'manager_private_brief.pdf',
       buffer: validPdfBuffer,
       size: validPdfBuffer.length,
       mimetype: 'application/pdf',
     },
-    uploadedBy: 'user_arun', // Admin
-    recipientIds: ['user_kumar'],
+    uploadedBy: 'user_ravi', // Manager
+    recipientIds: ['user_kumar'], // Member
+    description: 'Confidential project brief from Manager Ravi to Kumar.',
   });
 
-  // Admin access
-  const adminAccess = await SupabaseService.getDocumentDownloadUrl(raviToKumarDoc.id, 'user_arun');
-  if (!adminAccess.doc) {
-    throw new Error('FAILED: Admin oversight access failed!');
+  console.log(`✓ Manager (Ravi) sent private document: ${managerDoc.id} (${managerDoc.visibilityLabel})`);
+  if (!managerDoc.visibilityLabel.includes('Private — kumar')) {
+    throw new Error('FAILED: Manager private doc label mismatch!');
   }
-  console.log('✓ Authorized administrator accessed document successfully.');
+
+  // Admin (Arun) can view and download the manager's private document
+  const adminDocList = await SupabaseService.getWorkflowDocuments(webWf.id, 'user_arun');
+  const adminFoundDoc = adminDocList.find((d) => d.id === managerDoc.id);
+  if (!adminFoundDoc) {
+    throw new Error('FAILED: Administrator cannot view private document sent by manager!');
+  }
+  console.log(`✓ Admin (Arun) successfully discovered manager private document: "${adminFoundDoc.fileName}"`);
+
+  const adminDownload = await SupabaseService.getDocumentDownloadUrl(managerDoc.id, 'user_arun');
+  if (!adminDownload.doc) {
+    throw new Error('FAILED: Administrator cannot download private document sent by manager!');
+  }
+  console.log('✓ Admin (Arun) successfully downloaded manager private document with audit tracking.');
+
+  // Verify Kumar's notification contains: Sender Name, Sender Role, Team Name, Workflow Name
+  const kumarNotifs = await SupabaseService.getUserNotifications('user_kumar');
+  const receivedNotif = kumarNotifs.find((n) => n.data?.documentId === managerDoc.id);
+  if (!receivedNotif) {
+    throw new Error('FAILED: Recipient (Kumar) did not receive in-app notification for private document!');
+  }
+
+  console.log(`✓ Recipient notification title: "${receivedNotif.title}"`);
+  console.log(`✓ Recipient notification message: "${receivedNotif.message}"`);
+
+  if (!receivedNotif.message.includes('Ravi')) {
+    throw new Error('FAILED: Notification message does not contain sender name (Ravi)!');
+  }
+  if (!receivedNotif.message.includes('Manager')) {
+    throw new Error('FAILED: Notification message does not contain sender role (Manager)!');
+  }
+  if (!receivedNotif.message.includes(devTeam.name)) {
+    throw new Error(`FAILED: Notification message does not contain team name (${devTeam.name})!`);
+  }
+  if (!receivedNotif.message.includes(webWf.name)) {
+    throw new Error(`FAILED: Notification message does not contain workflow name (${webWf.name})!`);
+  }
+  console.log('✓ All notification details verified: sender name, sender role, team name, and workflow name!');
 
   // 9. Test Invalid File Rejection (Security validation)
   console.log('\n9. Testing File Header & Extension Security Validation...');

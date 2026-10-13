@@ -473,7 +473,7 @@ ${process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app'}
   /**
    * Send a private document notification email to a single recipient
    */
-  async sendPrivateDocumentEmail({ to, recipientName, senderName, documentName, workflowName, teamName, documentUrl }) {
+  async sendPrivateDocumentEmail({ to, recipientName, senderName, senderRole, documentName, workflowName, teamName, documentUrl }) {
     const cleanTo = (to || '').trim();
     if (!cleanTo) return { success: false, error: 'Recipient email required' };
 
@@ -482,12 +482,14 @@ ${process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app'}
     }
 
     const safeRecipient = escapeHtml(recipientName || 'Team Member');
-    const safeSender = escapeHtml(senderName || 'Workflow Manager');
+    const safeSender = escapeHtml(senderName || 'Manager');
+    const safeSenderRole = escapeHtml(senderRole || 'Workflow Manager');
     const safeDoc = escapeHtml(documentName || 'Document');
     const safeWorkflow = escapeHtml(workflowName || 'Workflow');
+    const safeTeam = escapeHtml(teamName || 'Workspace Team');
     const safeUrl = documentUrl || 'https://flow-ferge.vercel.app/documents';
     const senderEmail = process.env.MAIL_USER || 'hemmanthguna@gmail.com';
-    const subject = `Private Document Shared: ${documentName} (${workflowName})`;
+    const subject = `Private Document Shared: ${documentName} (${workflowName} • ${safeTeam})`;
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -497,12 +499,16 @@ ${process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app'}
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #080B12; color: #F8FAFC; margin: 0; padding: 24px; }
     .card { background-color: #0D1220; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; max-width: 540px; margin: 0 auto; padding: 32px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
-    .badge { display: inline-block; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 700; color: #FBBF24; background-color: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.3); text-transform: uppercase; margin-bottom: 16px; letter-spacing: 0.05em; }
+    .badge { display: inline-block; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 700; color: #C084FC; background-color: rgba(192, 132, 252, 0.15); border: 1px solid rgba(192, 132, 252, 0.3); text-transform: uppercase; margin-bottom: 16px; letter-spacing: 0.05em; }
     h2 { margin: 0 0 12px; font-size: 20px; color: #ffffff; }
     p { margin: 8px 0; font-size: 14px; line-height: 1.6; color: #94A3B8; }
     .highlight { color: #ffffff; font-weight: 600; }
-    .doc-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px; margin: 20px 0; }
-    .btn { display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #8B5CF6, #6366F1); color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4); margin-top: 12px; }
+    .doc-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 18px; margin: 20px 0; }
+    .meta-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .meta-row:last-child { border-bottom: none; }
+    .meta-label { color: #64748b; }
+    .meta-val { color: #e2e8f0; font-weight: 600; }
+    .btn { display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #8B5CF6, #6366F1); color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4); margin-top: 12px; }
     .footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; color: #64748b; text-align: center; }
   </style>
 </head>
@@ -510,12 +516,14 @@ ${process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app'}
   <div class="card">
     <div class="badge">🔒 Confidential Document Delivery</div>
     <h2>Hello ${safeRecipient},</h2>
-    <p><span class="highlight">${safeSender}</span> has shared a private document with you in the workflow <span class="highlight">${safeWorkflow}</span>.</p>
+    <p><span class="highlight">${safeSender}</span> (<span class="highlight">${safeSenderRole}</span>) has shared a private document with you in team <span class="highlight">${safeTeam}</span>.</p>
     
     <div class="doc-box">
-      <div style="font-size: 15px; font-weight: 700; color: #ffffff; margin-bottom: 4px;">📄 ${safeDoc}</div>
-      <div style="font-size: 12px; color: #94A3B8;">Workflow: ${safeWorkflow}</div>
-      <div style="font-size: 11px; color: #cbd5e1; margin-top: 6px;">This document was sent privately to your account. Only authorized members can access it.</div>
+      <div style="font-size: 16px; font-weight: 700; color: #ffffff; margin-bottom: 10px;">📄 ${safeDoc}</div>
+      <div class="meta-row"><span class="meta-label">Sender:</span><span class="meta-val">${safeSender} (${safeSenderRole})</span></div>
+      <div class="meta-row"><span class="meta-label">Team:</span><span class="meta-val">${safeTeam}</span></div>
+      <div class="meta-row"><span class="meta-label">Workflow:</span><span class="meta-val">${safeWorkflow}</span></div>
+      <div style="font-size: 11px; color: #cbd5e1; margin-top: 10px;">This document was sent privately to your account. Only you, the sender, and authorized administrators can access it.</div>
     </div>
 
     <div style="text-align: center; margin: 24px 0;">
@@ -537,7 +545,7 @@ ${process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app'}
         to: cleanTo,
         replyTo: senderEmail,
         subject,
-        text: `${safeSender} sent you a private document "${safeDoc}" in ${safeWorkflow}. Log in to FlowForge to view: ${safeUrl}`,
+        text: `${safeSender} (${safeSenderRole}) sent you a private document "${safeDoc}" in team "${safeTeam}" for workflow "${safeWorkflow}". Log in to FlowForge to view: ${safeUrl}`,
         html: htmlContent,
       });
 
