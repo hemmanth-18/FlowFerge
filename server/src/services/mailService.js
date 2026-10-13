@@ -19,13 +19,152 @@ class MailService {
   }
 
   /**
-   * Check if mail service credentials are configured
+   * Check if any email service credentials are configured (Brevo, Resend, or Gmail SMTP)
    */
   isConfigured() {
+    if (process.env.BREVO_API_KEY && process.env.BREVO_API_KEY.trim().length > 0) return true;
+    if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim().length > 0) return true;
+    return this.isSmtpConfigured();
+  }
+
+  /**
+   * Check if classic SMTP credentials are configured
+   */
+  isSmtpConfigured() {
     const user = process.env.MAIL_USER || 'hemmanthguna@gmail.com';
     const rawPass = process.env.MAIL_APP_PASSWORD;
     const pass = (rawPass || '').replace(/\s+/g, '');
     return Boolean(user && pass && pass.length > 0);
+  }
+
+  /**
+   * Get the name of the currently active mail provider
+   */
+  getActiveProvider() {
+    if (process.env.BREVO_API_KEY && process.env.BREVO_API_KEY.trim().length > 0) return 'Brevo (HTTPS API)';
+    if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim().length > 0) return 'Resend (HTTPS API)';
+    if (this.isSmtpConfigured()) return 'Gmail SMTP';
+    return 'None (Unconfigured)';
+  }
+
+  /**
+   * Universal email dispatcher supporting:
+   * 1. Brevo REST API (HTTPS port 443 — works on Render Free Tier!)
+   * 2. Resend REST API (HTTPS port 443 — works on Render Free Tier!)
+   * 3. Nodemailer SMTP (port 465/587 — works on Localhost & Paid cloud servers)
+   */
+  async dispatchEmail({ to, subject, html, text, fromName = 'FlowForge', replyTo }) {
+    const cleanTo = (to || '').trim();
+    if (!cleanTo) return { success: false, error: 'Recipient email required' };
+
+    const senderEmail = process.env.MAIL_USER || 'hemmanthguna@gmail.com';
+
+    // 1. Brevo REST API (HTTPS Port 443 - 300 free emails/day, works on Render Free Tier!)
+    const brevoKey = (process.env.BREVO_API_KEY || '').trim();
+    if (brevoKey) {
+      try {
+        const payload = {
+          sender: { name: fromName, email: senderEmail },
+          to: [{ email: cleanTo }],
+          subject,
+          htmlContent: html,
+          textContent: text,
+        };
+        if (replyTo) {
+          payload.replyTo = { email: replyTo };
+        }
+
+        const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'api-key': brevoKey,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          console.warn('[MailService] Brevo API error response:', data);
+          throw new Error(data.message || `Brevo returned status ${res.status}`);
+        }
+
+        console.log(`[MailService] Sent via Brevo HTTPS API to ${cleanTo} (MessageId: ${data.messageId})`);
+        return { success: true, messageId: data.messageId, provider: 'brevo' };
+      } catch (err) {
+        console.error('[MailService] Brevo HTTPS dispatch failed:', err.message);
+        // Fall through to next provider
+      }
+    }
+
+    // 2. Resend REST API (HTTPS Port 443 — works on Render Free Tier!)
+    const resendKey = (process.env.RESEND_API_KEY || '').trim();
+    if (resendKey) {
+      try {
+        const fromHeader = process.env.RESEND_FROM || `${fromName} <onboarding@resend.dev>`;
+        const payload = {
+          from: fromHeader,
+          to: [cleanTo],
+          subject,
+          html,
+          text,
+        };
+        if (replyTo) {
+          payload.reply_to = replyTo;
+        }
+
+        const res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          console.warn('[MailService] Resend API error response:', data);
+          throw new Error(data.message || `Resend returned status ${res.status}`);
+        }
+
+        console.log(`[MailService] Sent via Resend HTTPS API to ${cleanTo} (ID: ${data.id})`);
+        return { success: true, messageId: data.id, provider: 'resend' };
+      } catch (err) {
+        console.error('[MailService] Resend HTTPS dispatch failed:', err.message);
+        // Fall through to SMTP
+      }
+    }
+
+    // 3. Fallback to Nodemailer SMTP (for localhost & paid servers)
+    if (this.isSmtpConfigured()) {
+      try {
+        const transporter = this.getTransporter();
+        const fromHeader = `"${fromName}" <${senderEmail}>`;
+
+        const info = await transporter.sendMail({
+          from: fromHeader,
+          to: cleanTo,
+          replyTo: replyTo || senderEmail,
+          subject,
+          text,
+          html,
+        });
+
+        console.log(`[MailService] Sent via SMTP to ${cleanTo} (Message ID: ${info.messageId})`);
+        return { success: true, messageId: info.messageId, provider: 'smtp' };
+      } catch (err) {
+        console.error(`[MailService] SMTP send failed to ${cleanTo}:`, err.message);
+        return { success: false, error: err.message, provider: 'smtp' };
+      }
+    }
+
+    return {
+      success: false,
+      reason: 'unconfigured',
+      message: 'No email service credentials configured. Set BREVO_API_KEY, RESEND_API_KEY, or MAIL_APP_PASSWORD.',
+    };
   }
 
   /**
@@ -341,29 +480,14 @@ FlowForge Workflow Management Platform
 ${process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app'}
 `;
 
-    try {
-      const transporter = this.getTransporter();
-      const info = await transporter.sendMail({
-        from: `"FlowForge" <${senderEmail}>`,
-        to: cleanTo,
-        replyTo: senderEmail,
-        subject,
-        text: plainTextContent,
-        html: htmlContent,
-      });
-
-      console.log(`[MailService] Team invitation email successfully sent to ${cleanTo} (Message ID: ${info.messageId})`);
-      return {
-        success: true,
-        messageId: info.messageId,
-      };
-    } catch (err) {
-      console.error(`[MailService] Failed to send invitation email to ${cleanTo}:`, err.message);
-      return {
-        success: false,
-        error: err.message,
-      };
-    }
+    return await this.dispatchEmail({
+      to: cleanTo,
+      subject,
+      html: htmlContent,
+      text: plainTextContent,
+      fromName: 'FlowForge',
+      replyTo: senderEmail,
+    });
   }
 
   /**
@@ -411,22 +535,14 @@ ${process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app'}
 </html>
 `;
 
-    try {
-      const transporter = this.getTransporter();
-      const info = await transporter.sendMail({
-        from: `"FlowForge" <${senderEmail}>`,
-        to: cleanTo,
-        replyTo: senderEmail,
-        subject,
-        text: `${inviterName} invited you to collaborate on ${workflowTitle} on FlowForge: ${safeUrl}`,
-        html: htmlContent,
-      });
-
-      return { success: true, messageId: info.messageId };
-    } catch (err) {
-      console.error(`[MailService] Workflow invite email error:`, err.message);
-      return { success: false, error: err.message };
-    }
+    return await this.dispatchEmail({
+      to: cleanTo,
+      subject,
+      html: htmlContent,
+      text: `${inviterName} invited you to collaborate on ${workflowTitle} on FlowForge: ${safeUrl}`,
+      fromName: 'FlowForge',
+      replyTo: senderEmail,
+    });
   }
 
   /**
@@ -477,22 +593,14 @@ ${process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app'}
 </html>
 `;
 
-    try {
-      const transporter = this.getTransporter();
-      const info = await transporter.sendMail({
-        from: `"FlowForge" <${senderEmail}>`,
-        to: cleanTo,
-        replyTo: senderEmail,
-        subject,
-        text: `${safeRespondent} has ${actionText} your invitation to ${safeTitle} on FlowForge.`,
-        html: htmlContent,
-      });
-
-      return { success: true, messageId: info.messageId };
-    } catch (err) {
-      console.warn(`[MailService] Response email error:`, err.message);
-      return { success: false, error: err.message };
-    }
+    return await this.dispatchEmail({
+      to: cleanTo,
+      subject,
+      html: htmlContent,
+      text: `${safeRespondent} has ${actionText} your invitation to ${safeTitle} on FlowForge.`,
+      fromName: 'FlowForge',
+      replyTo: senderEmail,
+    });
   }
 
   /**
@@ -563,26 +671,18 @@ ${process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app'}
 </html>
 `;
 
-    try {
-      const transporter = this.getTransporter();
-      const fromHeader = safeSenderRole
-        ? `"${safeSender} (${safeSenderRole}) via FlowForge" <${senderEmail}>`
-        : `"${safeSender} via FlowForge" <${senderEmail}>`;
+    const fromName = safeSenderRole
+      ? `${safeSender} (${safeSenderRole}) via FlowForge`
+      : `${safeSender} via FlowForge`;
 
-      const info = await transporter.sendMail({
-        from: fromHeader,
-        to: cleanTo,
-        replyTo: senderEmail,
-        subject,
-        text: `${safeSender} (${safeSenderRole}) sent you a private document "${safeDoc}" in team "${safeTeam}" for workflow "${safeWorkflow}". Log in to FlowForge to view: ${safeUrl}`,
-        html: htmlContent,
-      });
-
-      return { success: true, messageId: info.messageId };
-    } catch (err) {
-      console.warn(`[MailService] Private document email error:`, err.message);
-      return { success: false, error: err.message };
-    }
+    return await this.dispatchEmail({
+      to: cleanTo,
+      subject,
+      html: htmlContent,
+      text: `${safeSender} (${safeSenderRole}) sent you a private document "${safeDoc}" in team "${safeTeam}" for workflow "${safeWorkflow}". Log in to FlowForge to view: ${safeUrl}`,
+      fromName,
+      replyTo: senderEmail,
+    });
   }
 }
 

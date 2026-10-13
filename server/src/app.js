@@ -72,6 +72,7 @@ app.get('/api/health', async (req, res) => {
     connected: conn.connected,
     auth: 'Supabase Auth & Session Engine',
     mailConfigured: mailService.isConfigured(),
+    mailProvider: mailService.getActiveProvider(),
     mailSender: process.env.MAIL_USER || 'hemmanthguna@gmail.com',
     timestamp: new Date().toISOString(),
   });
