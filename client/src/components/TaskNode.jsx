@@ -2,9 +2,14 @@ import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { StatusBadge } from './StatusBadge';
 import { PriorityBadge } from './PriorityBadge';
-import { Calendar, User, CheckCircle, Clock, Circle, Edit3, Paperclip } from 'lucide-react';
+import { Calendar, User, CheckCircle, Clock, Circle, Edit3, Paperclip, Lock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useTeam } from '../context/TeamContext';
 
 const TaskNode = ({ data, selected }) => {
+  const { user } = useAuth();
+  const { isAdmin, isManager } = useTeam();
+
   const task = data?.task || {
     title: 'Untitled Task',
     description: '',
@@ -14,8 +19,23 @@ const TaskNode = ({ data, selected }) => {
     dueDate: '',
   };
 
+  const rawAssignee = task.assignedTo || '';
+  const isAssignedToMe = Boolean(
+    user && rawAssignee && (
+      rawAssignee === user.name ||
+      rawAssignee === user.username ||
+      rawAssignee === user.id ||
+      rawAssignee === user.email ||
+      rawAssignee === `@${user.username}` ||
+      (user.name && rawAssignee.toLowerCase().trim() === user.name.toLowerCase().trim()) ||
+      (user.username && rawAssignee.toLowerCase().trim() === user.username.toLowerCase().trim())
+    )
+  );
+  const canModifyTask = isAdmin || isManager || isAssignedToMe;
+
   const onStatusChange = (e, newStatus) => {
     e.stopPropagation();
+    if (!canModifyTask) return;
     if (data?.onUpdateTaskStatus) {
       data.onUpdateTaskStatus(task.id, newStatus);
     }
@@ -138,7 +158,11 @@ const TaskNode = ({ data, selected }) => {
           <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-white/5">
             <button
               onClick={(e) => onStatusChange(e, 'TODO')}
+              disabled={!canModifyTask}
+              title={canModifyTask ? 'Set to Todo' : `View-Only: Assigned to ${task.assignedTo || 'another member'}`}
               className={`px-2 py-1 text-[10px] font-semibold rounded-lg transition-colors flex items-center justify-center space-x-1 ${
+                !canModifyTask ? 'opacity-40 cursor-not-allowed ' : ''
+              }${
                 task.status === 'TODO'
                   ? 'bg-white/[0.12] text-white border border-white/20'
                   : 'bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200 border border-white/5'
@@ -149,7 +173,11 @@ const TaskNode = ({ data, selected }) => {
             </button>
             <button
               onClick={(e) => onStatusChange(e, 'IN_PROGRESS')}
+              disabled={!canModifyTask}
+              title={canModifyTask ? 'Set to In Progress' : `View-Only: Assigned to ${task.assignedTo || 'another member'}`}
               className={`px-2 py-1 text-[10px] font-semibold rounded-lg transition-colors flex items-center justify-center space-x-1 ${
+                !canModifyTask ? 'opacity-40 cursor-not-allowed ' : ''
+              }${
                 task.status === 'IN_PROGRESS'
                   ? 'bg-brand-500/25 text-brand-300 border border-brand-500/40 shadow-sm'
                   : 'bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200 border border-white/5'
@@ -160,7 +188,11 @@ const TaskNode = ({ data, selected }) => {
             </button>
             <button
               onClick={(e) => onStatusChange(e, 'COMPLETED')}
+              disabled={!canModifyTask}
+              title={canModifyTask ? 'Mark Completed' : `View-Only: Assigned to ${task.assignedTo || 'another member'}`}
               className={`px-2 py-1 text-[10px] font-semibold rounded-lg transition-colors flex items-center justify-center space-x-1 ${
+                !canModifyTask ? 'opacity-40 cursor-not-allowed ' : ''
+              }${
                 task.status === 'COMPLETED'
                   ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm'
                   : 'bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200 border border-white/5'

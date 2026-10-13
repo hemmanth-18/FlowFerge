@@ -138,7 +138,25 @@ const taskController = {
       const isManagerOrAdmin = teamRole === 'TEAM_ADMIN' || teamRole === 'TEAM_MANAGER' || isWorkflowOwnerOrMgr || existing.createdBy === userId;
 
       if (!isManagerOrAdmin) {
-        // Team member without manager rights can only change status or update description
+        // Enforce: Team member without manager rights can only access/update tasks assigned to them!
+        const user = req.user;
+        const rawAssignee = existing.assignedTo ? String(existing.assignedTo).toLowerCase().trim() : '';
+        const isAssignedToUser = rawAssignee && (
+          rawAssignee === user.id.toLowerCase().trim() ||
+          (user.name && rawAssignee === user.name.toLowerCase().trim()) ||
+          (user.username && rawAssignee === user.username.toLowerCase().trim()) ||
+          (user.email && rawAssignee === user.email.toLowerCase().trim()) ||
+          (user.username && rawAssignee === `@${user.username.toLowerCase().trim()}`)
+        );
+
+        if (!isAssignedToUser) {
+          return res.status(403).json({
+            success: false,
+            error: 'Forbidden: As a team member, you can only access and update tasks assigned to you.',
+          });
+        }
+
+        // Assigned team member can only change status or update description
         if (updates.assignedTo && updates.assignedTo !== existing.assignedTo) {
           return res.status(403).json({
             success: false,
@@ -226,6 +244,28 @@ const taskController = {
     try {
       const userId = req.user.id;
       const { id } = req.params;
+
+      const existing = req.task || (await SupabaseService.getTaskById(id));
+      if (!existing) {
+        return res.status(404).json({ success: false, error: 'Task not found' });
+      }
+
+      const workflow = await SupabaseService.getWorkflowById(existing.workflowId);
+      const isWorkflowOwnerOrMgr = workflow && (
+        workflow.createdBy === userId ||
+        workflow.ownerId === userId ||
+        workflow.userRole === 'OWNER' ||
+        workflow.userRole === 'MANAGER'
+      );
+      const teamRole = req.teamRole || (existing.teamId ? await SupabaseService.getTeamMemberRole(existing.teamId, userId) : null);
+      const isManagerOrAdmin = teamRole === 'TEAM_ADMIN' || teamRole === 'TEAM_MANAGER' || isWorkflowOwnerOrMgr || existing.createdBy === userId;
+
+      if (!isManagerOrAdmin) {
+        return res.status(403).json({
+          success: false,
+          error: 'Forbidden: Only Team Admins and Managers can delete tasks.',
+        });
+      }
 
       await SupabaseService.deleteTask(id, userId);
       res.json({ success: true, message: 'Task deleted successfully' });

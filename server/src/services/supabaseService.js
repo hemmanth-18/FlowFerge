@@ -1432,10 +1432,23 @@ const SupabaseService = {
     const members = await this.getTeamMembers(teamId);
     const recentActivity = await this.getTeamActivity(teamId, 10);
 
-    const enrichedWorkflows = workflows.map((wf) => ({
-      ...wf,
-      ...this.calculateWorkflowMetrics(wf),
-    }));
+    const teamRole = await this.getTeamMemberRole(teamId, userId);
+    const authorizedWorkflows = workflows.filter((wf) => {
+      if (!wf.isRestricted) return true;
+      if (teamRole === 'TEAM_ADMIN') return true;
+      if (wf.ownerId === userId || wf.createdBy === userId) return true;
+      if (memoryDb.workflowMembers.get(`${wf.id}:${userId}`)) return true;
+      return false;
+    });
+
+    const enrichedWorkflows = authorizedWorkflows.map((wf) => {
+      let creatorUser = memoryDb.users.get(wf.createdBy || wf.ownerId);
+      return {
+        ...wf,
+        ...this.calculateWorkflowMetrics(wf),
+        createdByName: creatorUser?.name || 'Team Member',
+      };
+    });
     const activeWorkflowsList = enrichedWorkflows.filter((w) => w.status === 'ACTIVE');
 
     return {
@@ -1499,6 +1512,7 @@ const SupabaseService = {
           description: workflow.description,
           team_id: workflow.teamId,
           status: workflow.status,
+          is_restricted: workflow.isRestricted || false,
           created_by: creatorUserId,
           owner_id: creatorUserId,
           nodes: workflow.nodes,
@@ -1542,6 +1556,7 @@ const SupabaseService = {
             description: data.description,
             teamId: data.team_id,
             status: data.status,
+            isRestricted: data.is_restricted || false,
             ownerId: data.owner_id || data.created_by,
             createdBy: data.created_by,
             nodes: data.nodes || [],
@@ -1585,6 +1600,12 @@ const SupabaseService = {
 
     if (wf.teamId) {
       const teamRole = await this.getTeamMemberRole(wf.teamId, userId);
+      // When workflow is restricted, only Team Admins have default override access
+      if (wf.isRestricted) {
+        if (teamRole === 'TEAM_ADMIN') return 'OWNER';
+        return null;
+      }
+      // When workflow is open to team (default), all team members have access
       if (teamRole === 'TEAM_ADMIN') return 'OWNER';
       if (teamRole === 'TEAM_MANAGER') return 'MANAGER';
       if (teamRole === 'TEAM_MEMBER') return 'MEMBER';
@@ -1710,6 +1731,21 @@ const SupabaseService = {
           }
         }
       } catch (e) {}
+      // Synchronize workflow_members from Supabase
+      try {
+        const { data: dbMembers } = await supabase.from('workflow_members').select('*');
+        if (dbMembers) {
+          for (const m of dbMembers) {
+            memoryDb.workflowMembers.set(`${m.workflow_id}:${m.user_id}`, {
+              id: m.id,
+              workflowId: m.workflow_id,
+              userId: m.user_id,
+              role: m.role,
+              joinedAt: m.joined_at,
+            });
+          }
+        }
+      } catch (e) {}
     }
 
     const results = [];
@@ -1721,17 +1757,26 @@ const SupabaseService = {
       const memRole = memoryDb.workflowMembers.get(`${wf.id}:${userId}`)?.role;
 
       let hasTeamAccess = false;
+      let teamRole = null;
       if (wf.teamId) {
-        const tr = await this.getTeamMemberRole(wf.teamId, userId);
-        if (tr) hasTeamAccess = true;
+        teamRole = await this.getTeamMemberRole(wf.teamId, userId);
+        if (teamRole) {
+          // If workflow is restricted, only creator, explicit workflow members, or Team Admins have access
+          if (!wf.isRestricted || teamRole === 'TEAM_ADMIN' || isOwner || memRole) {
+            hasTeamAccess = true;
+          }
+        }
       }
 
+      // If user is not creator/owner, not an assigned workflow member, and has no team access, exclude
       if (!isOwner && !memRole && !hasTeamAccess) continue;
 
+      // Filter by team if requested
       if (teamId && wf.teamId !== teamId) continue;
 
       const role = await this.getWorkflowMemberRole(wf.id, userId);
 
+      // Filtering by ownership / shared view
       if (filter === 'owned' && !isOwner) continue;
       if (filter === 'shared' && isOwner) continue;
 
@@ -1745,11 +1790,21 @@ const SupabaseService = {
         teamIcon = team?.icon || null;
       }
 
+      // Creator profile
+      let creatorUser = memoryDb.users.get(wf.createdBy || wf.ownerId);
+      if (!creatorUser && (wf.createdBy || wf.ownerId)) {
+        try {
+          creatorUser = await this.getUserById(wf.createdBy || wf.ownerId);
+        } catch (e) {}
+      }
+
       results.push({
         ...wf,
         ...metrics,
         teamName,
         teamIcon,
+        createdByName: creatorUser?.name || 'Team Member',
+        createdByEmail: creatorUser?.email || '',
         userRole: role || 'VIEWER',
       });
     }
@@ -1782,6 +1837,8 @@ const SupabaseService = {
     if (updates.status) wf.status = updates.status;
     if (updates.nodes) wf.nodes = updates.nodes;
     if (updates.dependencies) wf.dependencies = updates.dependencies;
+    if (updates.isRestricted !== undefined) wf.isRestricted = Boolean(updates.isRestricted);
+    if (updates.teamId !== undefined) wf.teamId = updates.teamId || null;
     wf.updatedAt = new Date().toISOString();
 
     if (await areTablesReady()) {
@@ -1792,6 +1849,8 @@ const SupabaseService = {
           status: wf.status,
           nodes: wf.nodes,
           dependencies: wf.dependencies,
+          is_restricted: wf.isRestricted,
+          team_id: wf.teamId,
           updated_at: wf.updatedAt,
         }).eq('id', workflowId);
       } catch (e) {}
@@ -2443,6 +2502,117 @@ const SupabaseService = {
     return task;
   },
 
+  async syncWorkflowNodeTasks(teamId = null) {
+    if (await areTablesReady()) {
+      try {
+        let query = supabase.from('workflows').select('*');
+        if (teamId) query = query.eq('team_id', teamId);
+        const { data: dbWfs } = await query;
+        if (dbWfs) {
+          for (const row of dbWfs) {
+            let parsedNodes = row.nodes || [];
+            if (typeof parsedNodes === 'string') {
+              try { parsedNodes = JSON.parse(parsedNodes); } catch (e) { parsedNodes = []; }
+            }
+            const existingWf = memoryDb.workflows.get(row.id);
+            if (existingWf) {
+              existingWf.nodes = parsedNodes;
+              if (row.team_id) existingWf.teamId = row.team_id;
+            } else {
+              memoryDb.workflows.set(row.id, {
+                id: row.id,
+                name: row.name,
+                description: row.description,
+                teamId: row.team_id,
+                status: row.status,
+                isRestricted: row.is_restricted || false,
+                nodes: parsedNodes,
+                dependencies: row.dependencies || [],
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+              });
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Inspect workflows to extract tasks from canvas nodes
+    for (const wf of memoryDb.workflows.values()) {
+      if (teamId && wf.teamId !== teamId) continue;
+      const nodes = Array.isArray(wf.nodes) ? wf.nodes : [];
+      for (const node of nodes) {
+        if (!node || !node.id) continue;
+        const taskData = node.data?.task || node.data || {};
+        const taskId = node.id;
+        const title = taskData.title || node.data?.label || node.data?.title || 'Task';
+        const description = taskData.description || node.data?.description || '';
+        const status = (taskData.status || node.data?.status || 'TODO').toUpperCase();
+        const priority = (taskData.priority || node.data?.priority || 'MEDIUM').toUpperCase();
+        const assignedTo = taskData.assignedTo || node.data?.assignee || 'Unassigned';
+        const dueDate = taskData.dueDate || node.data?.dueDate || null;
+        const targetTeamId = wf.teamId || teamId || null;
+
+        const taskObj = {
+          id: taskId,
+          workflowId: wf.id,
+          workflowName: wf.name,
+          teamId: targetTeamId,
+          title,
+          description,
+          status,
+          priority,
+          assignedTo,
+          dueDate,
+          position: node.position || taskData.position || null,
+          createdAt: taskData.createdAt || wf.createdAt || new Date().toISOString(),
+          updatedAt: taskData.updatedAt || wf.updatedAt || new Date().toISOString(),
+        };
+
+        const existingMem = memoryDb.tasks.get(taskId);
+        if (!existingMem) {
+          memoryDb.tasks.set(taskId, taskObj);
+        } else {
+          memoryDb.tasks.set(taskId, {
+            ...taskObj,
+            ...existingMem,
+            workflowName: wf.name,
+            teamId: existingMem.teamId || targetTeamId,
+          });
+        }
+
+        // Also ensure Supabase tasks table has it so queries and relations work reliably
+        if (await areTablesReady()) {
+          try {
+            const { data: dbTask } = await supabase.from('tasks').select('id, team_id').eq('id', taskId).maybeSingle();
+            if (!dbTask) {
+              await supabase.from('tasks').insert([{
+                id: taskId,
+                workflow_id: wf.id,
+                team_id: targetTeamId,
+                title,
+                description,
+                status,
+                priority,
+                assigned_to: assignedTo,
+                due_date: dueDate,
+                position: node.position || null,
+                created_at: taskObj.createdAt,
+                updated_at: taskObj.updatedAt,
+              }]);
+            } else if (!dbTask.team_id && targetTeamId) {
+              await supabase.from('tasks').update({
+                team_id: targetTeamId,
+                workflow_id: wf.id,
+                assigned_to: assignedTo,
+              }).eq('id', taskId);
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  },
+
   async getTaskById(taskId) {
     if (!taskId) return null;
     let t = memoryDb.tasks.get(taskId);
@@ -2468,16 +2638,55 @@ const SupabaseService = {
         }
       } catch (e) {}
     }
+
+    // Fallback: Check inside workflow nodes
+    if (!t) {
+      for (const wf of memoryDb.workflows.values()) {
+        const nodes = Array.isArray(wf.nodes) ? wf.nodes : [];
+        const foundNode = nodes.find((n) => n && n.id === taskId);
+        if (foundNode) {
+          const taskData = foundNode.data?.task || foundNode.data || {};
+          t = {
+            id: taskId,
+            workflowId: wf.id,
+            workflowName: wf.name,
+            teamId: wf.teamId,
+            title: taskData.title || foundNode.data?.label || foundNode.data?.title || 'Task',
+            description: taskData.description || foundNode.data?.description || '',
+            status: (taskData.status || foundNode.data?.status || 'TODO').toUpperCase(),
+            priority: (taskData.priority || foundNode.data?.priority || 'MEDIUM').toUpperCase(),
+            assignedTo: taskData.assignedTo || foundNode.data?.assignee || 'Unassigned',
+            dueDate: taskData.dueDate || foundNode.data?.dueDate || null,
+            position: foundNode.position || null,
+            createdAt: taskData.createdAt || wf.createdAt || new Date().toISOString(),
+            updatedAt: taskData.updatedAt || wf.updatedAt || new Date().toISOString(),
+          };
+          memoryDb.tasks.set(taskId, t);
+          break;
+        }
+      }
+    }
+
+    if (t && t.workflowId && !t.workflowName) {
+      const wf = memoryDb.workflows.get(t.workflowId);
+      if (wf) t.workflowName = wf.name;
+    }
     return t || null;
   },
 
   async getTasksByWorkflow(workflowId) {
     const list = [];
+    const wf = await this.getWorkflowById(workflowId);
+    if (wf) {
+      await this.syncWorkflowNodeTasks(wf.teamId);
+    }
+
     if (await areTablesReady()) {
       try {
         const { data } = await supabase.from('tasks').select('*').eq('workflow_id', workflowId);
         if (data && data.length > 0) {
           for (const row of data) {
+            const existing = memoryDb.tasks.get(row.id);
             const t = {
               id: row.id,
               workflowId: row.workflow_id,
@@ -2491,6 +2700,7 @@ const SupabaseService = {
               position: row.position,
               createdAt: row.created_at,
               updatedAt: row.updated_at,
+              workflowName: wf?.name || existing?.workflowName || 'Workflow',
             };
             memoryDb.tasks.set(t.id, t);
           }
@@ -2498,17 +2708,23 @@ const SupabaseService = {
       } catch (e) {}
     }
     for (const t of memoryDb.tasks.values()) {
-      if (t.workflowId === workflowId && !list.some((x) => x.id === t.id)) list.push(t);
+      if (t.workflowId === workflowId && !list.some((x) => x.id === t.id)) {
+        if (!t.workflowName && wf) t.workflowName = wf.name;
+        list.push(t);
+      }
     }
     return list;
   },
 
   async getTeamTasks(teamId, filters = {}) {
+    await this.syncWorkflowNodeTasks(teamId);
+
     if (await areTablesReady()) {
       try {
         const { data } = await supabase.from('tasks').select('*').eq('team_id', teamId);
         if (data && data.length > 0) {
           for (const row of data) {
+            const existing = memoryDb.tasks.get(row.id);
             const t = {
               id: row.id,
               workflowId: row.workflow_id,
@@ -2522,6 +2738,7 @@ const SupabaseService = {
               position: row.position,
               createdAt: row.created_at,
               updatedAt: row.updated_at,
+              workflowName: existing?.workflowName || null,
             };
             memoryDb.tasks.set(t.id, t);
           }
@@ -2530,12 +2747,19 @@ const SupabaseService = {
     }
     const list = [];
     for (const t of memoryDb.tasks.values()) {
-      if (t.teamId === teamId && !list.some((x) => x.id === t.id)) list.push(t);
+      if (t.teamId === teamId && !list.some((x) => x.id === t.id)) {
+        if (!t.workflowName && t.workflowId) {
+          const wf = memoryDb.workflows.get(t.workflowId);
+          t.workflowName = wf?.name || 'Workflow';
+        }
+        list.push(t);
+      }
     }
     return list;
   },
 
   async getMyTasks(userId, teamId = null) {
+    await this.syncWorkflowNodeTasks(teamId);
     const user = await this.getUserById(userId);
     const identifiers = new Set([
       userId,
@@ -2543,7 +2767,7 @@ const SupabaseService = {
       user?.username,
       user?.email,
       user?.username ? `@${user.username}` : null,
-    ].filter(Boolean));
+    ].filter(Boolean).map((x) => String(x).toLowerCase().trim()));
 
     if (await areTablesReady()) {
       try {
@@ -2552,6 +2776,7 @@ const SupabaseService = {
         const { data } = await query;
         if (data && data.length > 0) {
           for (const row of data) {
+            const existing = memoryDb.tasks.get(row.id);
             const t = {
               id: row.id,
               workflowId: row.workflow_id,
@@ -2565,6 +2790,7 @@ const SupabaseService = {
               position: row.position,
               createdAt: row.created_at,
               updatedAt: row.updated_at,
+              workflowName: existing?.workflowName || null,
             };
             memoryDb.tasks.set(t.id, t);
           }
@@ -2574,10 +2800,24 @@ const SupabaseService = {
 
     const list = [];
     for (const t of memoryDb.tasks.values()) {
-      const isAssigned = identifiers.has(t.assignedTo);
+      if (!t) continue;
+      const rawAssignee = t.assignedTo ? String(t.assignedTo).toLowerCase().trim() : '';
+      const isAssigned = rawAssignee && (
+        identifiers.has(rawAssignee) ||
+        (user?.name && rawAssignee === user.name.toLowerCase().trim()) ||
+        (user?.username && rawAssignee === user.username.toLowerCase().trim()) ||
+        rawAssignee === userId.toLowerCase().trim()
+      );
+
       if (isAssigned) {
         if (!teamId || t.teamId === teamId) {
-          if (!list.some((x) => x.id === t.id)) list.push(t);
+          if (!list.some((x) => x.id === t.id)) {
+            if (!t.workflowName && t.workflowId) {
+              const wf = memoryDb.workflows.get(t.workflowId);
+              t.workflowName = wf?.name || 'Workflow';
+            }
+            list.push(t);
+          }
         }
       }
     }

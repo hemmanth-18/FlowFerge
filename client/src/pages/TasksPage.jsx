@@ -322,151 +322,179 @@ export const TasksPage = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredTasks.map((task) => (
-              <div
-                key={task.id}
-                className="p-4 sm:p-5 rounded-3xl bg-white/[0.045] hover:bg-white/[0.07] border border-white/10 hover:border-white/20 backdrop-blur-xl transition-all shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 group"
-              >
-                {/* Left: Completion Checkbox & Info */}
-                <div className="flex items-start space-x-3.5 flex-1 min-w-0">
-                  <button
-                    type="button"
-                    onClick={() => handleDoneClick(task)}
-                    title={
-                      task.status === 'COMPLETED'
-                        ? 'Click to mark In Progress'
-                        : 'Done (Click to complete task & upload deliverable)'
-                    }
-                    className={`mt-0.5 w-5 h-5 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
-                      task.status === 'COMPLETED'
-                        ? 'bg-[#34D399] border-[#34D399] text-black shadow-md'
-                        : 'border-slate-500 hover:border-[#34D399] text-transparent'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                  </button>
+            {filteredTasks.map((task) => {
+              const rawAssignee = task.assignedTo ? String(task.assignedTo).toLowerCase().trim() : '';
+              const isAssignedToUser = Boolean(
+                user && rawAssignee && (
+                  rawAssignee === user.id.toLowerCase().trim() ||
+                  (user.name && rawAssignee === user.name.toLowerCase().trim()) ||
+                  (user.username && rawAssignee === user.username.toLowerCase().trim()) ||
+                  (user.email && rawAssignee === user.email.toLowerCase().trim()) ||
+                  (user.username && rawAssignee === `@${user.username.toLowerCase().trim()}`)
+                )
+              );
+              const canAccessTask = isManager || isAdmin || isAssignedToUser;
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center space-x-2 flex-wrap">
-                      <h4
-                        className={`text-sm font-semibold truncate ${
-                          task.status === 'COMPLETED'
-                            ? 'line-through text-slate-400'
-                            : 'text-[#F8FAFC] group-hover:text-[#A78BFA]'
-                        }`}
-                      >
-                        {task.title}
-                      </h4>
-                      <Link
-                        to={`/workflows/${task.workflowId}`}
-                        className="text-[10px] px-2.5 py-0.5 rounded-full bg-white/[0.05] text-[#CBD5E1] hover:text-purple-300 border border-white/10 transition-colors inline-flex items-center space-x-1 backdrop-blur-sm"
-                      >
-                        <span>{task.workflowName || 'Workflow'}</span>
-                        <ExternalLink className="w-2.5 h-2.5" />
-                      </Link>
+              return (
+                <div
+                  key={task.id}
+                  className="p-4 sm:p-5 rounded-3xl bg-white/[0.045] hover:bg-white/[0.07] border border-white/10 hover:border-white/20 backdrop-blur-xl transition-all shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                >
+                  {/* Left: Completion Checkbox & Info */}
+                  <div className="flex items-start space-x-3.5 flex-1 min-w-0">
+                    <button
+                      type="button"
+                      disabled={!canAccessTask}
+                      onClick={() => handleDoneClick(task)}
+                      title={
+                        !canAccessTask
+                          ? `View-Only: Assigned to ${task.assignedTo || 'another member'}`
+                          : task.status === 'COMPLETED'
+                          ? 'Click to mark In Progress'
+                          : 'Done (Click to complete task & upload deliverable)'
+                      }
+                      className={`mt-0.5 w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${
+                        !canAccessTask
+                          ? 'opacity-40 cursor-not-allowed border-slate-600 text-slate-600'
+                          : task.status === 'COMPLETED'
+                          ? 'bg-[#34D399] border-[#34D399] text-black shadow-md cursor-pointer'
+                          : 'border-slate-500 hover:border-[#34D399] text-transparent cursor-pointer'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    </button>
 
-                      {/* Attached Document Pill if available */}
-                      {(task.documentName || task.documentId) && (
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadTaskDocument(task)}
-                          className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-[11px] text-purple-300 hover:bg-purple-500/25 transition-all cursor-pointer backdrop-blur-sm"
-                          title="Download attached deliverable document"
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center space-x-2 flex-wrap">
+                        <h4
+                          className={`text-sm font-semibold truncate ${
+                            task.status === 'COMPLETED'
+                              ? 'line-through text-slate-400'
+                              : 'text-[#F8FAFC] group-hover:text-[#A78BFA]'
+                          }`}
                         >
-                          <Paperclip className="w-3 h-3 text-purple-400" />
-                          <span className="max-w-[140px] truncate">
-                            {task.documentName || 'Deliverable Doc'}
+                          {task.title}
+                        </h4>
+                        <Link
+                          to={`/workflows/${task.workflowId}`}
+                          className="text-[10px] px-2.5 py-0.5 rounded-full bg-white/[0.05] text-[#CBD5E1] hover:text-purple-300 border border-white/10 transition-colors inline-flex items-center space-x-1 backdrop-blur-sm"
+                        >
+                          <span>{task.workflowName || 'Workflow'}</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </Link>
+
+                        {/* Attached Document Pill if available */}
+                        {(task.documentName || task.documentId) && (
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadTaskDocument(task)}
+                            className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-[11px] text-purple-300 hover:bg-purple-500/25 transition-all cursor-pointer backdrop-blur-sm"
+                            title="Download attached deliverable document"
+                          >
+                            <Paperclip className="w-3 h-3 text-purple-400" />
+                            <span className="max-w-[140px] truncate">
+                              {task.documentName || 'Deliverable Doc'}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+
+                      {task.description && (
+                        <p className="text-xs text-[#CBD5E1] mt-1 line-clamp-1">
+                          {task.description}
+                        </p>
+                      )}
+
+                      {/* Completion Deliverable Notes */}
+                      {task.completionDescription && (
+                        <div className="mt-2 text-[11px] text-[#34D399] bg-[#34D399]/10 border border-[#34D399]/25 rounded-2xl p-2.5 flex items-start space-x-2 backdrop-blur-sm">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#34D399] flex-shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <span className="font-semibold text-white">Completion Notes: </span>
+                            <span className="text-[#CBD5E1]">{task.completionDescription}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center space-x-4 mt-2 text-[11px] text-slate-400">
+                        <span className="flex items-center space-x-1">
+                          <User className="w-3 h-3 text-slate-400" />
+                          <span className="text-[#CBD5E1] font-medium">
+                            {task.assignedTo || 'Unassigned'}
                           </span>
+                        </span>
+
+                        {task.dueDate && (
+                          <span className="flex items-center space-x-1">
+                            <Calendar className="w-3 h-3 text-slate-400" />
+                            <span
+                              className={
+                                new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
+                                  ? 'text-[#FB7185] font-semibold'
+                                  : 'text-slate-400'
+                              }
+                            >
+                              Due {task.dueDate}
+                            </span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Badges & Actions */}
+                  <div className="flex items-center space-x-2 sm:space-x-3 self-end md:self-center flex-wrap gap-y-1.5">
+                    <PriorityBadge priority={task.priority} size="sm" />
+                    <StatusBadge status={task.status} size="sm" />
+
+                    {/* Explicit Done Task Button */}
+                    {task.status !== 'COMPLETED' && canAccessTask && (
+                      <button
+                        type="button"
+                        onClick={() => handleDoneClick(task)}
+                        className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-[#34D399]/15 hover:bg-[#34D399] hover:text-black text-[#34D399] border border-[#34D399]/30 text-xs font-semibold transition-all cursor-pointer shadow-sm backdrop-blur-sm"
+                        title="Done (Upload deliverable & 15-word description)"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Done</span>
+                      </button>
+                    )}
+
+                    <div className="flex items-center space-x-1 pl-2 border-l border-white/10">
+                      {canAccessTask ? (
+                        <button
+                          onClick={() => {
+                            setEditingTask(task);
+                            setIsTaskModalOpen(true);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-white hover:bg-white/[0.08] rounded-xl transition-colors"
+                          title="Edit Task"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <span
+                          className="p-1.5 text-slate-500 cursor-not-allowed"
+                          title="View-Only: You can only edit tasks assigned to you"
+                        >
+                          <Lock className="w-3.5 h-3.5 text-slate-500" />
+                        </span>
+                      )}
+
+                      {isManager && (
+                        <button
+                          onClick={() => handleDeleteTask(task.id)}
+                          className="p-1.5 text-slate-400 hover:text-[#FB7185] hover:bg-white/[0.08] rounded-xl transition-colors"
+                          title="Delete Task"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
-
-                    {task.description && (
-                      <p className="text-xs text-[#CBD5E1] mt-1 line-clamp-1">
-                        {task.description}
-                      </p>
-                    )}
-
-                    {/* Completion Deliverable Notes */}
-                    {task.completionDescription && (
-                      <div className="mt-2 text-[11px] text-[#34D399] bg-[#34D399]/10 border border-[#34D399]/25 rounded-2xl p-2.5 flex items-start space-x-2 backdrop-blur-sm">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#34D399] flex-shrink-0 mt-0.5" />
-                        <div className="min-w-0">
-                          <span className="font-semibold text-white">Completion Notes: </span>
-                          <span className="text-[#CBD5E1]">{task.completionDescription}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex items-center space-x-4 mt-2 text-[11px] text-slate-400">
-                      <span className="flex items-center space-x-1">
-                        <User className="w-3 h-3 text-slate-400" />
-                        <span className="text-[#CBD5E1] font-medium">
-                          {task.assignedTo || 'Unassigned'}
-                        </span>
-                      </span>
-
-                      {task.dueDate && (
-                        <span className="flex items-center space-x-1">
-                          <Calendar className="w-3 h-3 text-slate-400" />
-                          <span
-                            className={
-                              new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
-                                ? 'text-[#FB7185] font-semibold'
-                                : 'text-slate-400'
-                            }
-                          >
-                            Due {task.dueDate}
-                          </span>
-                        </span>
-                      )}
-                    </div>
                   </div>
                 </div>
-
-                {/* Right: Badges & Actions */}
-                <div className="flex items-center space-x-2 sm:space-x-3 self-end md:self-center flex-wrap gap-y-1.5">
-                  <PriorityBadge priority={task.priority} size="sm" />
-                  <StatusBadge status={task.status} size="sm" />
-
-                  {/* Explicit Done Task Button */}
-                  {task.status !== 'COMPLETED' && (
-                    <button
-                      type="button"
-                      onClick={() => handleDoneClick(task)}
-                      className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-[#34D399]/15 hover:bg-[#34D399] hover:text-black text-[#34D399] border border-[#34D399]/30 text-xs font-semibold transition-all cursor-pointer shadow-sm backdrop-blur-sm"
-                      title="Done (Upload deliverable & 15-word description)"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Done</span>
-                    </button>
-                  )}
-
-                  <div className="flex items-center space-x-1 pl-2 border-l border-white/10">
-                    <button
-                      onClick={() => {
-                        setEditingTask(task);
-                        setIsTaskModalOpen(true);
-                      }}
-                      className="p-1.5 text-slate-400 hover:text-white hover:bg-white/[0.08] rounded-xl transition-colors"
-                      title="Edit Task"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-
-                    {isManager && (
-                      <button
-                        onClick={() => handleDeleteTask(task.id)}
-                        className="p-1.5 text-slate-400 hover:text-[#FB7185] hover:bg-white/[0.08] rounded-xl transition-colors"
-                        title="Delete Task"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

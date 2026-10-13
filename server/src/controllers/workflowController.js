@@ -1,12 +1,12 @@
 const SupabaseService = require('../services/supabaseService');
 
 const workflowController = {
-  // GET /api/workflows?filter=all|owned|shared&teamId=...
+  // GET /api/workflows?filter=all|owned|shared|team&teamId=...
   async getWorkflows(req, res) {
     try {
       const userId = req.user.id;
-      const filter = req.query.filter || 'all'; // 'all' | 'owned' | 'shared'
-      const teamId = req.query.teamId || null;
+      const filter = req.query.filter || 'all'; // 'all' | 'owned' | 'shared' | 'team'
+      const teamId = req.query.teamId || req.headers['x-team-id'] || null;
 
       const workflows = await SupabaseService.getWorkflowsForUser(userId, { filter, teamId });
       return res.json({ success: true, data: workflows });
@@ -64,10 +64,26 @@ const workflowController = {
   async createWorkflow(req, res) {
     try {
       const userId = req.user.id;
-      const { teamId, name, description, status, nodes, dependencies, isRestricted } = req.body;
+      let { teamId, name, description, status, nodes, dependencies, isRestricted } = req.body;
 
       if (!name || !name.trim()) {
         return res.status(400).json({ success: false, error: 'Workflow name is required' });
+      }
+
+      // If teamId not explicitly passed in body, resolve from x-team-id header
+      if (!teamId && req.headers['x-team-id']) {
+        teamId = req.headers['x-team-id'];
+      }
+
+      // Validate team membership if teamId is provided
+      if (teamId) {
+        const teamRole = await SupabaseService.getTeamMemberRole(teamId, userId);
+        if (!teamRole) {
+          return res.status(403).json({
+            success: false,
+            error: 'You do not have permission to create workflows in this team.',
+          });
+        }
       }
 
       const workflow = await SupabaseService.createWorkflow(userId, {
