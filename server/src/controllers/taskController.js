@@ -88,12 +88,38 @@ const taskController = {
     }
   },
 
+  // GET /api/tasks/:id/document
+  async getTaskDocument(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const task = req.task || (await SupabaseService.getTaskById(id));
+      if (!task) {
+        return res.status(404).json({ success: false, error: 'Task not found' });
+      }
+
+      if (!task.documentId) {
+        return res.status(404).json({ success: false, error: 'No document attached to this task' });
+      }
+
+      const result = await SupabaseService.getDocumentDownloadUrl(task.documentId, userId);
+      return res.json({
+        success: true,
+        downloadUrl: result.url,
+        data: result.doc,
+      });
+    } catch (err) {
+      console.error('[Get Task Document Error]:', err);
+      return res.status(400).json({ success: false, error: err.message || 'Failed to get document' });
+    }
+  },
+
   // PUT /api/tasks/:id
   async updateTask(req, res) {
     try {
       const userId = req.user.id;
       const { id } = req.params;
-      const updates = req.body;
+      const updates = { ...req.body };
 
       const existing = req.task || (await SupabaseService.getTaskById(id));
       if (!existing) {
@@ -131,6 +157,40 @@ const taskController = {
             error: 'Forbidden: Only Team Admins and Managers can modify due dates.',
           });
         }
+      }
+
+      // Mandatory validation if marking task as COMPLETED
+      if (updates.status === 'COMPLETED' && existing.status !== 'COMPLETED') {
+        const completionText = (updates.completionDescription || updates.description || '').trim();
+        const words = completionText.split(/\s+/).filter(Boolean);
+        if (words.length < 15) {
+          return res.status(400).json({
+            success: false,
+            error: `A completion description of at least 15 words is required to mark this task as completed (current count: ${words.length} words).`,
+          });
+        }
+
+        if (!req.file && !existing.documentId && !updates.documentId) {
+          return res.status(400).json({
+            success: false,
+            error: 'A supporting document (.pdf, .doc, .docx) is mandatory to mark this task as completed.',
+          });
+        }
+
+        updates.completionDescription = completionText;
+      }
+
+      // If file was attached (via multer memoryStorage)
+      if (req.file) {
+        const uploadedDoc = await SupabaseService.saveWorkflowDocument({
+          workflowId: existing.workflowId || 'general',
+          file: req.file,
+          uploadedBy: userId,
+          description: updates.completionDescription || `Deliverable for task "${existing.title}"`,
+        });
+        updates.documentId = uploadedDoc.id;
+        updates.documentName = uploadedDoc.fileName;
+        updates.attachment = uploadedDoc;
       }
 
       const updated = await SupabaseService.updateTask(id, updates, userId);

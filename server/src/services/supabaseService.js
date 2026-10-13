@@ -2546,6 +2546,10 @@ const SupabaseService = {
     if (updates.assignedTo !== undefined) task.assignedTo = updates.assignedTo;
     if (updates.dueDate !== undefined) task.dueDate = updates.dueDate;
     if (updates.position) task.position = updates.position;
+    if (updates.completionDescription !== undefined) task.completionDescription = updates.completionDescription;
+    if (updates.documentId !== undefined) task.documentId = updates.documentId;
+    if (updates.documentName !== undefined) task.documentName = updates.documentName;
+    if (updates.attachment !== undefined) task.attachment = updates.attachment;
     task.updatedAt = new Date().toISOString();
 
     if (await areTablesReady()) {
@@ -3412,8 +3416,9 @@ const SupabaseService = {
     const doc = memoryDb.workflowDocuments.get(docId);
     if (!doc) throw new Error('Document not found');
 
+    const isUploader = doc.uploadedBy === userId;
     const role = await this.getWorkflowMemberRole(doc.workflowId, userId);
-    if (!role) throw new Error('Access denied: You are not authorized to view documents for this workflow.');
+    if (!role && !isUploader) throw new Error('Access denied: You are not authorized to view documents for this workflow.');
 
     // Generate signed URL if Supabase storage is active
     if (supabase) {

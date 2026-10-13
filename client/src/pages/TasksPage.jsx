@@ -17,11 +17,14 @@ import {
   Users,
   Shield,
   ListTodo,
+  Paperclip,
+  FileText,
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { StatusBadge } from '../components/StatusBadge';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { TaskModal } from '../components/TaskModal';
+import { TaskCompletionModal } from '../components/TaskCompletionModal';
 import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
 import { useToast } from '../context/ToastContext';
@@ -51,6 +54,8 @@ export const TasksPage = () => {
   const [assigneeFilter, setAssigneeFilter] = useState('ALL');
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [completingTask, setCompletingTask] = useState(null);
+  const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
 
   const fetchTasksAndWorkflows = useCallback(async () => {
     if (!activeTeam) {
@@ -85,7 +90,17 @@ export const TasksPage = () => {
     try {
       const isEdit = Boolean(editingTask);
       if (isEdit) {
-        await api.put(`/tasks/${editingTask.id}`, taskData);
+        if (taskData instanceof FormData) {
+          await api.put(`/tasks/${editingTask.id}`, taskData);
+        } else if (taskData?.file) {
+          const fd = new FormData();
+          Object.entries(taskData).forEach(([k, v]) => {
+            if (v !== undefined && v !== null) fd.append(k, v);
+          });
+          await api.put(`/tasks/${editingTask.id}`, fd);
+        } else {
+          await api.put(`/tasks/${editingTask.id}`, taskData);
+        }
       } else {
         await api.post(`/workflows/${taskData.workflowId}/tasks`, {
           ...taskData,
@@ -120,6 +135,28 @@ export const TasksPage = () => {
       toast.success(`Task status changed to ${newStatus.replace('_', ' ')}!`);
     } catch (err) {
       toast.error('Failed to update status: ' + err.message);
+    }
+  };
+
+  const handleDoneClick = (task) => {
+    if (task.status === 'COMPLETED') {
+      handleQuickStatusChange(task.id, 'IN_PROGRESS');
+    } else {
+      setCompletingTask(task);
+      setIsCompletionModalOpen(true);
+    }
+  };
+
+  const handleDownloadTaskDocument = async (task) => {
+    try {
+      const res = await api.get(`/tasks/${task.id}/document`);
+      if (res.data?.downloadUrl) {
+        window.open(res.data.downloadUrl, '_blank');
+      } else if (res.data?.data?.fileName) {
+        toast.info(`Deliverable: ${res.data.data.fileName}`);
+      }
+    } catch (err) {
+      toast.error('Failed to download deliverable: ' + (err.message || 'File not available'));
     }
   };
 
@@ -293,13 +330,13 @@ export const TasksPage = () => {
                 <div className="flex items-start space-x-3.5 flex-1 min-w-0">
                   <button
                     type="button"
-                    onClick={() =>
-                      handleQuickStatusChange(
-                        task.id,
-                        task.status === 'COMPLETED' ? 'IN_PROGRESS' : 'COMPLETED'
-                      )
+                    onClick={() => handleDoneClick(task)}
+                    title={
+                      task.status === 'COMPLETED'
+                        ? 'Click to mark In Progress'
+                        : 'Done (Click to complete task & upload deliverable)'
                     }
-                    className={`mt-0.5 w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${
+                    className={`mt-0.5 w-5 h-5 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
                       task.status === 'COMPLETED'
                         ? 'bg-emerald-500 border-emerald-500 text-dark-950 shadow-glow-emerald'
                         : 'border-slate-600 hover:border-emerald-400 text-transparent'
@@ -326,12 +363,38 @@ export const TasksPage = () => {
                         <span>{task.workflowName || 'Workflow'}</span>
                         <ExternalLink className="w-2.5 h-2.5" />
                       </Link>
+
+                      {/* Attached Document Pill if available */}
+                      {(task.documentName || task.documentId) && (
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadTaskDocument(task)}
+                          className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-cyan-950/60 border border-cyan-700/50 text-[11px] text-cyan-300 hover:text-cyan-200 hover:border-cyan-500 transition-all cursor-pointer"
+                          title="Download attached deliverable document"
+                        >
+                          <Paperclip className="w-3 h-3 text-cyan-400" />
+                          <span className="max-w-[140px] truncate">
+                            {task.documentName || 'Deliverable Doc'}
+                          </span>
+                        </button>
+                      )}
                     </div>
 
                     {task.description && (
                       <p className="text-xs text-slate-400 mt-1 line-clamp-1">
                         {task.description}
                       </p>
+                    )}
+
+                    {/* Completion Deliverable Notes */}
+                    {task.completionDescription && (
+                      <div className="mt-2 text-[11px] text-emerald-300 bg-emerald-950/40 border border-emerald-800/40 rounded-xl p-2.5 flex items-start space-x-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                        <div className="min-w-0">
+                          <span className="font-semibold text-emerald-200">Completion Notes: </span>
+                          <span className="text-slate-300">{task.completionDescription}</span>
+                        </div>
+                      </div>
                     )}
 
                     <div className="flex items-center space-x-4 mt-2 text-[11px] text-slate-500">
@@ -364,6 +427,19 @@ export const TasksPage = () => {
                 <div className="flex items-center space-x-2 sm:space-x-3 self-end md:self-center flex-wrap gap-y-1.5">
                   <PriorityBadge priority={task.priority} size="sm" />
                   <StatusBadge status={task.status} size="sm" />
+
+                  {/* Explicit Done Task Button */}
+                  {task.status !== 'COMPLETED' && (
+                    <button
+                      type="button"
+                      onClick={() => handleDoneClick(task)}
+                      className="flex items-center space-x-1 px-2.5 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
+                      title="Done (Upload deliverable & 15-word description)"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Done</span>
+                    </button>
+                  )}
 
                   <div className="flex items-center space-x-1 pl-2 border-l border-slate-800">
                     <button
@@ -406,6 +482,24 @@ export const TasksPage = () => {
         initialData={editingTask}
         workflows={workflows}
         teamMembers={teamMembers}
+      />
+
+      {/* Task Completion Modal (Mandatory Deliverable Upload & 15 words) */}
+      <TaskCompletionModal
+        isOpen={isCompletionModalOpen}
+        onClose={() => {
+          setIsCompletionModalOpen(false);
+          setCompletingTask(null);
+        }}
+        task={completingTask}
+        onSuccess={(updatedTask) => {
+          if (updatedTask) {
+            setTasks((prev) =>
+              prev.map((t) => (t.id === updatedTask.id ? { ...t, ...updatedTask } : t))
+            );
+          }
+          fetchTasksAndWorkflows();
+        }}
       />
     </div>
   );

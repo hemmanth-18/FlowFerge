@@ -1,5 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { X, CheckSquare, Loader2, Trash2, Users, ShieldAlert } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  X,
+  CheckSquare,
+  Loader2,
+  Trash2,
+  Users,
+  ShieldAlert,
+  Paperclip,
+  UploadCloud,
+  CheckCircle2,
+  Check,
+  File,
+  AlertCircle,
+} from 'lucide-react';
 import { useTeam } from '../context/TeamContext';
 import { api } from '../services/api';
 
@@ -24,6 +37,8 @@ export const TaskModal = ({
   const [assignedTo, setAssignedTo] = useState('Unassigned');
   const [workflowId, setWorkflowId] = useState(selectedWorkflowId || '');
   const [teamMembers, setTeamMembers] = useState(passedTeamMembers || []);
+  const [completionDescription, setCompletionDescription] = useState('');
+  const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -53,6 +68,10 @@ export const TaskModal = ({
     }
   }, [isOpen, activeTeam?.id, passedTeamMembers]);
 
+  const completionWordCount = useMemo(() => {
+    return (completionDescription || description || '').trim().split(/\s+/).filter(Boolean).length;
+  }, [completionDescription, description]);
+
   // Reset form state ONLY when modal opens or initialData changes
   useEffect(() => {
     if (isOpen) {
@@ -64,6 +83,8 @@ export const TaskModal = ({
         setDueDate(initialData.dueDate ? initialData.dueDate.split('T')[0] : '');
         setAssignedTo(initialData.assignedTo || 'Unassigned');
         setWorkflowId(initialData.workflowId || selectedWorkflowId || '');
+        setCompletionDescription(initialData.completionDescription || '');
+        setFile(null);
       } else {
         setTitle('');
         setDescription('');
@@ -72,6 +93,8 @@ export const TaskModal = ({
         setDueDate(new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]);
         setAssignedTo('Unassigned');
         setWorkflowId(selectedWorkflowId || (workflows && workflows[0]?.id ? workflows[0].id : ''));
+        setCompletionDescription('');
+        setFile(null);
       }
       setError('');
     }
@@ -92,12 +115,24 @@ export const TaskModal = ({
       return;
     }
 
+    if (status === 'COMPLETED') {
+      const words = (completionDescription || description || '').trim().split(/\s+/).filter(Boolean);
+      if (words.length < 15) {
+        setError(`A completion description of at least 15 words is required to mark this task as completed (currently ${words.length} words).`);
+        return;
+      }
+      if (!file && !initialData?.documentId) {
+        setError('A supporting deliverable document (.pdf, .doc, .docx) is mandatory to complete this task.');
+        return;
+      }
+    }
+
     try {
       setLoading(true);
       setError('');
       const saveHandler = onSave || onSubmit;
       if (typeof saveHandler === 'function') {
-        await saveHandler({
+        const payload = {
           workflowId: targetWorkflowId,
           title: title.trim(),
           description: description.trim(),
@@ -105,7 +140,12 @@ export const TaskModal = ({
           priority,
           dueDate,
           assignedTo,
-        });
+        };
+        if (status === 'COMPLETED') {
+          payload.completionDescription = (completionDescription || description).trim();
+          if (file) payload.file = file;
+        }
+        await saveHandler(payload);
       }
       onClose();
     } catch (err) {
@@ -265,6 +305,75 @@ export const TaskModal = ({
               </select>
             </div>
           </div>
+
+          {/* Deliverable & 15-word Description Requirements (Visible when COMPLETED) */}
+          {status === 'COMPLETED' && (
+            <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-3 animate-in fade-in">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-300 flex items-center space-x-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Completion Deliverables</span>
+                </span>
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-mono flex items-center space-x-1 ${
+                    completionWordCount >= 15
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  }`}
+                >
+                  {completionWordCount >= 15 ? (
+                    <Check className="w-2.5 h-2.5 inline mr-0.5" />
+                  ) : (
+                    <AlertCircle className="w-2.5 h-2.5 inline mr-0.5" />
+                  )}
+                  <span>{completionWordCount} / 15 words</span>
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Deliverable Summary (Min. 15 words) <span className="text-rose-400">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={completionDescription}
+                  onChange={(e) => setCompletionDescription(e.target.value)}
+                  placeholder="Summarize the completed deliverables and work output (minimum 15 words required)..."
+                  className="w-full px-3 py-2 bg-dark-850 border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all resize-none"
+                />
+                <p className="text-[10px] mt-1 text-slate-400">
+                  {completionWordCount < 15 ? (
+                    <span className="text-amber-400">
+                      ⚠️ Need {15 - completionWordCount} more word{15 - completionWordCount === 1 ? '' : 's'}.
+                    </span>
+                  ) : (
+                    <span className="text-emerald-400">✓ Description requirement satisfied.</span>
+                  )}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Deliverable Document (.pdf, .doc, .docx) <span className="text-rose-400">*</span>
+                </label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="file"
+                    id="task-modal-file-upload"
+                    accept=".pdf,.doc,.docx"
+                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                    className="text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-600/20 file:text-emerald-300 hover:file:bg-emerald-600/30 cursor-pointer"
+                  />
+                  {initialData?.documentName && !file && (
+                    <span className="text-[11px] text-cyan-400 flex items-center space-x-1">
+                      <Paperclip className="w-3 h-3" />
+                      <span>Current: {initialData.documentName}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>

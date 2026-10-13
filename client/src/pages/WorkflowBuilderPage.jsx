@@ -51,6 +51,7 @@ import { TaskDrawer } from '../components/TaskDrawer';
 import { WorkflowPermissionsModal } from '../components/WorkflowPermissionsModal';
 import { ShareWorkflowModal } from '../components/ShareWorkflowModal';
 import { WorkflowTransitionModal } from '../components/WorkflowTransitionModal';
+import { TaskCompletionModal } from '../components/TaskCompletionModal';
 import { WorkflowDocumentsTab } from '../components/WorkflowDocumentsTab';
 import { useTeam } from '../context/TeamContext';
 import { useToast } from '../context/ToastContext';
@@ -94,6 +95,8 @@ export const WorkflowBuilderPage = () => {
   const [isDocumentsOpen, setIsDocumentsOpen] = useState(false);
   const [isTransitionModalOpen, setIsTransitionModalOpen] = useState(false);
   const [transitionTarget, setTransitionTarget] = useState('IN_PROGRESS');
+  const [completingTask, setCompletingTask] = useState(null);
+  const [isTaskCompletionModalOpen, setIsTaskCompletionModalOpen] = useState(false);
   const [topNotification, setTopNotification] = useState('');
 
   const handleInvitationSent = (invite) => {
@@ -138,6 +141,14 @@ export const WorkflowBuilderPage = () => {
 
   // Handle live task status updates directly from Node buttons or Drawer
   const handleUpdateTaskStatus = async (taskId, newStatus) => {
+    if (newStatus === 'COMPLETED') {
+      const node = nodes.find((n) => n.id === taskId);
+      const targetTask = node?.data?.task || { id: taskId, workflowId };
+      setCompletingTask(targetTask);
+      setIsTaskCompletionModalOpen(true);
+      return;
+    }
+
     try {
       const res = await api.put(`/tasks/${taskId}`, { status: newStatus });
       const updatedTask = res.data.data;
@@ -181,6 +192,44 @@ export const WorkflowBuilderPage = () => {
     } catch (err) {
       toast.error('Failed to update task status: ' + (err.response?.data?.error || err.message));
     }
+  };
+
+  const handleTaskCompleted = (updatedTask) => {
+    if (!updatedTask) return;
+    const taskId = updatedTask.id;
+    setNodes((nds) => {
+      const next = nds.map((node) => {
+        if (node.id === taskId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              task: updatedTask,
+              onUpdateTaskStatus: handleUpdateTaskStatus,
+              onEditTask: handleOpenDrawer,
+            },
+          };
+        }
+        return node;
+      });
+
+      setEdges((currentEdges) => {
+        api.put(`/workflows/${workflowId}/graph`, {
+          nodes: next.map((n) => ({
+            id: n.id,
+            type: n.type,
+            position: n.position,
+            data: { task: n.data.task },
+          })),
+          edges: currentEdges,
+        }).catch(console.warn);
+        return currentEdges;
+      });
+
+      return next;
+    });
+
+    setSelectedTask((prev) => (prev && prev.id === taskId ? updatedTask : prev));
   };
 
   const [loadError, setLoadError] = useState(null);
@@ -247,6 +296,15 @@ export const WorkflowBuilderPage = () => {
   }, [workflow?.name]);
 
   const handleDrawerUpdate = async (taskId, taskUpdates) => {
+    if (taskUpdates.status === 'COMPLETED') {
+      const node = nodes.find((n) => n.id === taskId);
+      const targetTask = node?.data?.task || { id: taskId, workflowId };
+      setIsDrawerOpen(false);
+      setCompletingTask(targetTask);
+      setIsTaskCompletionModalOpen(true);
+      return;
+    }
+
     const res = await api.put(`/tasks/${taskId}`, taskUpdates);
     const updated = res.data.data;
 
@@ -942,6 +1000,19 @@ export const WorkflowBuilderPage = () => {
             <WorkflowDocumentsTab workflowId={workflowId} isManager={canManageWorkflow} />
           </div>
         </div>
+      )}
+
+      {/* Task Completion Modal */}
+      {isTaskCompletionModalOpen && completingTask && (
+        <TaskCompletionModal
+          isOpen={isTaskCompletionModalOpen}
+          onClose={() => {
+            setIsTaskCompletionModalOpen(false);
+            setCompletingTask(null);
+          }}
+          task={completingTask}
+          onSuccess={handleTaskCompleted}
+        />
       )}
     </div>
   );

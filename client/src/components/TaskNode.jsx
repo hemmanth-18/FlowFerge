@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { StatusBadge } from './StatusBadge';
 import { PriorityBadge } from './PriorityBadge';
-import { Calendar, User, CheckCircle, Clock, Circle, MoreVertical, Edit3 } from 'lucide-react';
+import { Calendar, User, CheckCircle, Clock, Circle, MoreVertical, Edit3, Paperclip } from 'lucide-react';
 
 const TaskNode = ({ data, selected }) => {
   const task = data?.task || {
@@ -79,6 +79,12 @@ const TaskNode = ({ data, selected }) => {
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
           <StatusBadge status={task.status} size="xs" />
           <PriorityBadge priority={task.priority} size="xs" />
+          {(task.documentName || task.documentId) && (
+            <span className="inline-flex items-center space-x-1 text-[10px] text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 px-1.5 py-0.5 rounded truncate max-w-[140px]">
+              <Paperclip className="w-2.5 h-2.5 flex-shrink-0" />
+              <span className="truncate">{task.documentName || 'Deliverable'}</span>
+            </span>
+          )}
         </div>
 
         {/* Metadata Footer */}
