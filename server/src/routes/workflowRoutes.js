@@ -1,10 +1,25 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
+const multer = require('multer');
 const workflowController = require('../controllers/workflowController');
 const taskController = require('../controllers/taskController');
 const graphController = require('../controllers/graphController');
 const authMiddleware = require('../middleware/auth');
 const rbac = require('../middleware/rbacMiddleware');
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB max limit
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (['.pdf', '.doc', '.docx'].includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid format: Only PDF, DOC, and DOCX documents are accepted.'));
+    }
+  },
+});
 
 router.use(authMiddleware);
 
@@ -16,6 +31,15 @@ router.post('/', workflowController.createWorkflow);
 router.get('/:id', rbac.requireWorkflowAccess(), workflowController.getWorkflowById);
 router.put('/:id', rbac.requireWorkflowManager(), workflowController.updateWorkflow);
 router.delete('/:id', rbac.requireWorkflowOwner(), workflowController.deleteWorkflow);
+
+// Status Lifecycle Transition (with optional / mandatory attachments)
+router.put('/:id/status', rbac.requireWorkflowManager(), upload.single('file'), workflowController.updateWorkflowStatus);
+
+// Shared Workflow Documents (Section 11)
+router.get('/:id/documents', rbac.requireWorkflowAccess(), workflowController.getWorkflowDocuments);
+router.post('/:id/documents', rbac.requireWorkflowAccess(), upload.single('file'), workflowController.uploadWorkflowDocument);
+router.get('/:id/documents/:docId/download', rbac.requireWorkflowAccess(), workflowController.downloadWorkflowDocument);
+router.delete('/:id/documents/:docId', rbac.requireWorkflowManager(), workflowController.deleteWorkflowDocument);
 
 // Duplication & Sharing (Section 5, 9)
 router.post('/:id/duplicate', rbac.requireWorkflowAccess(), workflowController.duplicateWorkflow);

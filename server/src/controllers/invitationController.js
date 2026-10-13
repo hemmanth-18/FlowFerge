@@ -90,13 +90,60 @@ const invitationController = {
     }
   },
 
+  // GET /api/invitations/:id (Details for acceptance page)
+  async getInvitationDetails(req, res) {
+    try {
+      const { id } = req.params;
+      const invitation = await SupabaseService.getInvitationById(id);
+      if (!invitation) {
+        return res.status(404).json({ success: false, error: 'Invitation not found or invalid invitation link.' });
+      }
+
+      let isAlreadyMember = false;
+      const userId = req.user?.id;
+      if (userId) {
+        if (invitation.type === 'TEAM') {
+          const role = await SupabaseService.getTeamMemberRole(invitation.resourceId, userId);
+          if (role) isAlreadyMember = true;
+        } else if (invitation.type === 'WORKFLOW') {
+          const role = await SupabaseService.getWorkflowMemberRole(invitation.resourceId, userId);
+          if (role) isAlreadyMember = true;
+        }
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          ...invitation,
+          isAlreadyMember,
+        },
+      });
+    } catch (err) {
+      console.error('[Get Invitation Details Error]:', err);
+      return res.status(500).json({ success: false, error: 'Failed to retrieve invitation details.' });
+    }
+  },
+
   // POST /api/invitations/:id/accept
   async acceptInvitation(req, res) {
     try {
       const { id } = req.params;
       const userId = req.user.id;
 
-      const result = await SupabaseService.acceptWorkflowInvitation(id, userId);
+      let result;
+      if (id.startsWith('tinv_')) {
+        result = await SupabaseService.acceptTeamInvitation(id, userId);
+      } else if (id.startsWith('winv_')) {
+        result = await SupabaseService.acceptWorkflowInvitation(id, userId);
+      } else {
+        // Try workflow first, fallback to team
+        try {
+          result = await SupabaseService.acceptWorkflowInvitation(id, userId);
+        } catch (wfErr) {
+          result = await SupabaseService.acceptTeamInvitation(id, userId);
+        }
+      }
+
       return res.json({
         success: true,
         message: 'Invitation accepted! You now have access.',
@@ -114,7 +161,13 @@ const invitationController = {
       const { id } = req.params;
       const userId = req.user.id;
 
-      const result = await SupabaseService.declineWorkflowInvitation(id, userId);
+      let result;
+      if (id.startsWith('tinv_')) {
+        result = await SupabaseService.declineTeamInvitation(id, userId);
+      } else {
+        result = await SupabaseService.declineWorkflowInvitation(id, userId);
+      }
+
       return res.json({
         success: true,
         message: 'Invitation declined.',

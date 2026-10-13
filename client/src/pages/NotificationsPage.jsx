@@ -111,15 +111,22 @@ export const NotificationsPage = () => {
       setActionLoadingId(notification.id);
       const res = await api.post(`/invitations/${invitationId}/accept`);
       if (res.data?.success) {
+        const isTeam = notification.type === 'TEAM_INVITE' || invitationId.startsWith('tinv_');
         setFeedback({
           type: 'success',
-          message: 'Invitation accepted! Workflow is now in your Shared list.',
+          message: isTeam
+            ? 'Team invitation accepted! You are now a member of the team.'
+            : 'Invitation accepted! Workflow is now in your Shared list.',
         });
         setAcceptedInvitationIds((prev) => new Set([...prev, notification.id, invitationId]));
         await handleMarkRead(notification.id);
         fetchNotifications();
-        if (autoNavigate && workflowId) {
-          setTimeout(() => navigate(`/workflows/${workflowId}`), 500);
+        if (autoNavigate) {
+          if (isTeam) {
+            setTimeout(() => navigate('/team'), 500);
+          } else if (workflowId) {
+            setTimeout(() => navigate(`/workflows/${workflowId}`), 500);
+          }
         } else {
           setTimeout(() => setFeedback(null), 3500);
         }

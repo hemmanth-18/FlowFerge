@@ -25,6 +25,9 @@ import {
   Eye,
   Check,
   X,
+  Paperclip,
+  FileText,
+  Play,
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { StatusBadge } from '../components/StatusBadge';
@@ -33,6 +36,9 @@ import { ProgressBar } from '../components/ProgressBar';
 import { WorkflowModal } from '../components/WorkflowModal';
 import { WorkflowPermissionsModal } from '../components/WorkflowPermissionsModal';
 import { ShareWorkflowModal } from '../components/ShareWorkflowModal';
+import { HoloCard } from '../components/HoloCard';
+import { WorkflowTransitionModal } from '../components/WorkflowTransitionModal';
+import { WorkflowDocumentsTab } from '../components/WorkflowDocumentsTab';
 import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
 import { useToast } from '../context/ToastContext';
@@ -65,6 +71,10 @@ export const WorkflowsPage = () => {
   const [sharingWorkflow, setSharingWorkflow] = useState(null);
   const [duplicatingId, setDuplicatingId] = useState(null);
   const [instantiating, setInstantiating] = useState(null);
+  const [transitionWf, setTransitionWf] = useState(null);
+  const [transitionTarget, setTransitionTarget] = useState('IN_PROGRESS');
+  const [isTransitionModalOpen, setIsTransitionModalOpen] = useState(false);
+  const [selectedWfForDocs, setSelectedWfForDocs] = useState(null);
 
   const fetchWorkflows = useCallback(async (silent = false) => {
     try {
@@ -395,7 +405,7 @@ export const WorkflowsPage = () => {
               return (
                 <div
                   key={wf.id}
-                  className="p-5 rounded-2xl bg-dark-900 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between space-y-4 group"
+                  className="halo-card p-5 rounded-3xl bg-[#10141D] border border-white/10 hover:border-brand-500/40 transition-all flex flex-col justify-between space-y-4 group"
                 >
                   <div>
                     {/* Header line */}
@@ -406,7 +416,21 @@ export const WorkflowsPage = () => {
                           {wf.name}
                         </h3>
                       </div>
-                      <StatusBadge status={wf.status} size="sm" />
+                      <div className="flex items-center space-x-1.5 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedWfForDocs(wf);
+                          }}
+                          className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] text-slate-300 hover:text-sky-300 transition-colors cursor-pointer"
+                          title="View & manage shared workflow documents"
+                        >
+                          <Paperclip className="w-3 h-3 text-sky-400" />
+                          <span>Docs</span>
+                        </button>
+                        <StatusBadge status={wf.status} size="sm" />
+                      </div>
                     </div>
 
                     <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
@@ -470,6 +494,38 @@ export const WorkflowsPage = () => {
                   {/* Card Actions (Section 5, 6, 9) */}
                   <div className="flex items-center justify-between pt-2 gap-1 border-t border-slate-800/60">
                     <div className="flex items-center space-x-1">
+                      {/* Move to In Progress Transition Button */}
+                      {wf.status !== 'IN_PROGRESS' && wf.status !== 'ACTIVE' && wf.status !== 'COMPLETED' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTransitionWf(wf);
+                            setTransitionTarget('IN_PROGRESS');
+                            setIsTransitionModalOpen(true);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-dark-800 rounded-lg transition-colors"
+                          title="Start Workflow / Move to In Progress (optional document upload)"
+                        >
+                          <Play className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      {/* Complete Workflow Transition Button (Requires 25+ words & document) */}
+                      {wf.status !== 'COMPLETED' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTransitionWf(wf);
+                            setTransitionTarget('COMPLETED');
+                            setIsTransitionModalOpen(true);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-dark-800 rounded-lg transition-colors"
+                          title="Mark Workflow Completed (Mandatory 25-word summary & document)"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
                       {/* Duplicate Button */}
                       <button
                         type="button"
@@ -590,6 +646,53 @@ export const WorkflowsPage = () => {
           workflowId={selectedWfForPerms.id}
           workflowName={selectedWfForPerms.name}
         />
+      )}
+
+      {/* Workflow Transition Lifecycle Modal */}
+      {isTransitionModalOpen && transitionWf && (
+        <WorkflowTransitionModal
+          isOpen={isTransitionModalOpen}
+          onClose={() => {
+            setIsTransitionModalOpen(false);
+            setTransitionWf(null);
+          }}
+          workflow={transitionWf}
+          targetStatus={transitionTarget}
+          onSuccess={() => {
+            setIsTransitionModalOpen(false);
+            setTransitionWf(null);
+            fetchWorkflows(true);
+          }}
+        />
+      )}
+
+      {/* Shared Workflow Documents Modal */}
+      {selectedWfForDocs && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="w-full max-w-3xl bg-[#10141D] border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => setSelectedWfForDocs(null)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                <Paperclip className="w-5 h-5 text-sky-400" />
+                <span>Documents &bull; {selectedWfForDocs.name}</span>
+              </h2>
+            </div>
+            <WorkflowDocumentsTab
+              workflowId={selectedWfForDocs.id}
+              isManager={
+                selectedWfForDocs.ownerId === user?.id ||
+                selectedWfForDocs.userRole === 'OWNER' ||
+                selectedWfForDocs.userRole === 'MANAGER'
+              }
+            />
+          </div>
+        </div>
       )}
     </div>
   );

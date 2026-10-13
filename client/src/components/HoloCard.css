@@ -1,0 +1,69 @@
+.holocard-container {
+  perspective: 1000px;
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  user-select: none;
+}
+
+.holocard-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease-out, box-shadow 0.25s ease;
+  border-radius: 1.25rem;
+}
+
+.holocard-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(139, 92, 246, 0.2) 30%,
+    rgba(56, 189, 248, 0.1) 50%,
+    transparent 80%
+  );
+  opacity: 0;
+  mix-blend-mode: overlay;
+  transition: opacity 0.25s ease;
+  z-index: 5;
+}
+
+.holocard-container:hover .holocard-glare {
+  opacity: 0.85;
+}
+
+.holocard-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 4;
+  mix-blend-mode: color-dodge;
+  opacity: 0.7;
+}
+
+.holocard-border-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.5),
+    rgba(56, 189, 248, 0.4),
+    rgba(236, 72, 153, 0.3),
+    rgba(139, 92, 246, 0.2)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 6;
+}

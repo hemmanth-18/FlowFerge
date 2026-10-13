@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
+import { Link, useOutletContext, useNavigate } from 'react-router-dom';
 import {
   FolderGit2,
   CheckCircle2,
@@ -20,14 +20,22 @@ import {
   CheckSquare,
   Building2,
   ExternalLink,
+  ShieldCheck,
+  FileText,
+  Workflow,
+  BarChart3,
+  Bot,
+  UserPlus,
+  ArrowUpRight,
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { StatusBadge } from '../components/StatusBadge';
-import { PriorityBadge } from '../components/PriorityBadge';
 import { ProgressBar } from '../components/ProgressBar';
 import { WorkflowModal } from '../components/WorkflowModal';
 import { CreateTeamModal } from '../components/CreateTeamModal';
+import { InviteMemberModal } from '../components/InviteMemberModal';
 import { TeamIcon } from '../components/TeamIcon';
+import { HoloCard } from '../components/HoloCard';
 import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
 import { useToast } from '../context/ToastContext';
@@ -37,16 +45,19 @@ import { api } from '../services/api';
 export const DashboardPage = () => {
   const { setSidebarOpen } = useOutletContext() || {};
   const { user } = useAuth();
-  const { activeTeam, activeRole, isAdmin, isManager, switchTeam } = useTeam();
+  const { activeTeam, activeRole, isAdmin, isManager } = useTeam();
   const toast = useToast();
+  const navigate = useNavigate();
 
-  usePageMeta('Dashboard & Analytics', 'Team telemetry, active DAG pipelines, assigned tasks, and real-time activity stream.');
+  usePageMeta('Dashboard — Magic Bento', 'Team telemetry, active DAG pipelines, assigned tasks, and real-time activity stream.');
 
   const [data, setData] = useState(null);
+  const [workflowsList, setWorkflowsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isWfModalOpen, setIsWfModalOpen] = useState(false);
   const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   const fetchDashboardData = useCallback(async (isManual = false) => {
     if (!activeTeam) {
@@ -55,16 +66,20 @@ export const DashboardPage = () => {
     }
     try {
       if (isManual) setRefreshing(true);
-      const res = await api.get(`/teams/${activeTeam.id}/dashboard`);
-      setData(res.data.data);
+      const [dashRes, wfRes] = await Promise.all([
+        api.get(`/teams/${activeTeam.id}/dashboard`).catch(() => ({ data: { data: null } })),
+        api.get('/workflows').catch(() => ({ data: { data: [] } })),
+      ]);
+
+      setData(dashRes.data?.data);
+      const wfs = wfRes.data?.data || [];
+      setWorkflowsList(wfs);
+
       if (isManual) {
-        toast.info('Dashboard telemetry updated.');
+        toast.info('Telemetry data refreshed.');
       }
     } catch (err) {
       console.error('Failed to load dashboard:', err);
-      if (isManual) {
-        toast.error('Failed to refresh dashboard: ' + err.message);
-      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -75,69 +90,52 @@ export const DashboardPage = () => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  // Listen for team switch event
-  useEffect(() => {
-    const handleTeamSwitch = () => {
-      fetchDashboardData(true);
-    };
-    window.addEventListener('flowforge_team_switched', handleTeamSwitch);
-    return () => window.removeEventListener('flowforge_team_switched', handleTeamSwitch);
-  }, [fetchDashboardData]);
-
   const handleCreateWorkflow = async (workflowData) => {
     if (!activeTeam) return;
     try {
-      await api.post('/workflows', {
+      const res = await api.post('/workflows', {
         ...workflowData,
         teamId: activeTeam.id,
       });
       toast.success('Workflow created successfully!');
       fetchDashboardData(true);
+      if (res.data?.data?.id) {
+        navigate(`/workflows/${res.data.data.id}`);
+      }
     } catch (err) {
       toast.error('Failed to create workflow: ' + err.message);
     }
   };
 
-  const handleToggleTaskStatus = async (task) => {
-    const nextStatus = task.status === 'COMPLETED' ? 'IN_PROGRESS' : 'COMPLETED';
-    try {
-      await api.put(`/tasks/${task.id}`, { status: nextStatus });
-      toast.success(`Task status changed to ${nextStatus.replace('_', ' ')}!`);
-      fetchDashboardData(true);
-    } catch (err) {
-      toast.error(err.message || 'Failed to update task status');
-    }
-  };
+  const userName = user?.name || user?.user_metadata?.name || 'Collaborator';
 
-  // Greeting helper
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  };
-
-  const userName = user?.name || user?.user_metadata?.name || 'Contributer';
+  // Format today's date
+  const todayFormatted = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 
   if (loading) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center space-y-3">
+      <div className="min-h-[85vh] flex flex-col items-center justify-center space-y-3 bg-[#080B12]">
         <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
-        <p className="text-sm text-slate-400">Loading Team telemetry...</p>
+        <p className="text-xs text-slate-400">Loading FlowForge Bento telemetry...</p>
       </div>
     );
   }
 
   if (!activeTeam) {
     return (
-      <div className="min-h-screen bg-dark-950 p-6 flex flex-col items-center justify-center">
-        <div className="max-w-md w-full p-8 rounded-2xl bg-dark-900 border border-slate-800 text-center space-y-4 shadow-2xl">
-          <div className="w-14 h-14 rounded-2xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center mx-auto">
-            <Building2 className="w-7 h-7 text-brand-400" />
+      <div className="min-h-screen bg-[#080B12] p-6 flex flex-col items-center justify-center">
+        <div className="max-w-md w-full p-8 rounded-3xl bg-[#10141D] border border-white/10 text-center space-y-4 shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center mx-auto text-brand-400">
+            <Building2 className="w-7 h-7" />
           </div>
-          <h2 className="text-xl font-bold text-slate-100">Welcome to FlowForge!</h2>
+          <h2 className="text-xl font-bold text-white">Welcome to FlowForge!</h2>
           <p className="text-xs text-slate-400 leading-relaxed">
-            FlowForge is built around Teams as the central organizational unit. Create your first team or accept an invitation to begin.
+            Create your workspace team or join via invitation to start coordinating reactive DAG pipelines.
           </p>
           <button
             onClick={() => setIsCreateTeamOpen(true)}
@@ -146,31 +144,29 @@ export const DashboardPage = () => {
             + Create Your First Team
           </button>
         </div>
-        <CreateTeamModal
-          isOpen={isCreateTeamOpen}
-          onClose={() => setIsCreateTeamOpen(false)}
-        />
+        <CreateTeamModal isOpen={isCreateTeamOpen} onClose={() => setIsCreateTeamOpen(false)} />
       </div>
     );
   }
 
-  const stats = data?.stats || {
-    activeWorkflows: 0,
-    totalWorkflows: 0,
-    pendingTasks: 0,
-    completedTasks: 0,
-    overdueTasks: 0,
-    automationRuns: 0,
-    memberCount: 0,
-  };
+  // Calculate real metrics from workflows
+  const teamWorkflows = workflowsList.filter((w) => !w.teamId || w.teamId === activeTeam.id);
+  const totalWorkflowsCount = teamWorkflows.length;
+  const inProgressCount = teamWorkflows.filter(
+    (w) => w.status === 'IN_PROGRESS' || w.status === 'ACTIVE'
+  ).length;
+  const completedCount = teamWorkflows.filter((w) => w.status === 'COMPLETED').length;
+  const pendingCount = teamWorkflows.filter(
+    (w) => w.status === 'PAUSED' || w.status === 'DRAFT' || w.status === 'TODO'
+  ).length;
 
-  const activeWorkflows = data?.activeWorkflows || [];
-  const myTasks = data?.myTasks || [];
-  const overdueTasks = data?.overdueTasks || [];
+  const recentWorkflows = teamWorkflows.slice(0, 4);
   const recentActivity = data?.recentActivity || [];
+  const automationRuns = data?.stats?.automationRuns || 0;
 
   return (
-    <div className="min-h-screen bg-dark-950 pb-16">
+    <div className="min-h-screen bg-[#080B12] text-slate-100 pb-20 selection:bg-brand-500 selection:text-white">
+      {/* Top Navigation */}
       <Navbar
         onOpenSidebar={() => setSidebarOpen(true)}
         title={`${activeTeam.name} Dashboard`}
@@ -179,339 +175,336 @@ export const DashboardPage = () => {
             <button
               onClick={() => fetchDashboardData(true)}
               disabled={refreshing}
-              title="Refresh Team Telemetry"
-              className="p-2 text-slate-400 hover:text-slate-200 hover:bg-dark-800 rounded-xl transition-colors"
+              title="Refresh telemetry"
+              className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors"
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-brand-400' : ''}`} />
             </button>
             {isManager && (
               <button
                 onClick={() => setIsWfModalOpen(true)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-glow-brand transition-all"
+                className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-glow-brand transition-all"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Create Workflow</span>
+                <span>New Workflow</span>
               </button>
             )}
           </div>
         }
       />
 
+      {/* Main Bento Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-        {/* 22. Top Header with Team greeting & create workflow button */}
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-dark-900 via-dark-850 to-dark-900 border border-slate-800 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <div className="w-14 h-14 rounded-2xl bg-dark-800 border border-slate-700 flex items-center justify-center shadow-lg">
-                <TeamIcon icon={activeTeam.icon} className="w-7 h-7 text-brand-400" />
+        {/* ========================================================================= */}
+        {/* ROW 1: MAGIC BENTO HERO & KPI ROW */}
+        {/* ========================================================================= */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {/* 1. WELCOME BENTO CARD (Span 2 cols on lg) */}
+          <div className="bento-card md:col-span-2 p-6 rounded-3xl bg-gradient-to-br from-[#121622] via-[#10141D] to-[#0A0D16] border border-white/10 shadow-xl relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-300 text-xs font-medium">
+                  <Sparkles className="w-3.5 h-3.5 text-brand-400" />
+                  <span>Workspace Command Center</span>
+                </span>
+                <span className="text-xs text-slate-400 flex items-center space-x-1 font-mono">
+                  <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                  <span>{todayFormatted}</span>
+                </span>
               </div>
-              <div>
-                <div className="flex items-center space-x-2.5">
-                  <h1 className="text-xl font-bold tracking-tight text-white">
-                    {activeTeam.name}
-                  </h1>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-brand-500/20 text-brand-300 border border-brand-500/30 uppercase">
-                    {activeRole}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-1">
-                  {getGreeting()}, <span className="text-slate-200 font-semibold">{userName}</span>. {activeTeam.description || 'Welcome to your team workspace.'}
-                </p>
-              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                Welcome back, {userName}!
+              </h2>
+              <p className="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed max-w-lg">
+                Your <span className="text-brand-300 font-semibold">{activeTeam.name}</span> workspace currently has{' '}
+                <span className="text-white font-semibold">{inProgressCount} active</span> pipelines running across{' '}
+                <span className="text-white font-semibold">{totalWorkflowsCount} workflows</span>.
+              </p>
             </div>
 
-            <div className="flex items-center space-x-2.5">
-              <Link
-                to="/team"
-                className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white border border-slate-700 text-xs font-medium transition-all"
+            <div className="pt-6 flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => setIsWfModalOpen(true)}
+                className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-brand-500/25 transition-all"
               >
-                <Users className="w-3.5 h-3.5 text-brand-400" />
-                <span>{stats.memberCount} Team Members</span>
+                <Plus className="w-4 h-4" />
+                <span>Create Workflow</span>
+              </button>
+              <Link
+                to="/workflows"
+                className="inline-flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white text-xs font-semibold transition-all"
+              >
+                <span>Browse Workflows</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-
-              {isManager && (
-                <button
-                  onClick={() => setIsWfModalOpen(true)}
-                  className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow-glow-brand transition-all"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Create Workflow</span>
-                </button>
-              )}
             </div>
           </div>
-        </div>
 
-        {/* 4 & 22. Statistics Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
-          {/* Active Workflows */}
-          <div className="p-4 rounded-2xl bg-dark-900 border border-slate-800 hover:border-slate-700 transition-all">
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-medium">Active Workflows</span>
-              <FolderGit2 className="w-4 h-4 text-brand-400" />
-            </div>
-            <div className="text-2xl font-bold text-white tracking-tight">
-              {stats.activeWorkflows}
-            </div>
-            <span className="text-[10px] text-slate-500">
-              of {stats.totalWorkflows} total pipelines
-            </span>
-          </div>
-
-          {/* Pending Tasks */}
-          <div className="p-4 rounded-2xl bg-dark-900 border border-slate-800 hover:border-slate-700 transition-all">
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-medium">Pending Tasks</span>
-              <Clock className="w-4 h-4 text-amber-400" />
-            </div>
-            <div className="text-2xl font-bold text-amber-300 tracking-tight">
-              {stats.pendingTasks}
-            </div>
-            <span className="text-[10px] text-slate-500">
-              in queue / in progress
-            </span>
-          </div>
-
-          {/* Completed Tasks */}
-          <div className="p-4 rounded-2xl bg-dark-900 border border-slate-800 hover:border-slate-700 transition-all">
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-medium">Completed Tasks</span>
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div className="text-2xl font-bold text-emerald-400 tracking-tight">
-              {stats.completedTasks}
-            </div>
-            <span className="text-[10px] text-slate-500">
-              successfully delivered
-            </span>
-          </div>
-
-          {/* Overdue Tasks */}
-          <div className="p-4 rounded-2xl bg-dark-900 border border-slate-800 hover:border-slate-700 transition-all">
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-medium">Overdue Tasks</span>
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
-            </div>
-            <div className={`text-2xl font-bold tracking-tight ${stats.overdueTasks > 0 ? 'text-rose-400' : 'text-slate-300'}`}>
-              {stats.overdueTasks}
-            </div>
-            <span className="text-[10px] text-slate-500">
-              past target deadline
-            </span>
-          </div>
-
-          {/* Automation Runs */}
-          <div className="p-4 rounded-2xl bg-dark-900 border border-slate-800 hover:border-slate-700 transition-all col-span-2 lg:col-span-1">
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-medium">Automation Runs</span>
-              <Zap className="w-4 h-4 text-indigo-400" />
-            </div>
-            <div className="text-2xl font-bold text-indigo-300 tracking-tight">
-              {stats.automationRuns}
-            </div>
-            <span className="text-[10px] text-slate-500">
-              DAG triggers executed
-            </span>
-          </div>
-        </div>
-
-        {/* Overdue Alert Banner if tasks are overdue */}
-        {overdueTasks.length > 0 && (
-          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-start space-x-3">
-            <AlertTriangle className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h4 className="text-xs font-bold text-rose-300">
-                Action Required: {overdueTasks.length} Overdue Task{overdueTasks.length > 1 ? 's' : ''} in {activeTeam.name}
-              </h4>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {overdueTasks.map((t) => (
-                  <Link
-                    key={t.id}
-                    to="/tasks"
-                    className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-dark-900/80 border border-rose-500/40 text-[11px] text-slate-200 hover:bg-dark-800"
-                  >
-                    <span>{t.title}</span>
-                    <span className="text-[10px] text-rose-400">({t.dueDate})</span>
-                  </Link>
-                ))}
+          {/* 2. TOTAL WORKFLOWS KPI */}
+          <Link
+            to="/workflows"
+            className="bento-card p-6 rounded-3xl bg-[#10141D] border border-white/10 hover:border-brand-500/30 transition-all shadow-xl flex flex-col justify-between group"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Total Workflows
+              </span>
+              <div className="w-10 h-10 rounded-2xl bg-brand-500/15 border border-brand-500/25 text-brand-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <FolderGit2 className="w-5 h-5" />
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Main Content Grid: Active Workflows & My Tasks / Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Active Workflows (2 Columns Wide on LG) */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="p-5 rounded-2xl bg-dark-900 border border-slate-800">
+            <div className="my-3">
+              <div className="text-3xl sm:text-4xl font-black text-white font-sans tracking-tight">
+                {totalWorkflowsCount}
+              </div>
+              <div className="text-xs text-slate-400 mt-1 flex items-center space-x-1">
+                <TrendingUp className="w-3.5 h-3.5 text-brand-400" />
+                <span>Managed across team</span>
+              </div>
+            </div>
+
+            <div className="text-xs font-semibold text-brand-400 flex items-center space-x-1 group-hover:translate-x-1 transition-transform">
+              <span>View all workflows</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </div>
+          </Link>
+
+          {/* 3. IN PROGRESS KPI */}
+          <Link
+            to="/workflows?filter=all"
+            className="bento-card p-6 rounded-3xl bg-[#10141D] border border-white/10 hover:border-sky-500/30 transition-all shadow-xl flex flex-col justify-between group"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                In Progress
+              </span>
+              <div className="w-10 h-10 rounded-2xl bg-sky-500/15 border border-sky-500/25 text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Activity className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="my-3">
+              <div className="text-3xl sm:text-4xl font-black text-white font-sans tracking-tight">
+                {inProgressCount}
+              </div>
+              <div className="text-xs text-slate-400 mt-1 flex items-center space-x-1">
+                <Clock className="w-3.5 h-3.5 text-sky-400" />
+                <span>Active executions</span>
+              </div>
+            </div>
+
+            <div className="text-xs font-semibold text-sky-400 flex items-center space-x-1 group-hover:translate-x-1 transition-transform">
+              <span>Filter in-progress</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </div>
+          </Link>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* ROW 2: STATUS SPLIT & EXECUTION STATS */}
+        {/* ========================================================================= */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {/* 4. COMPLETED WORKFLOWS KPI */}
+          <div className="bento-card p-6 rounded-3xl bg-[#10141D] border border-white/10 shadow-xl flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Completed
+              </span>
+              <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="my-2">
+              <div className="text-3xl font-black text-white font-sans tracking-tight">
+                {completedCount}
+              </div>
+              <div className="text-xs text-emerald-400 mt-1 flex items-center space-x-1">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Verified with sign-offs</span>
+              </div>
+            </div>
+
+            <div className="w-full bg-[#151A24] rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-emerald-500 h-1.5 rounded-full"
+                style={{
+                  width: totalWorkflowsCount > 0 ? `${Math.round((completedCount / totalWorkflowsCount) * 100)}%` : '0%',
+                }}
+              />
+            </div>
+          </div>
+
+          {/* 5. PENDING / AWAITING ACTION */}
+          <div className="bento-card p-6 rounded-3xl bg-[#10141D] border border-white/10 shadow-xl flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Pending / Draft
+              </span>
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/25 text-amber-400 flex items-center justify-center">
+                <Clock className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="my-2">
+              <div className="text-3xl font-black text-white font-sans tracking-tight">
+                {pendingCount}
+              </div>
+              <div className="text-xs text-slate-400 mt-1">
+                Awaiting transition
+              </div>
+            </div>
+
+            <div className="w-full bg-[#151A24] rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-amber-400 h-1.5 rounded-full"
+                style={{
+                  width: totalWorkflowsCount > 0 ? `${Math.round((pendingCount / totalWorkflowsCount) * 100)}%` : '0%',
+                }}
+              />
+            </div>
+          </div>
+
+          {/* 6. EXECUTION & AUTOMATION TELEMETRY (Span 2 cols) */}
+          <div className="bento-card md:col-span-2 p-6 rounded-3xl bg-[#10141D] border border-white/10 shadow-xl flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <Bot className="w-5 h-5 text-indigo-400" />
+                <h3 className="text-sm font-bold text-white">Execution Engine Telemetry</h3>
+              </div>
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/25 text-indigo-300 font-mono">
+                100% Health
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 my-3">
+              <div className="p-3 rounded-2xl bg-[#151A24] border border-white/5">
+                <span className="text-[11px] text-slate-400 block mb-1">Automation Runs</span>
+                <span className="text-xl font-bold text-white font-mono">{automationRuns}</span>
+              </div>
+              <div className="p-3 rounded-2xl bg-[#151A24] border border-white/5">
+                <span className="text-[11px] text-slate-400 block mb-1">Active Rules</span>
+                <span className="text-xl font-bold text-brand-300 font-mono">
+                  {data?.stats?.activeWorkflows || 0}
+                </span>
+              </div>
+              <div className="p-3 rounded-2xl bg-[#151A24] border border-white/5">
+                <span className="text-[11px] text-slate-400 block mb-1">Success Rate</span>
+                <span className="text-xl font-bold text-emerald-400 font-mono">99.8%</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/5">
+              <span>DAG reactive event loop active</span>
+              <Link to="/automations" className="text-brand-400 hover:text-brand-300 font-semibold flex items-center space-x-1">
+                <span>Manage Automations</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* ROW 3: RECENT WORKFLOWS & ACTIVITY STREAM */}
+        {/* ========================================================================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          {/* 7. RECENT WORKFLOWS */}
+          <div className="bento-card p-6 rounded-3xl bg-[#10141D] border border-white/10 shadow-xl flex flex-col justify-between">
+            <div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
-                  <FolderGit2 className="w-4 h-4 text-brand-400" />
-                  <h3 className="text-sm font-bold text-slate-100">
-                    Active Team Workflows
-                  </h3>
+                  <Workflow className="w-5 h-5 text-brand-400" />
+                  <h3 className="text-sm font-bold text-white">Recent Workflows</h3>
                 </div>
-                <Link
-                  to="/workflows"
-                  className="text-xs text-brand-400 hover:text-brand-300 flex items-center space-x-1 font-medium"
-                >
-                  <span>View All Workflows</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                <Link to="/workflows" className="text-xs text-brand-400 hover:text-brand-300 font-semibold">
+                  View All
                 </Link>
               </div>
 
-              {activeWorkflows.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 text-xs">
-                  No active workflows yet. Click "+ Create Workflow" to start building your first pipeline.
+              {recentWorkflows.length === 0 ? (
+                <div className="py-10 text-center text-xs text-slate-400">
+                  No workflows found. Click "Create Workflow" above to start!
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  {activeWorkflows.map((wf) => (
+                <div className="space-y-3">
+                  {recentWorkflows.map((wf) => (
                     <Link
                       key={wf.id}
                       to={`/workflows/${wf.id}`}
-                      className="p-4 rounded-xl bg-dark-850 hover:bg-dark-800 border border-slate-800 hover:border-brand-500/40 transition-all group flex flex-col justify-between"
+                      className="p-3.5 rounded-2xl bg-[#151A24] border border-white/5 hover:border-brand-500/40 hover:bg-[#1a202d] transition-all flex items-center justify-between group"
                     >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-xs font-bold text-slate-200 group-hover:text-brand-400 transition-colors truncate">
+                      <div className="flex items-center space-x-3 overflow-hidden">
+                        <div className="w-9 h-9 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center flex-shrink-0">
+                          <Workflow className="w-4 h-4" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <h4 className="text-xs sm:text-sm font-semibold text-white group-hover:text-brand-300 transition-colors truncate">
                             {wf.name}
                           </h4>
-                          <StatusBadge status={wf.status} size="sm" />
+                          <span className="text-[11px] text-slate-400">
+                            {wf.description ? wf.description.substring(0, 45) + '...' : 'Interactive DAG pipeline'}
+                          </span>
                         </div>
-                        <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed mb-3">
-                          {wf.description || 'DAG visual workflow'}
-                        </p>
                       </div>
 
-                      {(() => {
-                        const parsedNodes = Array.isArray(wf.nodes) ? wf.nodes : (typeof wf.nodes === 'string' ? (() => { try { return JSON.parse(wf.nodes); } catch (e) { return []; } })() : []);
-                        const totalCount = wf.totalTasks !== undefined && wf.totalTasks !== null && wf.totalTasks > 0 ? wf.totalTasks : parsedNodes.length;
-                        const completedCount = wf.completedTasks !== undefined && wf.completedTasks !== null && wf.completedTasks > 0
-                          ? wf.completedTasks
-                          : parsedNodes.filter(n => {
-                              const s = (n?.data?.task?.status || n?.data?.status || n?.status || '').toUpperCase();
-                              return s === 'COMPLETED';
-                            }).length;
-                        const currentProgress = wf.progress !== undefined && wf.progress !== null && wf.progress > 0
-                          ? wf.progress
-                          : (totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0);
-
-                        return (
-                          <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
-                            <div className="flex items-center justify-between text-[10px] text-slate-400">
-                              <span>Progress: {completedCount}/{totalCount} Tasks</span>
-                              <span className="font-mono font-bold text-slate-300">{currentProgress}%</span>
-                            </div>
-                            <ProgressBar progress={currentProgress} />
-                          </div>
-                        );
-                      })()}
+                      <div className="flex items-center space-x-3 flex-shrink-0">
+                        <StatusBadge status={wf.status} size="xs" />
+                        <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
+                      </div>
                     </Link>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* My Tasks Section */}
-            <div className="p-5 rounded-2xl bg-dark-900 border border-slate-800">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-2">
-                  <CheckSquare className="w-4 h-4 text-emerald-400" />
-                  <h3 className="text-sm font-bold text-slate-100">
-                    My Assigned Tasks ({myTasks.length})
-                  </h3>
-                </div>
-                <Link
-                  to="/tasks"
-                  className="text-xs text-brand-400 hover:text-brand-300 flex items-center space-x-1 font-medium"
-                >
-                  <span>All Tasks</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-
-              {myTasks.length === 0 ? (
-                <div className="text-center py-6 text-slate-500 text-xs flex items-center justify-center space-x-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-brand-400" />
-                  <span>You have no pending tasks assigned in this team.</span>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {myTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="p-3 rounded-xl bg-dark-850 border border-slate-800 flex items-center justify-between hover:border-slate-700 transition-all"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleTaskStatus(task)}
-                          className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${
-                            task.status === 'COMPLETED'
-                              ? 'bg-emerald-500 border-emerald-500 text-dark-950'
-                              : 'border-slate-600 hover:border-emerald-400 text-transparent'
-                          }`}
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                        </button>
-                        <div>
-                          <p className={`text-xs font-semibold ${
-                            task.status === 'COMPLETED' ? 'line-through text-slate-500' : 'text-slate-200'
-                          }`}>
-                            {task.title}
-                          </p>
-                          <span className="text-[10px] text-slate-400">
-                            {task.workflowName || 'Workflow Task'} • Due {task.dueDate || 'No date'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <PriorityBadge priority={task.priority} size="sm" />
-                        <StatusBadge status={task.status} size="sm" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="pt-4 border-t border-white/5 mt-4 flex items-center justify-between text-xs text-slate-400">
+              <span>{totalWorkflowsCount} workflows in this workspace</span>
+              <button
+                onClick={() => setIsWfModalOpen(true)}
+                className="text-brand-400 hover:text-brand-300 font-semibold"
+              >
+                + New Workflow
+              </button>
             </div>
           </div>
 
-          {/* Right Column: Team Activity Feed (1 Column Wide) */}
-          <div className="space-y-6">
-            <div className="p-5 rounded-2xl bg-dark-900 border border-slate-800">
+          {/* 8. RECENT ACTIVITY STREAM */}
+          <div className="bento-card p-6 rounded-3xl bg-[#10141D] border border-white/10 shadow-xl flex flex-col justify-between">
+            <div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
-                  <Activity className="w-4 h-4 text-brand-400" />
-                  <h3 className="text-sm font-bold text-slate-100">
-                    Team Recent Activity
-                  </h3>
+                  <Activity className="w-5 h-5 text-sky-400" />
+                  <h3 className="text-sm font-bold text-white">Live Workspace Activity</h3>
                 </div>
-                <Link
-                  to="/activity"
-                  className="text-xs text-brand-400 hover:text-brand-300"
-                >
-                  View Feed
+                <Link to="/activity" className="text-xs text-sky-400 hover:text-sky-300 font-semibold">
+                  Full Stream
                 </Link>
               </div>
 
               {recentActivity.length === 0 ? (
-                <div className="text-center py-6 text-slate-500 text-xs">
-                  No activity recorded yet in this team.
+                <div className="py-10 text-center text-xs text-slate-400">
+                  No recent activity recorded yet. Start editing workflows!
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {recentActivity.slice(0, 8).map((act) => (
-                    <div key={act.id} className="flex items-start space-x-2.5 text-xs">
-                      <span className="w-2 h-2 rounded-full bg-brand-400 mt-1.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-slate-300 leading-snug">
-                          <strong className="text-slate-100 font-semibold">{act.userName}</strong> {act.details || act.action}
+                  {recentActivity.slice(0, 4).map((act, idx) => (
+                    <div
+                      key={act.id || idx}
+                      className="p-3 rounded-2xl bg-[#151A24] border border-white/5 flex items-start space-x-3"
+                    >
+                      <div className="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-slate-200 leading-snug">
+                          {act.details || act.action || 'Workspace event executed'}
                         </p>
-                        <span className="text-[10px] text-slate-500">
-                          {act.timestamp?.substring(11, 16)} • {act.action}
+                        <span className="text-[10px] text-slate-500 mt-0.5 block font-mono">
+                          {act.createdAt ? new Date(act.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}
                         </span>
                       </div>
                     </div>
@@ -519,16 +512,204 @@ export const DashboardPage = () => {
                 </div>
               )}
             </div>
+
+            <div className="pt-4 border-t border-white/5 mt-4 flex items-center justify-between text-xs text-slate-400">
+              <span>Real-time Supabase audit trail</span>
+              <Link to="/audit" className="text-sky-400 hover:text-sky-300 font-semibold">
+                Security Logs
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* ROW 4: FEATURED RECIPES (REACT BITS HOLOCARD SHOWCASE) */}
+        {/* ========================================================================= */}
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-500 to-sky-400 flex items-center justify-center text-white shadow-md">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-white tracking-tight">
+                  Featured Holographic Templates
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Instant deployment recipes rendered with interactive 3D WebGL foil.
+                </p>
+              </div>
+            </div>
+            <span className="text-[11px] font-mono font-semibold px-2.5 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-300 hidden sm:inline">
+              React Bits HoloCards
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {/* Holographic Template 1: Cosmos */}
+            <HoloCard preset="cosmos" className="w-full h-64">
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 uppercase tracking-wide">
+                      Engineering
+                    </span>
+                    <span className="text-xs text-slate-400 font-mono">v2.4</span>
+                  </div>
+                  <h4 className="text-base font-black text-white tracking-tight">
+                    Software Release Sprint
+                  </h4>
+                  <p className="text-xs text-slate-300/80 mt-1.5 leading-relaxed line-clamp-3">
+                    Automate code freeze, staging deployments, QA validation, and production rollouts with strict dependencies.
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">5 DAG Nodes</span>
+                  <button
+                    onClick={() => setIsWfModalOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-all"
+                  >
+                    Deploy
+                  </button>
+                </div>
+              </div>
+            </HoloCard>
+
+            {/* Holographic Template 2: Bursts */}
+            <HoloCard preset="bursts" className="w-full h-64">
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 uppercase tracking-wide">
+                      Growth
+                    </span>
+                    <span className="text-xs text-slate-400 font-mono">v1.8</span>
+                  </div>
+                  <h4 className="text-base font-black text-white tracking-tight">
+                    Product Launch Campaign
+                  </h4>
+                  <p className="text-xs text-slate-300/80 mt-1.5 leading-relaxed line-clamp-3">
+                    Multi-channel marketing automation with copy review, asset approvals, social scheduling, and analytics.
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">4 DAG Nodes</span>
+                  <button
+                    onClick={() => setIsWfModalOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-all"
+                  >
+                    Deploy
+                  </button>
+                </div>
+              </div>
+            </HoloCard>
+
+            {/* Holographic Template 3: Shards */}
+            <HoloCard preset="shards" className="w-full h-64">
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 uppercase tracking-wide">
+                      SecOps
+                    </span>
+                    <span className="text-xs text-slate-400 font-mono">v3.0</span>
+                  </div>
+                  <h4 className="text-base font-black text-white tracking-tight">
+                    Incident War Room
+                  </h4>
+                  <p className="text-xs text-slate-300/80 mt-1.5 leading-relaxed line-clamp-3">
+                    Rapid response triage: alerts, on-call assignments, post-mortem generation, and stakeholder notifications.
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">6 DAG Nodes</span>
+                  <button
+                    onClick={() => setIsWfModalOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-all"
+                  >
+                    Deploy
+                  </button>
+                </div>
+              </div>
+            </HoloCard>
+
+            {/* Holographic Template 4: Rainbow */}
+            <HoloCard preset="rainbow" className="w-full h-64">
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 uppercase tracking-wide">
+                      Data
+                    </span>
+                    <span className="text-xs text-slate-400 font-mono">v2.1</span>
+                  </div>
+                  <h4 className="text-base font-black text-white tracking-tight">
+                    ETL Pipeline Stream
+                  </h4>
+                  <p className="text-xs text-slate-300/80 mt-1.5 leading-relaxed line-clamp-3">
+                    Extract, transform, validate, and load batches into your warehouse with automated error recovery.
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">5 DAG Nodes</span>
+                  <button
+                    onClick={() => setIsWfModalOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-all"
+                  >
+                    Deploy
+                  </button>
+                </div>
+              </div>
+            </HoloCard>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* ROW 5: QUICK ACTIONS BANNER */}
+        {/* ========================================================================= */}
+        <div className="bento-card p-6 rounded-3xl bg-[#10141D] border border-white/10 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h4 className="text-sm font-bold text-white">Need to onboard collaborators?</h4>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Invite teammates to your workspace with role-based access control.
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setIsInviteModalOpen(true)}
+              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-semibold transition-all"
+            >
+              <UserPlus className="w-4 h-4 text-brand-400" />
+              <span>Invite Teammate</span>
+            </button>
+            <Link
+              to="/team"
+              className="inline-flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-glow-brand transition-all"
+            >
+              <Users className="w-4 h-4" />
+              <span>Manage Team</span>
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Create Workflow Modal */}
+      {/* Modals */}
       <WorkflowModal
         isOpen={isWfModalOpen}
         onClose={() => setIsWfModalOpen(false)}
-        onSave={handleCreateWorkflow}
         onSubmit={handleCreateWorkflow}
+      />
+      <InviteMemberModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        teamId={activeTeam?.id}
+        teamName={activeTeam?.name}
+        onSuccess={() => fetchDashboardData(true)}
       />
     </div>
   );

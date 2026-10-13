@@ -25,6 +25,7 @@ if (supabaseUrl && supabaseKey) {
 }
 
 const SESSIONS_FILE = path.join(__dirname, '..', '.sessions.json');
+const DOCUMENTS_FILE = path.join(__dirname, '..', '.documents.json');
 
 // In-memory store for high performance and fallback synchronization
 const memoryDb = {
@@ -37,6 +38,7 @@ const memoryDb = {
   workflows: new Map(),
   workflowMembers: new Map(), // `${workflowId}:${userId}` -> { id, workflowId, userId, role, joinedAt }
   workflowInvitations: new Map(), // invitationId -> invitation
+  workflowDocuments: new Map(), // docId -> document metadata
   tasks: new Map(),
   automations: new Map(),
   automationLogs: [],
@@ -86,7 +88,30 @@ function savePersistedSessions() {
   } catch (e) {}
 }
 
+function loadPersistedDocuments() {
+  try {
+    if (fs.existsSync(DOCUMENTS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(DOCUMENTS_FILE, 'utf8'));
+      if (Array.isArray(data)) {
+        for (const doc of data) {
+          if (doc && doc.id) {
+            memoryDb.workflowDocuments.set(doc.id, doc);
+          }
+        }
+      }
+    }
+  } catch (e) {}
+}
+
+function savePersistedDocuments() {
+  try {
+    const list = Array.from(memoryDb.workflowDocuments.values());
+    fs.writeFileSync(DOCUMENTS_FILE, JSON.stringify(list, null, 2), 'utf8');
+  } catch (e) {}
+}
+
 loadPersistedSessions();
+loadPersistedDocuments();
 
 let readinessPromise = null;
 
@@ -900,6 +925,7 @@ const SupabaseService = {
     const cleanEmail = email.trim().toLowerCase();
     const invId = `tinv_${uuidv4().replace(/-/g, '').substring(0, 8)}`;
     const now = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + 7 * 86400000).toISOString();
 
     const inv = {
       id: invId,
@@ -910,10 +936,28 @@ const SupabaseService = {
       invitedBy: inviterUserId,
       status: 'PENDING',
       createdAt: now,
-      expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
+      expiresAt,
     };
 
     memoryDb.teamInvitations.set(invId, inv);
+
+    if (await areTablesReady()) {
+      try {
+        await supabase.from('team_invitations').insert([{
+          id: invId,
+          team_id: teamId,
+          team_name: team.name,
+          email: cleanEmail,
+          role,
+          invited_by: inviterUserId,
+          status: 'PENDING',
+          created_at: now,
+          expires_at: expiresAt,
+        }]);
+      } catch (err) {
+        console.error('[Supabase createTeamInvitation Error]:', err.message);
+      }
+    }
 
     const registeredUser = await this.getUserByEmail(cleanEmail);
     if (registeredUser) {
@@ -931,9 +975,43 @@ const SupabaseService = {
 
   async getTeamInvitations(teamId) {
     const list = [];
+    const seen = new Set();
     for (const inv of memoryDb.teamInvitations.values()) {
-      if (inv.teamId === teamId) list.push(inv);
+      if (inv.teamId === teamId && inv.status === 'PENDING') {
+        seen.add(inv.id);
+        list.push(inv);
+      }
     }
+
+    if (await areTablesReady()) {
+      try {
+        const { data: dbInvs } = await supabase
+          .from('team_invitations')
+          .select('*')
+          .eq('team_id', teamId)
+          .eq('status', 'PENDING');
+        if (dbInvs) {
+          for (const row of dbInvs) {
+            if (!seen.has(row.id)) {
+              const item = {
+                id: row.id,
+                teamId: row.team_id,
+                teamName: row.team_name,
+                email: row.email,
+                role: row.role,
+                invitedBy: row.invited_by,
+                status: row.status,
+                createdAt: row.created_at,
+                expiresAt: row.expires_at,
+              };
+              memoryDb.teamInvitations.set(row.id, item);
+              list.push(item);
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
     return list;
   },
 
@@ -941,17 +1019,105 @@ const SupabaseService = {
     if (!userEmail) return [];
     const cleanEmail = userEmail.trim().toLowerCase();
     const list = [];
+    const seen = new Set();
+
     for (const inv of memoryDb.teamInvitations.values()) {
-      if (inv.email.toLowerCase() === cleanEmail && inv.status === 'PENDING') {
+      if (inv.email?.toLowerCase() === cleanEmail && inv.status === 'PENDING') {
+        seen.add(inv.id);
         list.push(inv);
       }
     }
+
+    if (await areTablesReady()) {
+      try {
+        const { data: dbInvs } = await supabase
+          .from('team_invitations')
+          .select('*')
+          .eq('email', cleanEmail)
+          .eq('status', 'PENDING');
+        if (dbInvs) {
+          for (const row of dbInvs) {
+            if (!seen.has(row.id)) {
+              const item = {
+                id: row.id,
+                teamId: row.team_id,
+                teamName: row.team_name,
+                email: row.email,
+                role: row.role,
+                invitedBy: row.invited_by,
+                status: row.status,
+                createdAt: row.created_at,
+                expiresAt: row.expires_at,
+              };
+              memoryDb.teamInvitations.set(row.id, item);
+              list.push(item);
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
     return list;
   },
 
   async acceptTeamInvitation(invitationId, userId) {
-    const inv = memoryDb.teamInvitations.get(invitationId);
-    if (!inv || inv.status !== 'PENDING') throw new Error('Invitation not found or no longer active');
+    let inv = memoryDb.teamInvitations.get(invitationId);
+    if (!inv && (await areTablesReady())) {
+      try {
+        const { data: dbInv } = await supabase
+          .from('team_invitations')
+          .select('*')
+          .eq('id', invitationId)
+          .maybeSingle();
+        if (dbInv) {
+          inv = {
+            id: dbInv.id,
+            teamId: dbInv.team_id,
+            teamName: dbInv.team_name,
+            email: dbInv.email,
+            role: dbInv.role,
+            invitedBy: dbInv.invited_by,
+            status: dbInv.status,
+            createdAt: dbInv.created_at,
+            expiresAt: dbInv.expires_at,
+          };
+          memoryDb.teamInvitations.set(inv.id, inv);
+        }
+      } catch (e) {}
+    }
+
+    if (!inv) throw new Error('Invitation not found or invalid link');
+
+    if (inv.status === 'ACCEPTED') {
+      return { success: true, teamId: inv.teamId, alreadyAccepted: true, message: 'You have already accepted this invitation.' };
+    }
+
+    if (inv.status !== 'PENDING') {
+      throw new Error(`This invitation is no longer active (${inv.status}).`);
+    }
+
+    // Check expiration
+    if (inv.expiresAt && new Date(inv.expiresAt) < new Date()) {
+      inv.status = 'EXPIRED';
+      if (await areTablesReady()) {
+        try {
+          await supabase.from('team_invitations').update({ status: 'EXPIRED' }).eq('id', invitationId);
+        } catch (e) {}
+      }
+      throw new Error('This team invitation has expired. Please ask the team manager for a new invite.');
+    }
+
+    // Check if user is already a member
+    const existingRole = await this.getTeamMemberRole(inv.teamId, userId);
+    if (existingRole) {
+      inv.status = 'ACCEPTED';
+      if (await areTablesReady()) {
+        try {
+          await supabase.from('team_invitations').update({ status: 'ACCEPTED' }).eq('id', invitationId);
+        } catch (e) {}
+      }
+      return { success: true, teamId: inv.teamId, alreadyMember: true, role: existingRole };
+    }
 
     inv.status = 'ACCEPTED';
     const now = new Date().toISOString();
@@ -965,24 +1131,63 @@ const SupabaseService = {
       joinedAt: now,
     });
 
+    if (await areTablesReady()) {
+      try {
+        await supabase.from('team_invitations').update({ status: 'ACCEPTED' }).eq('id', invitationId);
+      } catch (e) {}
+      try {
+        await supabase.from('team_members').upsert([{
+          id: memId,
+          team_id: inv.teamId,
+          user_id: userId,
+          role: inv.role,
+          joined_at: now,
+        }], { onConflict: 'team_id,user_id' });
+      } catch (e) {}
+    }
+
+    invalidateTeamCache(userId);
+
     await this.logTeamActivity(inv.teamId, {
       action: 'JOINED_TEAM',
       details: `User joined team via invitation`,
       userId,
     });
 
-    return { success: true, teamId: inv.teamId };
+    // Notify inviter
+    const recipient = await this.getUserById(userId);
+    if (inv.invitedBy) {
+      await this.createNotification(inv.invitedBy, {
+        title: 'Team Invitation Accepted',
+        message: `${recipient?.name || 'A new member'} accepted your invitation to "${inv.teamName}".`,
+        type: 'INVITATION_ACCEPTED',
+        link: '/team',
+        data: { teamId: inv.teamId },
+      });
+    }
+
+    return { success: true, teamId: inv.teamId, role: inv.role };
   },
 
   async declineTeamInvitation(invitationId, userId) {
-    const inv = memoryDb.teamInvitations.get(invitationId);
+    let inv = memoryDb.teamInvitations.get(invitationId);
     if (inv) inv.status = 'REJECTED';
+    if (await areTablesReady()) {
+      try {
+        await supabase.from('team_invitations').update({ status: 'REJECTED' }).eq('id', invitationId);
+      } catch (e) {}
+    }
     return true;
   },
 
   async cancelTeamInvitation(teamId, invitationId, executorUserId) {
-    const inv = memoryDb.teamInvitations.get(invitationId);
+    let inv = memoryDb.teamInvitations.get(invitationId);
     if (inv) inv.status = 'CANCELLED';
+    if (await areTablesReady()) {
+      try {
+        await supabase.from('team_invitations').update({ status: 'CANCELLED' }).eq('id', invitationId);
+      } catch (e) {}
+    }
     return true;
   },
 
@@ -1810,7 +2015,7 @@ const SupabaseService = {
           .from('workflow_invitations')
           .select('*')
           .eq('id', invitationId)
-          .single();
+          .maybeSingle();
         if (dbInv) {
           inv = {
             id: dbInv.id,
@@ -1820,14 +2025,46 @@ const SupabaseService = {
             role: dbInv.role,
             status: dbInv.status,
             invitedBy: dbInv.invited_by,
+            createdAt: dbInv.created_at,
+            expiresAt: dbInv.expires_at,
           };
           memoryDb.workflowInvitations.set(inv.id, inv);
         }
       } catch (e) {}
     }
 
-    if (!inv || inv.status !== 'PENDING') throw new Error('Invitation not found or no longer active');
-    if (inv.invitedUserId !== userId) throw new Error('Unauthorized invitation response');
+    if (!inv) throw new Error('Invitation not found or invalid link.');
+
+    if (inv.status === 'ACCEPTED') {
+      return { success: true, workflowId: inv.workflowId, role: inv.role, alreadyAccepted: true, message: 'You have already accepted this invitation.' };
+    }
+
+    if (inv.status !== 'PENDING') {
+      throw new Error(`This invitation is no longer active (${inv.status}).`);
+    }
+
+    // Check expiration
+    if (inv.expiresAt && new Date(inv.expiresAt) < new Date()) {
+      inv.status = 'EXPIRED';
+      if (await areTablesReady()) {
+        try {
+          await supabase.from('workflow_invitations').update({ status: 'EXPIRED' }).eq('id', invitationId);
+        } catch (e) {}
+      }
+      throw new Error('This workflow invitation has expired. Please ask the workflow owner for a new invitation.');
+    }
+
+    // Check if user is already a workflow collaborator
+    const existingRole = await this.getWorkflowMemberRole(inv.workflowId, userId);
+    if (existingRole) {
+      inv.status = 'ACCEPTED';
+      if (await areTablesReady()) {
+        try {
+          await supabase.from('workflow_invitations').update({ status: 'ACCEPTED' }).eq('id', invitationId);
+        } catch (e) {}
+      }
+      return { success: true, workflowId: inv.workflowId, role: existingRole, alreadyMember: true };
+    }
 
     inv.status = 'ACCEPTED';
     const now = new Date().toISOString();
@@ -1863,12 +2100,14 @@ const SupabaseService = {
 
     // Notify inviter
     const recipient = await this.getUserById(userId);
-    await this.createNotification(inv.invitedBy, {
-      title: 'Invitation Accepted',
-      message: `${recipient?.name || 'A user'} accepted your invitation to "${inv.workflowName}".`,
-      type: 'INVITATION_ACCEPTED',
-      link: `/workflows/${inv.workflowId}`,
-    });
+    if (inv.invitedBy) {
+      await this.createNotification(inv.invitedBy, {
+        title: 'Invitation Accepted',
+        message: `${recipient?.name || 'A user'} accepted your invitation to "${inv.workflowName}".`,
+        type: 'INVITATION_ACCEPTED',
+        link: `/workflows/${inv.workflowId}`,
+      });
+    }
 
     return { success: true, workflowId: inv.workflowId, role: inv.role };
   },
@@ -2876,7 +3115,288 @@ const SupabaseService = {
 
     return { devTeam, mktTeam, eventTeam };
   },
+
+  async getInvitationById(id) {
+    if (!id) return null;
+
+    // 1. Check Team Invitations
+    let teamInv = memoryDb.teamInvitations.get(id);
+    if (!teamInv && (await areTablesReady())) {
+      try {
+        const { data: dbInv } = await supabase
+          .from('team_invitations')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+        if (dbInv) {
+          teamInv = {
+            id: dbInv.id,
+            teamId: dbInv.team_id,
+            teamName: dbInv.team_name,
+            email: dbInv.email,
+            role: dbInv.role,
+            invitedBy: dbInv.invited_by,
+            status: dbInv.status,
+            createdAt: dbInv.created_at,
+            expiresAt: dbInv.expires_at,
+          };
+          memoryDb.teamInvitations.set(teamInv.id, teamInv);
+        }
+      } catch (e) {}
+    }
+
+    if (teamInv) {
+      const inviter = await this.getUserById(teamInv.invitedBy);
+      const isExpired = Boolean(teamInv.expiresAt && new Date(teamInv.expiresAt) < new Date());
+      return {
+        id: teamInv.id,
+        type: 'TEAM',
+        resourceId: teamInv.teamId,
+        resourceName: teamInv.teamName,
+        role: teamInv.role,
+        status: isExpired && teamInv.status === 'PENDING' ? 'EXPIRED' : teamInv.status,
+        isExpired,
+        inviterName: inviter?.name || 'Workspace Administrator',
+        email: teamInv.email,
+        createdAt: teamInv.createdAt,
+        expiresAt: teamInv.expiresAt,
+      };
+    }
+
+    // 2. Check Workflow Invitations
+    let wfInv = memoryDb.workflowInvitations.get(id);
+    if (!wfInv && (await areTablesReady())) {
+      try {
+        const { data: dbInv } = await supabase
+          .from('workflow_invitations')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+        if (dbInv) {
+          wfInv = {
+            id: dbInv.id,
+            workflowId: dbInv.workflow_id,
+            workflowName: dbInv.workflow_name,
+            invitedUserId: dbInv.invited_user_id,
+            role: dbInv.role,
+            status: dbInv.status,
+            invitedBy: dbInv.invited_by,
+            createdAt: dbInv.created_at,
+            expiresAt: dbInv.expires_at,
+          };
+          memoryDb.workflowInvitations.set(wfInv.id, wfInv);
+        }
+      } catch (e) {}
+    }
+
+    if (wfInv) {
+      const inviter = await this.getUserById(wfInv.invitedBy);
+      const isExpired = Boolean(wfInv.expiresAt && new Date(wfInv.expiresAt) < new Date());
+      return {
+        id: wfInv.id,
+        type: 'WORKFLOW',
+        resourceId: wfInv.workflowId,
+        resourceName: wfInv.workflowName,
+        role: wfInv.role,
+        status: isExpired && wfInv.status === 'PENDING' ? 'EXPIRED' : wfInv.status,
+        isExpired,
+        inviterName: inviter?.name || 'Workflow Owner',
+        invitedUserId: wfInv.invitedUserId,
+        createdAt: wfInv.createdAt,
+        expiresAt: wfInv.expiresAt,
+      };
+    }
+
+    return null;
+  },
+
+  // Document management methods
+  async saveWorkflowDocument({ workflowId, file, uploadedBy, description }) {
+    if (!workflowId) throw new Error('Workflow ID is required');
+    if (!file) throw new Error('File is required');
+
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!['.pdf', '.doc', '.docx'].includes(ext)) {
+      throw new Error(`Unsupported file type (${ext}). Only PDF, DOC, and DOCX files are allowed.`);
+    }
+
+    const docId = `doc_${uuidv4().replace(/-/g, '').substring(0, 10)}`;
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const storagePath = `${workflowId}/${docId}/${safeName}`;
+    const now = new Date().toISOString();
+
+    // Upload to Supabase Storage bucket 'workflow-documents'
+    if (supabase) {
+      try {
+        await supabase.storage
+          .from('workflow-documents')
+          .upload(storagePath, file.buffer, {
+            contentType: file.mimetype || 'application/octet-stream',
+            upsert: true,
+          });
+      } catch (err) {
+        console.warn('Supabase storage upload notice:', err.message);
+      }
+    }
+
+    const uploader = await this.getUserById(uploadedBy);
+
+    const doc = {
+      id: docId,
+      workflowId,
+      fileName: file.originalname,
+      storagePath,
+      fileType: ext.replace('.', '').toUpperCase(),
+      mimeType: file.mimetype,
+      fileSize: file.size,
+      uploadedBy,
+      uploaderName: uploader?.name || 'Team Member',
+      description: description || '',
+      createdAt: now,
+    };
+
+    memoryDb.workflowDocuments.set(docId, doc);
+    savePersistedDocuments();
+
+    // Log activity
+    await this.logTeamActivity(null, {
+      action: 'DOCUMENT_UPLOADED',
+      details: `Document "${file.originalname}" attached to workflow`,
+      userId: uploadedBy,
+      workflowId,
+    });
+
+    return doc;
+  },
+
+  async getWorkflowDocuments(workflowId) {
+    const list = [];
+    for (const doc of memoryDb.workflowDocuments.values()) {
+      if (doc.workflowId === workflowId) {
+        list.push(doc);
+      }
+    }
+    return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  },
+
+  async getDocumentDownloadUrl(docId, userId) {
+    const doc = memoryDb.workflowDocuments.get(docId);
+    if (!doc) throw new Error('Document not found');
+
+    const role = await this.getWorkflowMemberRole(doc.workflowId, userId);
+    if (!role) throw new Error('Access denied: You are not authorized to view documents for this workflow.');
+
+    // Generate signed URL if Supabase storage is active
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.storage
+          .from('workflow-documents')
+          .createSignedUrl(doc.storagePath, 3600); // 1 hour expiration
+        if (!error && data?.signedUrl) {
+          return { url: data.signedUrl, doc };
+        }
+      } catch (e) {}
+    }
+
+    return { url: null, doc };
+  },
+
+  async deleteWorkflowDocument(docId, userId) {
+    const doc = memoryDb.workflowDocuments.get(docId);
+    if (!doc) throw new Error('Document not found');
+
+    const role = await this.getWorkflowMemberRole(doc.workflowId, userId);
+    const isOwnerOrManager = role === 'OWNER' || role === 'MANAGER';
+    const isUploader = doc.uploadedBy === userId;
+
+    if (!isOwnerOrManager && !isUploader) {
+      throw new Error('Access denied: Only workflow managers or the uploader can delete this document.');
+    }
+
+    if (supabase) {
+      try {
+        await supabase.storage.from('workflow-documents').remove([doc.storagePath]);
+      } catch (e) {}
+    }
+
+    memoryDb.workflowDocuments.delete(docId);
+    savePersistedDocuments();
+
+    return true;
+  },
+
+  async updateWorkflowStatus(workflowId, { status, completionDescription, file }, userId) {
+    const wf = await this.getWorkflowById(workflowId);
+    if (!wf) throw new Error('Workflow not found');
+
+    const normalizedStatus = (status || '').toUpperCase();
+    const validStatuses = ['ACTIVE', 'IN_PROGRESS', 'COMPLETED', 'PAUSED', 'ARCHIVED'];
+    if (!validStatuses.includes(normalizedStatus)) {
+      throw new Error(`Invalid status: ${status}. Valid options are In Progress, Completed, Paused, Active, Archived.`);
+    }
+
+    // Rule 11: Mandatory Requirements when marking a workflow COMPLETED
+    if (normalizedStatus === 'COMPLETED') {
+      const words = (completionDescription || '').trim().split(/\s+/).filter(Boolean);
+      if (words.length < 25) {
+        throw new Error(`A completion description of at least 25 words is required to mark a workflow Completed (current word count: ${words.length}).`);
+      }
+      if (!file) {
+        throw new Error('At least one PDF or Word document (.pdf, .doc, .docx) attachment is mandatory to mark a workflow Completed.');
+      }
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (!['.pdf', '.doc', '.docx'].includes(ext)) {
+        throw new Error('The completion attachment must be a PDF or Word document (.pdf, .doc, .docx).');
+      }
+    }
+
+    // Optional upload for IN_PROGRESS or any other status
+    let uploadedDoc = null;
+    if (file) {
+      uploadedDoc = await this.saveWorkflowDocument({
+        workflowId,
+        file,
+        uploadedBy: userId,
+        description: completionDescription || `Status changed to ${normalizedStatus}`,
+      });
+    }
+
+    // Map IN_PROGRESS to ACTIVE for Supabase table check constraint ('ACTIVE', 'COMPLETED', 'ARCHIVED', 'PAUSED')
+    const dbStatus = normalizedStatus === 'IN_PROGRESS' ? 'ACTIVE' : normalizedStatus;
+
+    wf.status = normalizedStatus;
+    if (completionDescription) wf.completionDescription = completionDescription;
+    wf.updatedAt = new Date().toISOString();
+
+    if (await areTablesReady()) {
+      try {
+        await supabase.from('workflows').update({
+          status: dbStatus,
+          updated_at: wf.updatedAt,
+        }).eq('id', workflowId);
+      } catch (err) {
+        console.error('[Supabase updateWorkflowStatus Error]:', err.message);
+      }
+    }
+
+    invalidateWorkflowCache();
+
+    // Log activity
+    await this.logTeamActivity(wf.teamId, {
+      action: 'WORKFLOW_STATUS_CHANGED',
+      details: `Workflow "${wf.name}" status updated to ${normalizedStatus}${uploadedDoc ? ` with document "${uploadedDoc.fileName}"` : ''}`,
+      userId,
+      workflowId,
+    });
+
+    return {
+      workflow: wf,
+      document: uploadedDoc,
+      status: normalizedStatus,
+    };
+  },
 };
 
 module.exports = SupabaseService;
+
 

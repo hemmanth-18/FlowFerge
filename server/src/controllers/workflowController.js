@@ -230,6 +230,104 @@ const workflowController = {
       return res.status(400).json({ success: false, error: err.message || 'Failed to remove workflow member' });
     }
   },
+
+  // PUT /api/workflows/:id/status
+  async updateWorkflowStatus(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const { status, completionDescription } = req.body;
+      const file = req.file;
+
+      const result = await SupabaseService.updateWorkflowStatus(id, {
+        status,
+        completionDescription,
+        file,
+      }, userId);
+
+      return res.json({
+        success: true,
+        message: `Workflow status updated to ${result.status}`,
+        data: result,
+      });
+    } catch (err) {
+      console.error('[Update Workflow Status Error]:', err);
+      return res.status(400).json({ success: false, error: err.message || 'Failed to update workflow status' });
+    }
+  },
+
+  // GET /api/workflows/:id/documents
+  async getWorkflowDocuments(req, res) {
+    try {
+      const { id } = req.params;
+      const documents = await SupabaseService.getWorkflowDocuments(id);
+      return res.json({ success: true, data: documents });
+    } catch (err) {
+      console.error('[Get Workflow Documents Error]:', err);
+      return res.status(500).json({ success: false, error: 'Failed to retrieve workflow documents' });
+    }
+  },
+
+  // POST /api/workflows/:id/documents
+  async uploadWorkflowDocument(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const file = req.file;
+      const { description } = req.body;
+
+      if (!file) {
+        return res.status(400).json({ success: false, error: 'No document file provided' });
+      }
+
+      const document = await SupabaseService.saveWorkflowDocument({
+        workflowId: id,
+        file,
+        uploadedBy: userId,
+        description,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Document uploaded successfully',
+        data: document,
+      });
+    } catch (err) {
+      console.error('[Upload Workflow Document Error]:', err);
+      return res.status(400).json({ success: false, error: err.message || 'Failed to upload document' });
+    }
+  },
+
+  // GET /api/workflows/:id/documents/:docId/download
+  async downloadWorkflowDocument(req, res) {
+    try {
+      const { docId } = req.params;
+      const userId = req.user.id;
+
+      const result = await SupabaseService.getDocumentDownloadUrl(docId, userId);
+      if (result.url) {
+        return res.json({ success: true, downloadUrl: result.url, data: result.doc });
+      }
+      return res.json({ success: true, data: result.doc });
+    } catch (err) {
+      console.error('[Download Workflow Document Error]:', err);
+      return res.status(400).json({ success: false, error: err.message || 'Failed to generate download URL' });
+    }
+  },
+
+  // DELETE /api/workflows/:id/documents/:docId
+  async deleteWorkflowDocument(req, res) {
+    try {
+      const { docId } = req.params;
+      const userId = req.user.id;
+
+      await SupabaseService.deleteWorkflowDocument(docId, userId);
+      return res.json({ success: true, message: 'Document removed successfully' });
+    } catch (err) {
+      console.error('[Delete Workflow Document Error]:', err);
+      return res.status(400).json({ success: false, error: err.message || 'Failed to delete document' });
+    }
+  },
 };
 
 module.exports = workflowController;

@@ -39,6 +39,8 @@ import {
   User,
   Eye,
   ArrowRight,
+  FileText,
+  Paperclip,
 } from 'lucide-react';
 import { StatusBadge } from '../components/StatusBadge';
 import { ProgressBar } from '../components/ProgressBar';
@@ -48,6 +50,8 @@ import { TaskModal } from '../components/TaskModal';
 import { TaskDrawer } from '../components/TaskDrawer';
 import { WorkflowPermissionsModal } from '../components/WorkflowPermissionsModal';
 import { ShareWorkflowModal } from '../components/ShareWorkflowModal';
+import { WorkflowTransitionModal } from '../components/WorkflowTransitionModal';
+import { WorkflowDocumentsTab } from '../components/WorkflowDocumentsTab';
 import { useTeam } from '../context/TeamContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
@@ -87,6 +91,9 @@ export const WorkflowBuilderPage = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isPermissionsOpen, setIsPermissionsOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isDocumentsOpen, setIsDocumentsOpen] = useState(false);
+  const [isTransitionModalOpen, setIsTransitionModalOpen] = useState(false);
+  const [transitionTarget, setTransitionTarget] = useState('IN_PROGRESS');
   const [topNotification, setTopNotification] = useState('');
 
   const handleInvitationSent = (invite) => {
@@ -657,8 +664,48 @@ export const WorkflowBuilderPage = () => {
             <RefreshCw className="w-4 h-4" />
           </button>
 
+          {/* Shared Workflow Documents Button */}
+          <button
+            onClick={() => setIsDocumentsOpen(true)}
+            title="View & Attach Workflow Documents"
+            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-dark-800 hover:bg-dark-750 text-slate-200 border border-slate-700 text-xs font-semibold rounded-xl transition-all shadow-sm"
+          >
+            <FileText className="w-3.5 h-3.5 text-sky-400" />
+            <span className="hidden sm:inline">Documents</span>
+          </button>
+
           {canManageWorkflow ? (
             <>
+              {/* Optional Transition to In Progress */}
+              {workflow?.status !== 'IN_PROGRESS' && workflow?.status !== 'ACTIVE' && (
+                <button
+                  onClick={() => {
+                    setTransitionTarget('IN_PROGRESS');
+                    setIsTransitionModalOpen(true);
+                  }}
+                  title="Move Workflow to In Progress (Optional Attachment)"
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-semibold rounded-xl transition-all shadow-sm"
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">In Progress</span>
+                </button>
+              )}
+
+              {/* Mandatory Transition to Completed (>= 25 words + doc) */}
+              {workflow?.status !== 'COMPLETED' && (
+                <button
+                  onClick={() => {
+                    setTransitionTarget('COMPLETED');
+                    setIsTransitionModalOpen(true);
+                  }}
+                  title="Complete Workflow (Requires >= 25 words description & document attachment)"
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold rounded-xl transition-all shadow-sm"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Complete</span>
+                </button>
+              )}
+
               {/* Invite Collaborator Button (Section 9) */}
               <button
                 onClick={() => setIsShareModalOpen(true)}
@@ -862,6 +909,39 @@ export const WorkflowBuilderPage = () => {
           workflow={workflow}
           onInvitationSent={handleInvitationSent}
         />
+      )}
+
+      {/* Workflow Transition Lifecycle Modal */}
+      {isTransitionModalOpen && workflow && (
+        <WorkflowTransitionModal
+          isOpen={isTransitionModalOpen}
+          onClose={() => setIsTransitionModalOpen(false)}
+          workflow={workflow}
+          targetStatus={transitionTarget}
+          onSuccess={(res) => {
+            setWorkflow((prev) => ({
+              ...prev,
+              status: res.status,
+            }));
+            loadWorkflowData(true);
+          }}
+        />
+      )}
+
+      {/* Shared Workflow Documents Modal */}
+      {isDocumentsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="w-full max-w-3xl bg-[#10141D] border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => setIsDocumentsOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <WorkflowDocumentsTab workflowId={workflowId} isManager={canManageWorkflow} />
+          </div>
+        </div>
       )}
     </div>
   );

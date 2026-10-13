@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
+import { GlobalCursor } from '../components/GlobalCursor';
 
 export const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-dark-950 text-slate-100 flex">
+    <div className="min-h-screen bg-dark-950 text-slate-100 flex relative">
+      {/* Global Interactive Cursor & Halo Tracking */}
+      <GlobalCursor />
+
       {/* Persistent Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 

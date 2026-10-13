@@ -6,6 +6,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { InvitationPage } from './pages/InvitationPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { WorkflowsPage } from './pages/WorkflowsPage';
 import { WorkflowBuilderPage } from './pages/WorkflowBuilderPage';
@@ -49,6 +50,8 @@ export const App = () => {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/invite/:token" element={<InvitationPage />} />
+      <Route path="/invitations/:token" element={<InvitationPage />} />
 
       {/* Authenticated Workspace Pages */}
       <Route
