@@ -14,6 +14,8 @@ import {
   AlertCircle,
   X,
   Paperclip,
+  Globe,
+  Lock,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
@@ -28,6 +30,7 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [description, setDescription] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
   const [error, setError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
 
@@ -119,6 +122,7 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
       if (description.trim()) {
         formData.append('description', description.trim());
       }
+      formData.append('isPrivate', isPrivate);
 
       const res = await api.post(`/workflows/${workflowId}/documents`, formData);
 
@@ -126,6 +130,7 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
         toast.success('Document uploaded successfully!');
         setSelectedFile(null);
         setDescription('');
+        setIsPrivate(false);
         setUploadModalOpen(false);
         fetchDocuments();
       }
@@ -223,8 +228,24 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
                     </div>
                   </div>
 
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-semibold uppercase">
-                    Verified
+                  <span
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase flex items-center space-x-1 ${
+                      doc.isPrivate
+                        ? 'bg-amber-500/15 border border-amber-500/30 text-amber-300'
+                        : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
+                    }`}
+                  >
+                    {doc.isPrivate ? (
+                      <>
+                        <Lock className="w-3 h-3 text-amber-400" />
+                        <span>Private</span>
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="w-3 h-3 text-emerald-400" />
+                        <span>Public</span>
+                      </>
+                    )}
                   </span>
                 </div>
 
@@ -363,6 +384,42 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Document Privacy / Visibility */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Document Visibility
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsPrivate(false)}
+                    className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                      !isPrivate
+                        ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 shadow-sm'
+                        : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:bg-white/[0.06]'
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Public</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsPrivate(true)}
+                    className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                      isPrivate
+                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm'
+                        : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:bg-white/[0.06]'
+                    }`}
+                  >
+                    <Lock className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Private</span>
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  {isPrivate ? 'Marked with Private label in workflow documents.' : 'Shared as Public document for all workflow members.'}
+                </p>
               </div>
 
               <div>

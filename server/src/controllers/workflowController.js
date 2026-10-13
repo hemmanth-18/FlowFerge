@@ -289,8 +289,7 @@ const workflowController = {
     try {
       const { id } = req.params;
       const userId = req.user.id;
-      const file = req.file;
-      const { description } = req.body;
+      const { description, isPrivate } = req.body;
 
       if (!file) {
         return res.status(400).json({ success: false, error: 'No document file provided' });
@@ -301,6 +300,7 @@ const workflowController = {
         file,
         uploadedBy: userId,
         description,
+        isPrivate: isPrivate === 'true' || isPrivate === true,
       });
 
       return res.status(201).json({

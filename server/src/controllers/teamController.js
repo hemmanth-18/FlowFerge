@@ -382,6 +382,96 @@ const teamController = {
       res.status(500).json({ success: false, error: 'Failed to fetch users' });
     }
   },
+
+  // POST /api/teams/:teamId/documents
+  // Admins & Managers can upload a document to specific or all team workflows
+  async sendTeamDocumentToWorkflows(req, res) {
+    try {
+      const { teamId } = req.params;
+      const userId = req.user.id;
+      const file = req.file;
+      const { workflowId, isPrivate, description } = req.body;
+
+      if (!file) {
+        return res.status(400).json({ success: false, error: 'No document file provided.' });
+      }
+
+      // Fetch team workflows
+      const teamWorkflows = await SupabaseService.getWorkflowsByTeam(teamId, userId);
+      if (!teamWorkflows || teamWorkflows.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'No active workflows exist in this team. Please create a workflow first to attach documents.',
+        });
+      }
+
+      let targetWorkflows = [];
+      if (!workflowId || workflowId === 'all') {
+        targetWorkflows = teamWorkflows;
+      } else {
+        const targetIds = Array.isArray(workflowId) ? workflowId : [workflowId];
+        targetWorkflows = teamWorkflows.filter((w) => targetIds.includes(w.id));
+        if (targetWorkflows.length === 0) {
+          return res.status(400).json({ success: false, error: 'Selected workflow not found in this team.' });
+        }
+      }
+
+      const results = [];
+      const privateFlag = isPrivate === 'true' || isPrivate === true;
+
+      for (const wf of targetWorkflows) {
+        const doc = await SupabaseService.saveWorkflowDocument({
+          workflowId: wf.id,
+          file,
+          uploadedBy: userId,
+          description: description || `Shared from team by ${req.user.name || 'Team Admin'}`,
+          isPrivate: privateFlag,
+        });
+        results.push({ ...doc, workflowName: wf.name });
+      }
+
+      return res.status(201).json({
+        success: true,
+        message:
+          targetWorkflows.length > 1
+            ? `Document distributed to all ${targetWorkflows.length} workflows successfully!`
+            : `Document attached to "${targetWorkflows[0].name}" successfully!`,
+        count: results.length,
+        data: results,
+      });
+    } catch (err) {
+      console.error('[Send Team Document Error]:', err);
+      return res.status(400).json({ success: false, error: err.message || 'Failed to send document.' });
+    }
+  },
+
+  // GET /api/teams/:teamId/documents
+  // Fetch all documents across workflows in this team
+  async getTeamDocuments(req, res) {
+    try {
+      const { teamId } = req.params;
+      const userId = req.user.id;
+      const teamWorkflows = await SupabaseService.getWorkflowsByTeam(teamId, userId);
+      const workflowMap = new Map((teamWorkflows || []).map((w) => [w.id, w.name]));
+
+      const allDocs = [];
+      for (const wf of teamWorkflows || []) {
+        const docs = await SupabaseService.getWorkflowDocuments(wf.id);
+        for (const doc of docs) {
+          allDocs.push({
+            ...doc,
+            workflowName: workflowMap.get(doc.workflowId) || 'Workflow',
+          });
+        }
+      }
+
+      allDocs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      return res.json({ success: true, data: allDocs });
+    } catch (err) {
+      console.error('[Get Team Documents Error]:', err);
+      return res.status(500).json({ success: false, error: 'Failed to fetch team documents.' });
+    }
+  },
 };
 
 module.exports = teamController;

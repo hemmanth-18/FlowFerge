@@ -281,10 +281,10 @@ export const LandingPage = () => {
               <span>Smart Workflow Management Platform</span>
             </div>
 
-            {/* TechText Interactive Wordmark — FLOWFERGE */}
+            {/* TechText Interactive Wordmark — FLOWFoRGE */}
             <div className="w-full h-36 sm:h-48 md:h-56 relative flex items-center justify-center my-2 max-w-4xl mx-auto">
               <TechText
-                text="FLOWFERGE"
+                text="FLOWFORGE"
                 fontWeight={800}
                 fontSize={120}
                 reveal="letter"
@@ -295,7 +295,7 @@ export const LandingPage = () => {
                 accentColor="#A855F7"
                 speed={1.2}
               />
-              <h1 className="sr-only">FLOWFERGE — FlowForge Workflow Management Platform</h1>
+              <h1 className="sr-only">FLOWFORGE — FlowForge Workflow Management Platform</h1>
             </div>
 
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-cyan-400 to-indigo-300 mb-6">

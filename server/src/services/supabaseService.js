@@ -96,6 +96,7 @@ function loadPersistedDocuments() {
       if (Array.isArray(data)) {
         for (const doc of data) {
           if (doc && doc.id) {
+            doc.isPrivate = Boolean(doc.isPrivate);
             memoryDb.workflowDocuments.set(doc.id, doc);
           }
         }
@@ -1868,8 +1869,17 @@ const SupabaseService = {
     return results;
   },
 
-  async getWorkflowsByTeam(teamId, userId) {
-    return this.getWorkflowsForUser(userId, { teamId });
+  async getWorkflowsByTeam(teamId, userId = null) {
+    if (userId) {
+      return this.getWorkflowsForUser(userId, { teamId });
+    }
+    const list = [];
+    for (const wf of memoryDb.workflows.values()) {
+      if (wf.teamId === teamId && !wf.isArchived) {
+        list.push(wf);
+      }
+    }
+    return list;
   },
 
   async updateWorkflow(arg1, arg2, arg3) {
@@ -3699,7 +3709,7 @@ const SupabaseService = {
   },
 
   // Document management methods
-  async saveWorkflowDocument({ workflowId, file, uploadedBy, description }) {
+  async saveWorkflowDocument({ workflowId, file, uploadedBy, description, isPrivate = false }) {
     if (!workflowId) throw new Error('Workflow ID is required');
     if (!file) throw new Error('File is required');
 
@@ -3741,16 +3751,39 @@ const SupabaseService = {
       uploadedBy,
       uploaderName: uploader?.name || 'Team Member',
       description: description || '',
+      isPrivate: Boolean(isPrivate),
       createdAt: now,
     };
 
     memoryDb.workflowDocuments.set(docId, doc);
     savePersistedDocuments();
 
+    // Sync to Supabase table if table exists
+    if (supabase) {
+      try {
+        await supabase.from('workflow_documents').upsert({
+          id: docId,
+          workflow_id: workflowId,
+          file_name: file.originalname,
+          storage_path: storagePath,
+          file_type: ext.replace('.', '').toUpperCase(),
+          mime_type: file.mimetype,
+          file_size: file.size,
+          uploaded_by: uploadedBy,
+          uploader_name: uploader?.name || 'Team Member',
+          description: description || '',
+          is_private: Boolean(isPrivate),
+          created_at: now,
+        });
+      } catch (err) {
+        // Handled gracefully if table/column does not exist yet
+      }
+    }
+
     // Log activity
     await this.logTeamActivity(null, {
       action: 'DOCUMENT_UPLOADED',
-      details: `Document "${file.originalname}" attached to workflow`,
+      details: `Document "${file.originalname}" (${isPrivate ? 'Private' : 'Public'}) attached to workflow`,
       userId: uploadedBy,
       workflowId,
     });
@@ -3806,6 +3839,9 @@ const SupabaseService = {
     if (supabase) {
       try {
         await supabase.storage.from('workflow-documents').remove([doc.storagePath]);
+      } catch (e) {}
+      try {
+        await supabase.from('workflow_documents').delete().eq('id', docId);
       } catch (e) {}
     }
 

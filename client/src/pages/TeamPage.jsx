@@ -21,10 +21,17 @@ import {
   RotateCw,
   Link as LinkIcon,
   Search,
+  FileUp,
+  FileText,
+  File,
+  Lock,
+  Globe,
+  Download,
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { InviteMemberModal } from '../components/InviteMemberModal';
 import { ArchiveTeamModal } from '../components/ArchiveTeamModal';
+import { SendTeamDocumentModal } from '../components/SendTeamDocumentModal';
 import { TeamIcon } from '../components/TeamIcon';
 import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
@@ -46,6 +53,9 @@ export const TeamPage = () => {
   const [loading, setLoading] = useState(true);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [isSendDocModalOpen, setIsSendDocModalOpen] = useState(false);
+  const [teamDocuments, setTeamDocuments] = useState([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
   const [resendingId, setResendingId] = useState(null);
   const [selectedProfileUser, setSelectedProfileUser] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -93,9 +103,48 @@ export const TeamPage = () => {
     }
   }, [activeTeam?.id, isManager]);
 
+  const fetchTeamDocuments = useCallback(async () => {
+    if (!activeTeam?.id) return;
+    try {
+      setLoadingDocuments(true);
+      const res = await api.get(`/teams/${activeTeam.id}/documents`);
+      setTeamDocuments(res.data?.data || []);
+    } catch (err) {
+      console.error('Failed to load team documents:', err);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  }, [activeTeam?.id]);
+
   useEffect(() => {
     fetchTeamMembersAndInvites();
-  }, [fetchTeamMembersAndInvites]);
+    fetchTeamDocuments();
+  }, [fetchTeamMembersAndInvites, fetchTeamDocuments]);
+
+  const handleDownloadDoc = async (doc) => {
+    try {
+      const res = await api.get(`/workflows/${doc.workflowId}/documents/${doc.id}/download`);
+      const url = res.data?.downloadUrl;
+      if (url) {
+        window.open(url, '_blank');
+      } else {
+        toast.info(`Document "${doc.fileName}" is recorded in metadata.`);
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to download document');
+    }
+  };
+
+  const handleDeleteDoc = async (doc) => {
+    if (!window.confirm(`Are you sure you want to remove "${doc.fileName}"?`)) return;
+    try {
+      await api.delete(`/workflows/${doc.workflowId}/documents/${doc.id}`);
+      toast.success('Document deleted successfully');
+      fetchTeamDocuments();
+    } catch (err) {
+      toast.error(err.message || 'Failed to delete document');
+    }
+  };
 
   // Role Change (Team Admin Only)
   const handleRoleChange = async (targetUserId, newRole) => {
@@ -201,10 +250,21 @@ export const TeamPage = () => {
         title={`${activeTeam?.name || 'Team'} Members & Roles`}
         actions={
           <div className="flex items-center space-x-2">
+            {(isManager || isAdmin) && (
+              <button
+                type="button"
+                onClick={() => setIsSendDocModalOpen(true)}
+                className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/25 transition-all cursor-pointer"
+                title="Send document to all or specific workflows"
+              >
+                <FileUp className="w-3.5 h-3.5" />
+                <span>+ Send Document</span>
+              </button>
+            )}
             {isManager && (
               <button
                 onClick={() => setIsInviteModalOpen(true)}
-                className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/25 transition-all"
+                className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/25 transition-all cursor-pointer"
               >
                 <UserPlus className="w-3.5 h-3.5" />
                 <span>+ Invite Member</span>
@@ -535,6 +595,137 @@ export const TeamPage = () => {
           </div>
         )}
 
+        {/* Team Workflow Documents Section */}
+        <div className="rounded-3xl bg-white/[0.045] border border-white/10 backdrop-blur-xl overflow-hidden shadow-xl">
+          <div className="p-5 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center space-x-2">
+              <FileText className="w-4 h-4 text-[#8B5CF6]" />
+              <h3 className="text-sm font-bold text-[#F8FAFC]">
+                Team & Workflow Documents ({teamDocuments.length})
+              </h3>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 font-mono border border-purple-500/25">
+                Workflow Distribution
+              </span>
+            </div>
+
+            {(isManager || isAdmin) && (
+              <button
+                type="button"
+                onClick={() => setIsSendDocModalOpen(true)}
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md shadow-purple-600/20 transition-all self-start sm:self-auto cursor-pointer"
+              >
+                <FileUp className="w-3.5 h-3.5" />
+                <span>+ Send Document</span>
+              </button>
+            )}
+          </div>
+
+          {loadingDocuments ? (
+            <div className="p-8 space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-14 rounded-2xl bg-white/[0.03] animate-pulse border border-white/5" />
+              ))}
+            </div>
+          ) : teamDocuments.length === 0 ? (
+            <div className="p-8 text-center">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 mb-3">
+                <FileText className="w-6 h-6" />
+              </div>
+              <h4 className="text-sm font-semibold text-white">No documents distributed yet</h4>
+              <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                Admins and managers can upload specifications, completion reports, or policies and broadcast them to each and every workflow or specific workflows.
+              </p>
+              {(isManager || isAdmin) && (
+                <button
+                  type="button"
+                  onClick={() => setIsSendDocModalOpen(true)}
+                  className="mt-4 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/25 transition-all cursor-pointer"
+                >
+                  Send First Document
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {teamDocuments.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="p-4 px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.035] transition-colors text-xs"
+                >
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center flex-shrink-0">
+                      <File className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                        <span className="font-bold text-[#F8FAFC] truncate max-w-[260px] sm:max-w-md" title={doc.fileName}>
+                          {doc.fileName}
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-300 border border-white/10 font-mono">
+                          {doc.workflowName || 'Workflow'}
+                        </span>
+                        {/* Privacy label */}
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase flex items-center space-x-1 ${
+                            doc.isPrivate
+                              ? 'bg-amber-500/15 border border-amber-500/30 text-amber-300'
+                              : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
+                          }`}
+                        >
+                          {doc.isPrivate ? (
+                            <>
+                              <Lock className="w-3 h-3 text-amber-400" />
+                              <span>Private</span>
+                            </>
+                          ) : (
+                            <>
+                              <Globe className="w-3 h-3 text-emerald-400" />
+                              <span>Public</span>
+                            </>
+                          )}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-400 flex items-center space-x-2 mt-1">
+                        <span>Uploaded by {doc.uploaderName || 'Team Member'}</span>
+                        <span>•</span>
+                        <span>{doc.fileSize ? `${(doc.fileSize / (1024 * 1024)).toFixed(2)} MB` : 'Attached'}</span>
+                        <span>•</span>
+                        <span>{doc.createdAt?.substring(0, 10)}</span>
+                      </div>
+                      {doc.description && (
+                        <p className="text-[11px] text-slate-300 mt-1 line-clamp-1 italic">
+                          "{doc.description}"
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-1.5 self-end sm:self-auto flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadDoc(doc)}
+                      className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 hover:text-white border border-white/10 transition-colors cursor-pointer"
+                      title="Download document"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                    {(isAdmin || isManager || doc.uploadedBy === user?.id) && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDoc(doc)}
+                        className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/20 transition-colors cursor-pointer"
+                        title="Delete document"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Danger Zone: Delete / Archive Team (Owner / Admin Only) */}
         {(isOwner || isAdmin) && activeTeam && (
           <div className="p-6 rounded-3xl bg-gradient-to-br from-[#FB7185]/10 via-[#FB7185]/5 to-transparent border border-[#FB7185]/25 backdrop-blur-xl shadow-xl space-y-3">
@@ -559,6 +750,16 @@ export const TeamPage = () => {
           </div>
         )}
       </div>
+
+      {/* Send Team Document to Workflows Modal */}
+      {activeTeam && (
+        <SendTeamDocumentModal
+          isOpen={isSendDocModalOpen}
+          onClose={() => setIsSendDocModalOpen(false)}
+          team={activeTeam}
+          onSuccess={() => fetchTeamDocuments()}
+        />
+      )}
 
       {/* Invite Member Modal */}
       <InviteMemberModal
