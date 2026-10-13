@@ -1,0 +1,109 @@
+@import '@xyflow/react/dist/style.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  html {
+    overflow-x: hidden;
+    max-width: 100vw;
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: #07090e;
+    color: #f1f5f9;
+    overflow-x: hidden;
+    max-width: 100vw;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Custom modern scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0f17;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* React Flow Dark Styling Overrides */
+.react-flow {
+  background-color: #07090e !important;
+}
+
+.react-flow__background {
+  background-color: #07090e !important;
+}
+
+.react-flow__controls {
+  background: #0f1523 !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background: #0f1523 !important;
+  border-bottom: 1px solid #1e293b !important;
+  color: #94a3b8 !important;
+  fill: #94a3b8 !important;
+}
+
+.react-flow__controls-button:hover {
+  background: #192338 !important;
+  color: #f8fafc !important;
+  fill: #f8fafc !important;
+}
+
+.react-flow__minimap {
+  background-color: #0b0f17 !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+}
+
+.react-flow__edge-path {
+  stroke: #6366f1 !important;
+  stroke-width: 2 !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #06b6d4 !important;
+  stroke-width: 3 !important;
+}
+
+.react-flow__handle {
+  width: 10px !important;
+  height: 10px !important;
+  background: #6366f1 !important;
+  border: 2px solid #0b0f17 !important;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.react-flow__handle:hover {
+  transform: scale(1.3);
+  background: #06b6d4 !important;
+}
+
+/* Custom animations */
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 3s ease-in-out infinite;
+}

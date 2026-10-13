@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="ff-grad" x1="4" y1="4" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="50%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <linearGradient id="bolt-grad" x1="16" y1="12" x2="48" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#e0e7ff" />
+    </linearGradient>
+    <filter id="glow" x="0" y="0" width="64" height="64" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Rounded Squircle Base -->
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#ff-grad)" />
+  <rect x="5" y="5" width="54" height="54" rx="15" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" />
+
+  <!-- FlowForge Network Node & Lightning Symbol -->
+  <path
+    d="M35 12L17 34H31L27 52L47 28H33L37 12Z"
+    fill="url(#bolt-grad)"
+    filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))"
+  />
+
+  <!-- Subtle Node Circles -->
+  <circle cx="16" cy="18" r="3" fill="#a5b4fc" opacity="0.8" />
+  <circle cx="48" cy="46" r="3.5" fill="#67e8f9" opacity="0.8" />
+  <line x1="18" y1="20" x2="26" y2="28" stroke="#a5b4fc" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6" />
+</svg>

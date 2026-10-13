@@ -1,0 +1,148 @@
+const SupabaseService = require('../services/supabaseService');
+
+const invitationController = {
+  // POST /api/invitations
+  async createInvitation(req, res) {
+    try {
+      const senderUserId = req.user.id;
+      const { type = 'WORKFLOW', resourceId, role = 'MEMBER', recipientIdentifier } = req.body;
+
+      if (!resourceId) {
+        return res.status(400).json({ success: false, error: 'Resource ID is required.' });
+      }
+      if (!recipientIdentifier || !recipientIdentifier.trim()) {
+        return res.status(400).json({ success: false, error: 'Recipient username or email is required.' });
+      }
+
+      // Validate workflow permissions if type === 'WORKFLOW'
+      if (type === 'WORKFLOW') {
+        const wf = await SupabaseService.getWorkflowById(resourceId);
+        if (!wf) {
+          return res.status(404).json({ success: false, error: 'Workflow not found.' });
+        }
+
+        // Only workflow owner or manager can invite
+        const isOwner = wf.ownerId === senderUserId || wf.createdBy === senderUserId;
+        const memRole = await SupabaseService.getWorkflowMemberRole(resourceId, senderUserId);
+        const isManager = memRole === 'MANAGER' || memRole === 'OWNER';
+
+        if (!isOwner && !isManager) {
+          return res.status(403).json({
+            success: false,
+            error: 'Forbidden: Only Workflow Owners and Managers can invite collaborators.',
+          });
+        }
+
+        // Validate role: Manager, Member, Viewer
+        const allowedRoles = ['MANAGER', 'MEMBER', 'VIEWER'];
+        if (!allowedRoles.includes(role)) {
+          return res.status(400).json({
+            success: false,
+            error: `Invalid workflow role "${role}". Allowed roles: ${allowedRoles.join(', ')}`,
+          });
+        }
+      }
+
+      const invitation = await SupabaseService.createUniversalInvitation(senderUserId, {
+        workflowId: resourceId,
+        role,
+        targetIdentifier: recipientIdentifier.trim(),
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: `Invitation sent to ${invitation.invitedUser?.name || recipientIdentifier}.`,
+        data: invitation,
+      });
+    } catch (err) {
+      console.error('[Create Invitation Error]:', err);
+      return res.status(400).json({ success: false, error: err.message || 'Failed to create invitation.' });
+    }
+  },
+
+  // GET /api/invitations/received
+  async getReceivedInvitations(req, res) {
+    try {
+      const userId = req.user.id;
+      const invitations = await SupabaseService.getReceivedInvitations(userId);
+      return res.json({
+        success: true,
+        data: invitations,
+      });
+    } catch (err) {
+      console.error('[Get Received Invitations Error]:', err);
+      return res.status(500).json({ success: false, error: 'Failed to retrieve received invitations.' });
+    }
+  },
+
+  // GET /api/invitations/sent
+  async getSentInvitations(req, res) {
+    try {
+      const userId = req.user.id;
+      const invitations = await SupabaseService.getSentInvitations(userId);
+      return res.json({
+        success: true,
+        data: invitations,
+      });
+    } catch (err) {
+      console.error('[Get Sent Invitations Error]:', err);
+      return res.status(500).json({ success: false, error: 'Failed to retrieve sent invitations.' });
+    }
+  },
+
+  // POST /api/invitations/:id/accept
+  async acceptInvitation(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      const result = await SupabaseService.acceptWorkflowInvitation(id, userId);
+      return res.json({
+        success: true,
+        message: 'Invitation accepted! You now have access.',
+        data: result,
+      });
+    } catch (err) {
+      console.error('[Accept Invitation Error]:', err);
+      return res.status(400).json({ success: false, error: err.message || 'Failed to accept invitation.' });
+    }
+  },
+
+  // POST /api/invitations/:id/decline
+  async declineInvitation(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      const result = await SupabaseService.declineWorkflowInvitation(id, userId);
+      return res.json({
+        success: true,
+        message: 'Invitation declined.',
+        data: result,
+      });
+    } catch (err) {
+      console.error('[Decline Invitation Error]:', err);
+      return res.status(400).json({ success: false, error: err.message || 'Failed to decline invitation.' });
+    }
+  },
+
+  // POST /api/invitations/:id/cancel
+  async cancelInvitation(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      const result = await SupabaseService.cancelWorkflowInvitation(id, userId);
+      return res.json({
+        success: true,
+        message: 'Invitation cancelled.',
+        data: result,
+      });
+    } catch (err) {
+      console.error('[Cancel Invitation Error]:', err);
+      return res.status(400).json({ success: false, error: err.message || 'Failed to cancel invitation.' });
+    }
+  },
+};
+
+module.exports = invitationController;
