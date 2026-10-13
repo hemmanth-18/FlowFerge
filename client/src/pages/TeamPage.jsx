@@ -64,8 +64,27 @@ export const TeamPage = () => {
         isManager ? api.get(`/teams/${activeTeam.id}/invitations`).catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
       ]);
 
-      setMembers(membersRes.data.data || []);
-      setInvitations(invitesRes.data.data || []);
+      const loadedMembers = membersRes.data.data || [];
+      const rawInvites = invitesRes.data.data || [];
+
+      // Ensure no active team member ever shows up under Pending Invitations
+      const activeMemberEmails = new Set(
+        loadedMembers.map((m) => m.email?.trim().toLowerCase()).filter(Boolean)
+      );
+      const activeMemberIds = new Set(
+        loadedMembers.map((m) => m.id).filter(Boolean)
+      );
+
+      const validPendingInvites = rawInvites.filter((inv) => {
+        if (inv.status !== 'PENDING') return false;
+        const invEmail = inv.email?.trim().toLowerCase();
+        if (invEmail && activeMemberEmails.has(invEmail)) return false;
+        if (inv.userId && activeMemberIds.has(inv.userId)) return false;
+        return true;
+      });
+
+      setMembers(loadedMembers);
+      setInvitations(validPendingInvites);
     } catch (err) {
       console.error('Failed to load team data:', err);
       toast.error('Failed to load team members: ' + err.message);

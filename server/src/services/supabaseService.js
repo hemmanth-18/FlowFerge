@@ -1104,42 +1104,74 @@ const SupabaseService = {
   },
 
   async getTeamInvitations(teamId) {
-    const list = [];
-    const seen = new Set();
-    for (const inv of memoryDb.teamInvitations.values()) {
-      if (inv.teamId === teamId && inv.status === 'PENDING') {
-        seen.add(inv.id);
-        list.push(inv);
-      }
-    }
+    // 1. Fetch current active team members to know who is already on the team
+    const teamMembers = await this.getTeamMembers(teamId);
+    const activeMemberEmails = new Set(
+      teamMembers.map(m => m.email?.trim().toLowerCase()).filter(Boolean)
+    );
 
+    // 2. Fetch fresh database invitations if tables ready to ensure memory store is 100% synchronized
     if (await areTablesReady()) {
       try {
         const { data: dbInvs } = await supabase
           .from('team_invitations')
           .select('*')
-          .eq('team_id', teamId)
-          .eq('status', 'PENDING');
+          .eq('team_id', teamId);
         if (dbInvs) {
           for (const row of dbInvs) {
-            if (!seen.has(row.id)) {
-              const item = {
-                id: row.id,
-                teamId: row.team_id,
-                teamName: row.team_name,
-                email: row.email,
-                role: row.role,
-                invitedBy: row.invited_by,
-                status: row.status,
-                createdAt: row.created_at,
-                expiresAt: row.expires_at,
-              };
-              memoryDb.teamInvitations.set(row.id, item);
-              list.push(item);
-            }
+            const item = {
+              id: row.id,
+              teamId: row.team_id,
+              teamName: row.team_name,
+              email: row.email,
+              role: row.role,
+              invitedBy: row.invited_by,
+              status: row.status,
+              createdAt: row.created_at,
+              expiresAt: row.expires_at,
+            };
+            memoryDb.teamInvitations.set(row.id, item);
           }
         }
       } catch (e) {}
+    }
+
+    const list = [];
+    const seen = new Set();
+
+    for (const inv of memoryDb.teamInvitations.values()) {
+      if (inv.teamId !== teamId) continue;
+
+      const cleanEmail = inv.email?.trim().toLowerCase();
+      const isAlreadyMember = Boolean(cleanEmail && activeMemberEmails.has(cleanEmail));
+
+      // If user has already joined the team, automatically mark invitation as ACCEPTED
+      if (isAlreadyMember && inv.status === 'PENDING') {
+        inv.status = 'ACCEPTED';
+        if (await areTablesReady()) {
+          try {
+            await supabase.from('team_invitations').update({ status: 'ACCEPTED' }).eq('id', inv.id);
+          } catch (e) {}
+        }
+        continue;
+      }
+
+      // Check if expired
+      if (inv.expiresAt && new Date(inv.expiresAt) < new Date() && inv.status === 'PENDING') {
+        inv.status = 'EXPIRED';
+        if (await areTablesReady()) {
+          try {
+            await supabase.from('team_invitations').update({ status: 'EXPIRED' }).eq('id', inv.id);
+          } catch (e) {}
+        }
+        continue;
+      }
+
+      // Only return strictly active PENDING invitations for non-members
+      if (inv.status === 'PENDING' && !isAlreadyMember && !seen.has(inv.id)) {
+        seen.add(inv.id);
+        list.push(inv);
+      }
     }
 
     return list;
@@ -1250,6 +1282,20 @@ const SupabaseService = {
     }
 
     inv.status = 'ACCEPTED';
+    const cleanEmail = inv.email?.trim().toLowerCase();
+    const recipient = await this.getUserById(userId);
+    const recipientEmail = recipient?.email?.trim().toLowerCase();
+
+    // Mark ALL invitations for this team matching email or user as ACCEPTED
+    for (const otherInv of memoryDb.teamInvitations.values()) {
+      if (otherInv.teamId === inv.teamId) {
+        const otherEmail = otherInv.email?.trim().toLowerCase();
+        if (otherEmail === cleanEmail || (recipientEmail && otherEmail === recipientEmail)) {
+          otherInv.status = 'ACCEPTED';
+        }
+      }
+    }
+
     const now = new Date().toISOString();
     const memId = `tm_${uuidv4().replace(/-/g, '').substring(0, 8)}`;
 
@@ -1265,6 +1311,16 @@ const SupabaseService = {
       try {
         await supabase.from('team_invitations').update({ status: 'ACCEPTED' }).eq('id', invitationId);
       } catch (e) {}
+      if (cleanEmail) {
+        try {
+          await supabase.from('team_invitations').update({ status: 'ACCEPTED' }).eq('team_id', inv.teamId).ilike('email', cleanEmail);
+        } catch (e) {}
+      }
+      if (recipientEmail && recipientEmail !== cleanEmail) {
+        try {
+          await supabase.from('team_invitations').update({ status: 'ACCEPTED' }).eq('team_id', inv.teamId).ilike('email', recipientEmail);
+        } catch (e) {}
+      }
       try {
         await supabase.from('team_members').upsert([{
           id: memId,
@@ -1285,7 +1341,6 @@ const SupabaseService = {
     });
 
     // Notify inviter
-    const recipient = await this.getUserById(userId);
     if (inv.invitedBy) {
       const inviter = await this.getUserById(inv.invitedBy);
       await this.createNotification(inv.invitedBy, {
