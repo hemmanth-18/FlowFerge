@@ -74,7 +74,7 @@ export const ActivityPage = () => {
       />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-800 gap-2">
           <div>
             <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
               <Activity className="w-5 h-5 text-brand-400" />
@@ -103,7 +103,7 @@ export const ActivityPage = () => {
             </p>
           </div>
         ) : (
-          <div className="p-5 rounded-2xl bg-dark-900 border border-slate-800 shadow-sm space-y-6">
+          <div className="p-3.5 sm:p-5 rounded-2xl bg-dark-900 border border-slate-800 shadow-sm space-y-6">
             <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
               {activities.map((act) => (
                 <div key={act.id} className="relative flex items-start space-x-3.5 group">
@@ -112,7 +112,7 @@ export const ActivityPage = () => {
                   </div>
 
                   <div className="flex-1 p-3 rounded-xl bg-dark-850 border border-slate-800/80 hover:border-slate-700 transition-all">
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 mb-1">
                       <span className="text-xs font-bold text-slate-200">
                         {act.userName}
                       </span>

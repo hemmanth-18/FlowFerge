@@ -1,4 +1,5 @@
 const SupabaseService = require('../services/supabaseService');
+const mailService = require('../services/mailService');
 
 const teamController = {
   // POST /api/teams
@@ -131,10 +132,92 @@ const teamController = {
       const { email, role } = req.body;
       const inviterUserId = req.user.id;
 
-      const invitation = await SupabaseService.createTeamInvitation(teamId, { email, role }, inviterUserId);
-      res.status(201).json({ success: true, data: invitation });
+      if (!email || !email.trim()) {
+        return res.status(400).json({ success: false, error: 'Valid recipient email address is required.' });
+      }
+
+      // 1. Create invitation record in Supabase / memory store
+      const invitation = await SupabaseService.createTeamInvitation(teamId, { email: email.trim(), role }, inviterUserId);
+
+      // 2. Generate production-ready invitation URL
+      const baseUrl = (process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app').replace(/\/+$/, '');
+      const invitationUrl = `${baseUrl}/invite/${invitation.id}`;
+      const inviterName = req.user.name || req.user.username || 'A team manager';
+
+      // 3. Dispatch real invitation email via Nodemailer Gmail SMTP
+      const mailResult = await mailService.sendTeamInvitationEmail({
+        to: invitation.email,
+        inviterName,
+        teamName: invitation.teamName,
+        role: invitation.role,
+        invitationUrl,
+        expiresAt: invitation.expiresAt,
+      });
+
+      res.status(201).json({
+        success: true,
+        data: invitation,
+        emailSent: mailResult.success,
+        emailMessage: mailResult.success
+          ? `Invitation email successfully sent to ${invitation.email}`
+          : (mailResult.message || 'Invitation link created, but email delivery failed.'),
+      });
     } catch (err) {
+      console.error('[Create Team Invitation Error]:', err);
       res.status(400).json({ success: false, error: err.message || 'Failed to send invitation' });
+    }
+  },
+
+  // POST /api/teams/:teamId/invitations/:invitationId/resend
+  async resendInvitation(req, res) {
+    try {
+      const { teamId, invitationId } = req.params;
+
+      const invitation = await SupabaseService.getInvitationById(invitationId);
+      if (!invitation || invitation.resourceId !== teamId) {
+        return res.status(404).json({ success: false, error: 'Invitation not found for this team.' });
+      }
+
+      if (invitation.status !== 'PENDING') {
+        return res.status(400).json({ success: false, error: `Cannot resend an invitation with status: ${invitation.status}` });
+      }
+
+      if (invitation.isExpired) {
+        return res.status(400).json({ success: false, error: 'This invitation has expired. Please create a new invitation.' });
+      }
+
+      const baseUrl = (process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app').replace(/\/+$/, '');
+      const invitationUrl = `${baseUrl}/invite/${invitation.id}`;
+      const inviterName = req.user.name || req.user.username || invitation.inviterName || 'A team manager';
+
+      const mailResult = await mailService.sendTeamInvitationEmail({
+        to: invitation.email,
+        inviterName,
+        teamName: invitation.resourceName,
+        role: invitation.role,
+        invitationUrl,
+        expiresAt: invitation.expiresAt,
+      });
+
+      if (!mailResult.success && mailResult.reason !== 'unconfigured') {
+        return res.status(500).json({
+          success: false,
+          error: mailResult.error || 'Failed to deliver invitation email.',
+          emailSent: false,
+        });
+      }
+
+      res.json({
+        success: true,
+        message: mailResult.success
+          ? `Invitation email resent to ${invitation.email}`
+          : 'Invitation is active, but mail server is unconfigured.',
+        emailSent: mailResult.success,
+        data: invitation,
+      });
+    } catch (err) {
+      console.error('[Resend Invitation Error]:', err);
+      res.status(500).json({ success: false, error: err.message || 'Failed to resend invitation' });
     }
   },
 

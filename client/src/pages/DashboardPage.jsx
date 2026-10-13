@@ -427,7 +427,7 @@ export const DashboardPage = () => {
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 my-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 my-3">
               <div className="p-3 rounded-2xl bg-[#151A24] border border-white/5">
                 <span className="text-[11px] text-slate-400 block mb-1">Automation Runs</span>
                 <span className="text-xl font-bold text-white font-mono">{automationRuns}</span>
@@ -481,23 +481,23 @@ export const DashboardPage = () => {
                     <Link
                       key={wf.id}
                       to={`/workflows/${wf.id}`}
-                      className="p-3.5 rounded-2xl bg-[#151A24] border border-white/5 hover:border-brand-500/40 hover:bg-[#1a202d] transition-all flex items-center justify-between group"
+                      className="p-3.5 rounded-2xl bg-[#151A24] border border-white/5 hover:border-brand-500/40 hover:bg-[#1a202d] transition-all flex items-center justify-between gap-3 group"
                     >
-                      <div className="flex items-center space-x-3 overflow-hidden">
+                      <div className="flex items-center space-x-3 overflow-hidden min-w-0 flex-1">
                         <div className="w-9 h-9 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center flex-shrink-0">
                           <Workflow className="w-4 h-4" />
                         </div>
-                        <div className="overflow-hidden">
+                        <div className="overflow-hidden min-w-0 flex-1">
                           <h4 className="text-xs sm:text-sm font-semibold text-white group-hover:text-brand-300 transition-colors truncate">
                             {wf.name}
                           </h4>
-                          <span className="text-[11px] text-slate-400">
-                            {wf.description ? wf.description.substring(0, 45) + '...' : 'Interactive DAG pipeline'}
+                          <span className="text-[11px] text-slate-400 block truncate">
+                            {wf.description || 'Interactive DAG pipeline'}
                           </span>
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-3 flex-shrink-0">
+                      <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
                         <StatusBadge status={wf.status} size="xs" />
                         <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
                       </div>

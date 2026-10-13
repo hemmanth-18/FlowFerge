@@ -217,7 +217,7 @@ export const NotificationsPage = () => {
             </p>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Filter buttons */}
             <div className="inline-flex rounded-xl p-1 bg-dark-900 border border-slate-800 text-xs">
               <button
@@ -390,7 +390,7 @@ export const NotificationsPage = () => {
                           type="button"
                           onClick={() => handleMarkRead(notif.id)}
                           title="Mark as read"
-                          className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-dark-800 rounded-lg transition-colors"
+                          className="min-h-[36px] min-w-[36px] flex items-center justify-center p-1.5 text-slate-400 hover:text-slate-200 hover:bg-dark-800 rounded-lg transition-colors"
                         >
                           <Check className="w-4 h-4" />
                         </button>
@@ -399,7 +399,7 @@ export const NotificationsPage = () => {
                         type="button"
                         onClick={() => handleDelete(notif.id)}
                         title="Delete notification"
-                        className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-dark-800 rounded-lg transition-colors"
+                        className="min-h-[36px] min-w-[36px] flex items-center justify-center p-1.5 text-slate-500 hover:text-rose-400 hover:bg-dark-800 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

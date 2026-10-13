@@ -27,8 +27,8 @@ export const ArchiveTeamModal = ({ isOpen, onClose, team }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-dark-900 border border-rose-500/40 rounded-2xl shadow-2xl p-6 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-dark-950/80 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+      <div className="relative w-full max-w-md bg-dark-900 border border-rose-500/40 rounded-2xl shadow-2xl p-5 sm:p-6 my-auto max-h-[92vh] overflow-y-auto">
         {/* Warning Accent */}
         <div className="flex items-center space-x-3 mb-4">
           <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">

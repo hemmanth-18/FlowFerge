@@ -143,3 +143,33 @@
   box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.6), 0 0 25px -5px rgba(139, 92, 246, 0.15);
 }
 
+/* Touch optimizations & safe areas */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* Touch target comfort on small coarse pointer screens */
+@media (pointer: coarse) {
+  .halo-card:hover {
+    transform: none;
+  }
+  button, [role="button"], a.btn {
+    min-height: 40px;
+  }
+}
+
+/* Ensure images, SVG and canvases never push layout wider than viewport */
+img, svg, video, canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Prevent horizontal grid overflow */
+.min-w-0 {
+  min-width: 0;
+}
+

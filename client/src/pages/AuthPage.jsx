@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Zap,
   Mail,
@@ -29,6 +29,7 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
   const navigate = useNavigate();
   const toast = useToast();
   const { user, signIn, signUp, forgotPassword } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
 
   usePageMeta(
     mode === 'signin' ? 'Sign In — FlowForge' : 'Create Account — FlowForge',
@@ -93,7 +94,13 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
       setLoginLoading(true);
       await signIn(loginIdentifier.trim(), loginPassword);
       toast.success('Welcome back to FlowForge!');
-      navigate('/dashboard');
+      const inviteRedirect = sessionStorage.getItem('flowforge_invite_redirect');
+      if (inviteRedirect) {
+        sessionStorage.removeItem('flowforge_invite_redirect');
+        navigate(inviteRedirect);
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       const msg = err.message || 'Invalid credentials. Please verify your email and password.';
       setLoginError(msg);
@@ -139,7 +146,13 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
         confirmPassword: signupConfirmPassword,
       });
       toast.success('Account created successfully! Welcome to FlowForge.');
-      navigate('/dashboard');
+      const inviteRedirect = sessionStorage.getItem('flowforge_invite_redirect');
+      if (inviteRedirect) {
+        sessionStorage.removeItem('flowforge_invite_redirect');
+        navigate(inviteRedirect);
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       const msg = err.message || 'Registration failed. Please try a different email or username.';
       setSignupError(msg);
@@ -223,7 +236,7 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
       </div>
 
       {/* Main Authentication Container */}
-      <div className="w-full max-w-4xl lg:max-w-5xl h-[670px] relative overflow-hidden rounded-3xl border border-white/10 bg-[#10141D]/95 backdrop-blur-2xl shadow-2xl shadow-black/80 flex">
+      <div className="w-full max-w-4xl lg:max-w-5xl min-h-[580px] md:h-[670px] relative overflow-hidden rounded-3xl border border-white/10 bg-[#10141D]/95 backdrop-blur-2xl shadow-2xl shadow-black/80 flex flex-col md:flex-row">
         {/* ========================================================================= */}
         {/* LEFT COLUMN: Sign In Form Area (Desktop 50%, Mobile 100%) */}
         {/* ========================================================================= */}
@@ -566,7 +579,7 @@ export const AuthPage = ({ initialMode = 'signin' }) => {
                 : 'polygon(0% 0%, 100% 0%, 85% 100%, 0% 100%)',
           }}
           transition={{
-            duration: 0.72,
+            duration: shouldReduceMotion ? 0 : 0.72,
             ease: [0.65, 0, 0.35, 1], // Natural bezier curve
           }}
         >

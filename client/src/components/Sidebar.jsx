@@ -23,6 +23,7 @@ import {
   Mail,
   User,
   Share2,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
@@ -61,6 +62,25 @@ export const Sidebar = ({ isOpen, onClose }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Close mobile drawer on Escape key press
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Close mobile drawer automatically when route changes
+  useEffect(() => {
+    if (isOpen) {
+      onClose?.();
+    }
+  }, [location.pathname, location.search]);
 
   // Poll unread notification count
   useEffect(() => {
@@ -144,6 +164,15 @@ export const Sidebar = ({ isOpen, onClose }) => {
               </span>
             </div>
           </NavLink>
+          {/* Mobile Close Button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-white hover:bg-dark-800 rounded-xl lg:hidden transition-colors"
+            aria-label="Close navigation drawer"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* WORKSPACE / TEAM SWITCHER */}
@@ -278,7 +307,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
                 key={item.path}
                 to={item.path}
                 onClick={onClose}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all group ${
+                className={`flex items-center justify-between px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-medium transition-all group ${
                   isActive
                     ? 'bg-brand-600/15 text-brand-400 border border-brand-500/30 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-dark-850'

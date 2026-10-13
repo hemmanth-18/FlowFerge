@@ -82,22 +82,23 @@ export const Navbar = ({ onOpenSidebar, title, actions = null }) => {
 
   return (
     <header className="h-16 border-b border-slate-800/80 bg-dark-900/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between">
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
         {/* Mobile Hamburger */}
         <button
           onClick={onOpenSidebar}
-          className="p-2 text-slate-400 hover:text-slate-100 hover:bg-dark-800 rounded-xl lg:hidden transition-colors"
+          aria-label="Open navigation menu"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 text-slate-400 hover:text-slate-100 hover:bg-dark-800 rounded-xl lg:hidden transition-colors flex-shrink-0"
         >
           <Menu className="w-5 h-5" />
         </button>
 
         {/* Page Title & Breadcrumbs */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 min-w-0">
           <TeamIcon icon={activeTeam?.icon} className="w-5 h-5 text-brand-400 hidden sm:inline-block flex-shrink-0" />
-          <h1 className="text-base sm:text-lg font-bold text-slate-100 tracking-tight truncate max-w-xs sm:max-w-sm">
+          <h1 className="text-sm sm:text-lg font-bold text-slate-100 tracking-tight truncate max-w-[120px] xs:max-w-[180px] sm:max-w-xs md:max-w-sm">
             {title || 'Dashboard'}
           </h1>
-          <span className="text-[10px] px-2 py-0.5 rounded-md font-mono font-bold uppercase hidden md:inline-block border bg-brand-500/10 text-brand-300 border-brand-500/30">
+          <span className="text-[10px] px-2 py-0.5 rounded-md font-mono font-bold uppercase hidden md:inline-block border bg-brand-500/10 text-brand-300 border-brand-500/30 flex-shrink-0">
             {activeRole}
           </span>
         </div>

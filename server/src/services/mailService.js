@@ -1,0 +1,408 @@
+const nodemailer = require('nodemailer');
+
+/**
+ * Escapes HTML characters to prevent XSS / HTML injection in email templates
+ */
+function escapeHtml(string) {
+  if (!string) return '';
+  return String(string)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+class MailService {
+  constructor() {
+    this.transporter = null;
+  }
+
+  /**
+   * Check if mail service credentials are configured
+   */
+  isConfigured() {
+    const user = process.env.MAIL_USER || 'hemmanthguna@gmail.com';
+    const pass = process.env.MAIL_APP_PASSWORD;
+    return Boolean(user && pass && pass.trim().length > 0);
+  }
+
+  /**
+   * Lazily initialize or retrieve the Nodemailer transporter
+   */
+  getTransporter() {
+    if (this.transporter) return this.transporter;
+
+    const host = process.env.MAIL_HOST || 'smtp.gmail.com';
+    const port = parseInt(process.env.MAIL_PORT || '465', 10);
+    // Port 465 uses SSL/TLS directly; Port 587 uses STARTTLS
+    const isSecure = process.env.MAIL_SECURE !== undefined
+      ? process.env.MAIL_SECURE === 'true'
+      : port === 465;
+
+    const user = process.env.MAIL_USER || 'hemmanthguna@gmail.com';
+    const pass = process.env.MAIL_APP_PASSWORD || '';
+
+    this.transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: isSecure,
+      auth: {
+        user,
+        pass,
+      },
+      tls: {
+        rejectUnauthorized: process.env.NODE_ENV === 'production',
+      },
+    });
+
+    return this.transporter;
+  }
+
+  /**
+   * Verify SMTP connection status without exposing secrets
+   */
+  async verifyConnection() {
+    if (!this.isConfigured()) {
+      return {
+        configured: false,
+        message: 'MAIL_APP_PASSWORD is not configured in environment variables.',
+      };
+    }
+
+    try {
+      const transporter = this.getTransporter();
+      await transporter.verify();
+      return { configured: true, connected: true, message: 'SMTP connection verified successfully.' };
+    } catch (err) {
+      console.error('[MailService] SMTP Verification failed:', err.message);
+      return {
+        configured: true,
+        connected: false,
+        error: err.message,
+      };
+    }
+  }
+
+  /**
+   * Send a team invitation email to an invited team member
+   * @param {Object} options
+   * @param {string} options.to - Recipient email
+   * @param {string} options.inviterName - Name of the user sending the invite
+   * @param {string} options.teamName - Target team/workspace name
+   * @param {string} options.role - Assigned team role (e.g. TEAM_MEMBER, TEAM_MANAGER)
+   * @param {string} options.invitationUrl - Full URL to accept the invitation
+   * @param {string} [options.expiresAt] - Expiration timestamp
+   */
+  async sendTeamInvitationEmail({ to, inviterName, teamName, role, invitationUrl, expiresAt }) {
+    const cleanTo = (to || '').trim();
+    if (!cleanTo) {
+      return { success: false, error: 'Recipient email address is required.' };
+    }
+
+    if (!this.isConfigured()) {
+      console.warn(`[MailService] Invitation created for ${cleanTo}, but MAIL_APP_PASSWORD is not set. Real email was not sent.`);
+      return {
+        success: false,
+        reason: 'unconfigured',
+        message: 'Mail server credentials are not configured on the backend (MAIL_APP_PASSWORD is empty). The invitation link was created successfully.',
+      };
+    }
+
+    const safeTeamName = escapeHtml(teamName || 'Your Team');
+    const safeInviterName = escapeHtml(inviterName || 'A Team Administrator');
+    const safeRole = escapeHtml((role || 'TEAM_MEMBER').replace(/^TEAM_/, ''));
+    const safeUrl = invitationUrl || 'https://flow-ferge.vercel.app';
+    const formattedExpiry = expiresAt
+      ? new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : '7 days';
+
+    const senderEmail = process.env.MAIL_USER || 'hemmanthguna@gmail.com';
+    const subject = `You're invited to join ${teamName} on FlowForge`;
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #030712;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #f3f4f6;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrapper {
+      width: 100%;
+      background-color: #030712;
+      padding: 40px 16px;
+    }
+    .card {
+      max-width: 580px;
+      margin: 0 auto;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 20px;
+      padding: 36px 32px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+    }
+    .brand-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .brand-badge {
+      display: inline-block;
+      padding: 8px 18px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #c084fc;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    h1 {
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 20px 0 12px 0;
+      text-align: center;
+    }
+    p {
+      color: #94a3b8;
+      font-size: 15px;
+      line-height: 1.6;
+      margin: 0 0 16px 0;
+    }
+    .highlight-box {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 24px 0;
+    }
+    .highlight-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+    .highlight-label {
+      color: #64748b;
+    }
+    .highlight-value {
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+    .btn-container {
+      text-align: center;
+      margin: 32px 0 28px 0;
+    }
+    .btn {
+      display: inline-block;
+      padding: 14px 36px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+      color: #ffffff !important;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+    }
+    .fallback-url {
+      word-break: break-all;
+      font-family: monospace;
+      font-size: 12px;
+      color: #818cf8;
+      background: #1e293b;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      display: block;
+      margin-top: 8px;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #1e293b;
+      font-size: 12px;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <div class="brand-header">
+        <span class="brand-badge">&bull; FLOWFORGE WORKFLOW PLATFORM &bull;</span>
+        <h1>You're Invited to Join ${safeTeamName}</h1>
+      </div>
+
+      <p>Hello,</p>
+      <p>
+        <strong>${safeInviterName}</strong> has invited you to join the team
+        <strong>${safeTeamName}</strong> on FlowForge as a <strong>${safeRole}</strong>.
+      </p>
+
+      <div class="highlight-box">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <tr>
+            <td style="color: #64748b; padding: 4px 0;">Team Workspace:</td>
+            <td style="color: #f1f5f9; font-weight: 600; text-align: right;">${safeTeamName}</td>
+          </tr>
+          <tr>
+            <td style="color: #64748b; padding: 4px 0;">Assigned Role:</td>
+            <td style="color: #c084fc; font-weight: 600; text-align: right;">${safeRole}</td>
+          </tr>
+          <tr>
+            <td style="color: #64748b; padding: 4px 0;">Invited By:</td>
+            <td style="color: #f1f5f9; font-weight: 600; text-align: right;">${safeInviterName}</td>
+          </tr>
+          <tr>
+            <td style="color: #64748b; padding: 4px 0;">Expires On:</td>
+            <td style="color: #f1f5f9; font-weight: 600; text-align: right;">${formattedExpiry}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="btn-container">
+        <a href="${safeUrl}" class="btn" target="_blank" rel="noopener noreferrer">Accept Invitation</a>
+      </div>
+
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 6px;">
+        Button not working? Copy and paste this URL directly into your browser:
+      </p>
+      <a href="${safeUrl}" class="fallback-url">${safeUrl}</a>
+
+      <div class="footer">
+        <p style="margin-bottom: 8px; font-size: 11px;">
+          This invitation was sent to <strong>${escapeHtml(cleanTo)}</strong>. If you were not expecting this invitation, you can safely disregard this email.
+        </p>
+        <p style="margin: 0; font-size: 11px;">
+          &copy; ${new Date().getFullYear()} FlowForge Inc. High-throughput collaborative workflows.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+    const plainTextContent = `
+You're invited to join ${teamName} on FlowForge!
+
+${inviterName || 'A Team Administrator'} has invited you to join the team "${teamName}" as a ${safeRole}.
+
+To accept this invitation and join your workspace team, visit the link below:
+${safeUrl}
+
+Invitation Details:
+- Team: ${teamName}
+- Assigned Role: ${safeRole}
+- Invited By: ${inviterName || 'Team Administrator'}
+- Link Expiration: ${formattedExpiry}
+
+If you weren't expecting this invitation, you can safely ignore this email.
+
+---
+FlowForge Workflow Management Platform
+${process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app'}
+`;
+
+    try {
+      const transporter = this.getTransporter();
+      const info = await transporter.sendMail({
+        from: `"FlowForge" <${senderEmail}>`,
+        to: cleanTo,
+        replyTo: senderEmail,
+        subject,
+        text: plainTextContent,
+        html: htmlContent,
+      });
+
+      console.log(`[MailService] Team invitation email successfully sent to ${cleanTo} (Message ID: ${info.messageId})`);
+      return {
+        success: true,
+        messageId: info.messageId,
+      };
+    } catch (err) {
+      console.error(`[MailService] Failed to send invitation email to ${cleanTo}:`, err.message);
+      return {
+        success: false,
+        error: err.message,
+      };
+    }
+  }
+
+  /**
+   * Send a workflow collaboration invitation email
+   */
+  async sendWorkflowInvitationEmail({ to, inviterName, workflowTitle, role, invitationUrl, expiresAt }) {
+    const cleanTo = (to || '').trim();
+    if (!cleanTo || !this.isConfigured()) {
+      return {
+        success: false,
+        reason: 'unconfigured',
+        message: 'Mail server credentials are not configured on the backend.',
+      };
+    }
+
+    const safeWf = escapeHtml(workflowTitle || 'Workflow');
+    const safeInviter = escapeHtml(inviterName || 'A Colleague');
+    const safeRole = escapeHtml(role || 'MEMBER');
+    const safeUrl = invitationUrl || 'https://flow-ferge.vercel.app';
+    const senderEmail = process.env.MAIL_USER || 'hemmanthguna@gmail.com';
+    const subject = `Collaborate on "${workflowTitle}" on FlowForge`;
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>${subject}</title>
+  <style>
+    body { background-color: #030712; font-family: sans-serif; color: #f3f4f6; margin: 0; padding: 24px; }
+    .card { max-width: 540px; margin: 0 auto; background: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 32px; }
+    .btn { display: inline-block; padding: 12px 28px; background: #6366f1; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2 style="color: #ffffff; margin-top: 0;">Workflow Collaboration Invitation</h2>
+    <p><strong>${safeInviter}</strong> invited you to collaborate on the workflow <strong>${safeWf}</strong> as a <strong>${safeRole}</strong>.</p>
+    <div style="text-align: center;">
+      <a href="${safeUrl}" class="btn">View & Accept Workflow Invite</a>
+    </div>
+    <p style="font-size: 12px; color: #64748b;">Or visit: <br><a href="${safeUrl}" style="color: #818cf8;">${safeUrl}</a></p>
+  </div>
+</body>
+</html>
+`;
+
+    try {
+      const transporter = this.getTransporter();
+      const info = await transporter.sendMail({
+        from: `"FlowForge" <${senderEmail}>`,
+        to: cleanTo,
+        replyTo: senderEmail,
+        subject,
+        text: `${inviterName} invited you to collaborate on ${workflowTitle} on FlowForge: ${safeUrl}`,
+        html: htmlContent,
+      });
+
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error(`[MailService] Workflow invite email error:`, err.message);
+      return { success: false, error: err.message };
+    }
+  }
+}
+
+module.exports = new MailService();

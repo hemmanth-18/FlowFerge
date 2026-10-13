@@ -145,8 +145,8 @@ export const WorkflowTransitionModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto">
-      <div className="w-full max-w-xl bg-[#10141D] border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl relative my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md overflow-y-auto">
+      <div className="w-full max-w-xl bg-[#10141D] border border-white/15 rounded-3xl p-5 sm:p-8 shadow-2xl relative my-auto max-h-[92vh] overflow-y-auto">
         {/* Close Button */}
         <button
           type="button"
@@ -296,19 +296,19 @@ export const WorkflowTransitionModal = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-white/10">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:space-x-3 pt-3 border-t border-white/10">
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="px-4 py-2.5 text-xs font-semibold text-slate-300 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors"
+              className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-slate-300 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors text-center"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!canSubmit}
-              className={`px-5 py-2.5 text-xs sm:text-sm font-semibold rounded-xl text-white transition-all shadow-lg flex items-center space-x-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+              className={`w-full sm:w-auto px-5 py-2.5 text-xs sm:text-sm font-semibold rounded-xl text-white transition-all shadow-lg flex items-center justify-center space-x-2 disabled:opacity-40 disabled:cursor-not-allowed ${
                 isCompleted
                   ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/25'
                   : 'bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 shadow-brand-500/25'

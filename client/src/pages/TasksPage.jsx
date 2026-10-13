@@ -361,7 +361,7 @@ export const TasksPage = () => {
                 </div>
 
                 {/* Right: Badges & Actions */}
-                <div className="flex items-center space-x-3 self-end md:self-center">
+                <div className="flex items-center space-x-2 sm:space-x-3 self-end md:self-center flex-wrap gap-y-1.5">
                   <PriorityBadge priority={task.priority} size="sm" />
                   <StatusBadge status={task.status} size="sm" />
 

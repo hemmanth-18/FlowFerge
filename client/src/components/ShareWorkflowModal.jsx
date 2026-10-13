@@ -159,10 +159,10 @@ export const ShareWorkflowModal = ({ isOpen, onClose, workflow, onInvitationSent
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-950/80 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-dark-950/80 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+      <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-dark-850">
+        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-dark-850 flex-shrink-0">
           <div className="flex items-center space-x-2.5">
             <div className="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400">
               <UserPlus className="w-4 h-4" />
@@ -181,7 +181,7 @@ export const ShareWorkflowModal = ({ isOpen, onClose, workflow, onInvitationSent
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSendInvite} className="p-5 space-y-4">
+        <form onSubmit={handleSendInvite} className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
           {error && (
             <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-xs text-rose-300 flex items-start space-x-2 animate-fadeIn">
               <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />

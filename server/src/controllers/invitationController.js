@@ -1,4 +1,5 @@
 const SupabaseService = require('../services/supabaseService');
+const mailService = require('../services/mailService');
 
 const invitationController = {
   // POST /api/invitations
@@ -48,6 +49,24 @@ const invitationController = {
         role,
         targetIdentifier: recipientIdentifier.trim(),
       });
+
+      // If recipient is an email address, attempt to send invitation email
+      const targetEmail = recipientIdentifier.includes('@')
+        ? recipientIdentifier.trim()
+        : invitation.invitedUser?.email;
+
+      if (targetEmail) {
+        const baseUrl = (process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app').replace(/\/+$/, '');
+        const invitationUrl = `${baseUrl}/invite/${invitation.id}`;
+        mailService.sendWorkflowInvitationEmail({
+          to: targetEmail,
+          inviterName: req.user.name || req.user.username || 'A colleague',
+          workflowTitle: invitation.workflowTitle || 'FlowForge Workflow',
+          role,
+          invitationUrl,
+          expiresAt: invitation.expiresAt,
+        }).catch((err) => console.warn('[MailService] Workflow email failed:', err.message));
+      }
 
       return res.status(201).json({
         success: true,

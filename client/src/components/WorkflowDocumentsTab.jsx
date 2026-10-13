@@ -235,8 +235,8 @@ export const WorkflowDocumentsTab = ({ workflowId, isManager = false }) => {
 
       {/* Upload Document Modal */}
       {uploadModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="w-full max-w-md bg-[#10141D] border border-white/15 rounded-3xl p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-md bg-[#10141D] border border-white/15 rounded-3xl p-5 sm:p-6 shadow-2xl relative my-auto max-h-[92vh] overflow-y-auto">
             <button
               type="button"
               onClick={() => {

@@ -132,12 +132,12 @@ export const TaskModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-950/80 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-dark-950/80 backdrop-blur-sm animate-fadeIn overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl p-6 relative overflow-hidden">
+      <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl p-5 sm:p-6 relative my-auto max-h-[92vh] overflow-y-auto">
         {/* Glow */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -301,20 +301,20 @@ export const TaskModal = ({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-800">
             {initialData && onDelete ? (
               <button
                 type="button"
                 onClick={handleDelete}
                 disabled={loading}
-                className="flex items-center space-x-1.5 px-3 py-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl text-xs font-medium transition-colors"
+                className="flex items-center justify-center space-x-1.5 px-3 py-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl text-xs font-medium transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete Task</span>
               </button>
             ) : <div />}
 
-            <div className="flex items-center space-x-2.5">
+            <div className="flex items-center justify-end space-x-2.5">
               <button
                 type="button"
                 onClick={onClose}

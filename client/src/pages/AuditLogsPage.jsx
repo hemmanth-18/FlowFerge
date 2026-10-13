@@ -88,7 +88,7 @@ export const AuditLogsPage = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* Banner */}
-        <div className="p-6 rounded-2xl bg-dark-900 border border-slate-800 shadow-card-dark flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-4 sm:p-6 rounded-2xl bg-dark-900 border border-slate-800 shadow-card-dark flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
@@ -159,8 +159,8 @@ export const AuditLogsPage = () => {
               No audit records matching your criteria.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full min-w-[640px] text-left text-xs text-slate-300">
                 <thead className="bg-dark-850 border-b border-slate-800 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Result</th>

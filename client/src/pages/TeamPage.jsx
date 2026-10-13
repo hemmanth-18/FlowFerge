@@ -17,6 +17,9 @@ import {
   Clock,
   Eye,
   CheckSquare,
+  Copy,
+  RotateCw,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { InviteMemberModal } from '../components/InviteMemberModal';
@@ -41,6 +44,7 @@ export const TeamPage = () => {
   const [loading, setLoading] = useState(true);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [resendingId, setResendingId] = useState(null);
   const [selectedProfileUser, setSelectedProfileUser] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [userProfileData, setUserProfileData] = useState(null);
@@ -117,6 +121,35 @@ export const TeamPage = () => {
       fetchTeamMembersAndInvites();
     } catch (err) {
       toast.error(err.message || 'Failed to cancel invitation');
+    }
+  };
+
+  // Resend Invitation Email (Manager & Admin)
+  const handleResendInvitation = async (invitationId) => {
+    try {
+      setResendingId(invitationId);
+      const res = await api.post(`/teams/${activeTeam.id}/invitations/${invitationId}/resend`);
+      if (res.data?.emailSent) {
+        toast.success(res.data.message || 'Invitation email resent successfully!');
+      } else {
+        toast.info(res.data?.message || 'Email delivery unconfigured or skipped on server.');
+      }
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message || 'Failed to resend invitation';
+      toast.error(msg);
+    } finally {
+      setResendingId(null);
+    }
+  };
+
+  // Copy Direct Invitation Link
+  const handleCopyInviteLink = async (invitationId) => {
+    try {
+      const link = `${window.location.origin}/invite/${invitationId}`;
+      await navigator.clipboard.writeText(link);
+      toast.success('Invitation link copied to clipboard!');
+    } catch (err) {
+      toast.error('Could not copy link to clipboard.');
     }
   };
 
@@ -383,36 +416,63 @@ export const TeamPage = () => {
               </div>
             ) : (
               <div className="divide-y divide-slate-800/80">
-                {invitations.map((inv) => (
-                  <div
-                    key={inv.id}
-                    className="p-3.5 px-4 flex items-center justify-between hover:bg-dark-850/60 transition-colors text-xs"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
-                        <Mail className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <span className="font-semibold text-slate-200">{inv.email}</span>
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono">
-                            {inv.role.replace('TEAM_', '')}
+                {invitations.map((inv) => {
+                  const isResending = resendingId === inv.id;
+                  return (
+                    <div
+                      key={inv.id}
+                      className="p-3.5 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-dark-850/60 transition-colors text-xs"
+                    >
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center flex-shrink-0">
+                          <Mail className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center space-x-2 flex-wrap">
+                            <span className="font-semibold text-slate-200 truncate">{inv.email}</span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono">
+                              {inv.role.replace('TEAM_', '')}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-500 block truncate">
+                            Invited by {inv.inviterName} • Expires {inv.expiresAt?.substring(0, 10)}
                           </span>
                         </div>
-                        <span className="text-[10px] text-slate-500">
-                          Invited by {inv.inviterName} • Expires {inv.expiresAt?.substring(0, 10)}
-                        </span>
+                      </div>
+
+                      <div className="flex items-center space-x-2 self-end sm:self-auto flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyInviteLink(inv.id)}
+                          className="px-2.5 py-1 text-slate-300 hover:text-white bg-dark-800 hover:bg-dark-750 border border-slate-700/80 rounded-lg text-xs font-medium transition-colors flex items-center space-x-1"
+                          title="Copy invitation link"
+                        >
+                          <Copy className="w-3 h-3 text-slate-400" />
+                          <span className="hidden xs:inline">Copy Link</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleResendInvitation(inv.id)}
+                          disabled={isResending}
+                          className="px-2.5 py-1 text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg text-xs font-medium transition-colors flex items-center space-x-1 disabled:opacity-50"
+                          title="Resend invitation email"
+                        >
+                          <RotateCw className={`w-3 h-3 text-indigo-400 ${isResending ? 'animate-spin' : ''}`} />
+                          <span>{isResending ? 'Sending...' : 'Resend Email'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleCancelInvitation(inv.id)}
+                          className="px-2.5 py-1 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg text-xs font-medium transition-colors"
+                        >
+                          Cancel
+                        </button>
                       </div>
                     </div>
-
-                    <button
-                      onClick={() => handleCancelInvitation(inv.id)}
-                      className="px-2.5 py-1 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg text-xs font-medium transition-colors"
-                    >
-                      Cancel Invite
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

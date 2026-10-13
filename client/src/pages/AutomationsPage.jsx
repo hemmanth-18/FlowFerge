@@ -312,8 +312,8 @@ export const AutomationsPage = () => {
               No automation execution logs recorded yet.
             </div>
           ) : (
-            <div className="rounded-2xl bg-dark-900 border border-slate-800 overflow-hidden">
-              <table className="w-full text-left text-xs text-slate-300">
+            <div className="rounded-2xl bg-dark-900 border border-slate-800 overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300 min-w-[500px]">
                 <thead className="bg-dark-850 border-b border-slate-800 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   <tr>
                     <th className="py-2.5 px-4">Status</th>

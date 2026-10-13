@@ -53,22 +53,22 @@ export const WorkflowModal = ({ isOpen, onClose, onSave, onSubmit, initialData =
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-950/80 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-dark-950/80 backdrop-blur-sm animate-fadeIn overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="w-full max-w-lg bg-dark-900 border border-slate-800 rounded-2xl shadow-card-dark overflow-hidden relative z-50"
+        className="w-full max-w-lg bg-dark-900 border border-slate-800 rounded-2xl shadow-card-dark overflow-hidden relative z-50 my-auto max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-800 flex-shrink-0">
           <div className="flex items-center space-x-2.5">
             <div className="p-2 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20">
               <FolderGit2 className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-100">
+            <h3 className="text-base sm:text-lg font-semibold text-slate-100">
               {initialData ? 'Edit Workflow' : 'Create New Workflow'}
             </h3>
           </div>
@@ -82,7 +82,7 @@ export const WorkflowModal = ({ isOpen, onClose, onSave, onSubmit, initialData =
         </div>
 
         {/* Modal Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
           {error && (
             <div className="p-3 text-xs text-rose-300 bg-rose-950/40 border border-rose-800/60 rounded-lg">
               {error}

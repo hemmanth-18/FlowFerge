@@ -121,7 +121,7 @@ export const InvitationPage = () => {
       </Link>
 
       {/* Main Glass Card */}
-      <div className="w-full max-w-lg bg-[#10141D]/90 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
+      <div className="w-full max-w-lg bg-[#10141D]/90 backdrop-blur-2xl border border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-10 shadow-2xl relative overflow-hidden">
         {loading || authLoading ? (
           <div className="py-16 flex flex-col items-center justify-center space-y-4 text-center">
             <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
@@ -240,12 +240,12 @@ export const InvitationPage = () => {
 
             {/* Resource Details Box */}
             <div className="p-4 rounded-2xl bg-[#151A24] border border-white/10 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-400 font-medium">Workspace</span>
-                <span className="text-sm font-bold text-white">{invitation?.resourceName}</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-slate-400 font-medium flex-shrink-0">Workspace</span>
+                <span className="text-sm font-bold text-white truncate text-right">{invitation?.resourceName}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-400 font-medium">Assigned Role</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-slate-400 font-medium flex-shrink-0">Assigned Role</span>
                 <span className="text-xs font-bold text-brand-300 uppercase tracking-wide px-2.5 py-0.5 rounded-md bg-brand-500/20 border border-brand-500/30">
                   {invitation?.role?.replace('TEAM_', '')}
                 </span>

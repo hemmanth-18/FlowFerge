@@ -175,3 +175,41 @@ node test-auth-and-ownership.js
 # Test multi-team scoping, invitations, and automation engine
 node test-team-platform.js
 ```
+
+---
+
+## 📧 Team Invitation Email Configuration (Gmail SMTP)
+
+FlowForge sends real invitation emails to invited members using Nodemailer and Gmail SMTP.
+
+### Gmail App Password Setup Instructions:
+1. **Enable 2-Step Verification**:
+   - Visit [Google Account Security](https://myaccount.google.com/security).
+   - Verify that **2-Step Verification** is turned ON.
+2. **Generate a Gmail App Password**:
+   - In your Google Account, navigate to **Security** &rarr; **2-Step Verification** &rarr; **App passwords** (or search "App passwords").
+   - Name: `FlowForge Backend`.
+   - Click **Create**. Google will generate a 16-character password (e.g., `abcd efgh ijkl mnop`).
+3. **Configure Local Environment**:
+   - In `server/.env`, set:
+     ```env
+     MAIL_HOST=smtp.gmail.com
+     MAIL_PORT=465
+     MAIL_SECURE=true
+     MAIL_USER=hemmanthguna@gmail.com
+     MAIL_APP_PASSWORD=your_16_character_app_password
+     APP_BASE_URL=https://flow-ferge.vercel.app
+     ```
+   - *Never commit your real App Password to Git. Keep `server/.env` gitignored.*
+4. **Configure Production Deployment (Render / Vercel / Railway)**:
+   - In your backend environment settings, configure:
+     - `MAIL_HOST` = `smtp.gmail.com`
+     - `MAIL_PORT` = `465`
+     - `MAIL_SECURE` = `true`
+     - `MAIL_USER` = `hemmanthguna@gmail.com`
+     - `MAIL_APP_PASSWORD` = `<your-16-char-app-password>`
+     - `APP_BASE_URL` = `https://flow-ferge.vercel.app`
+5. **Restart / Redeploy Backend**:
+   - Trigger a redeployment or restart so the backend process picks up the new environment variables.
+6. **Reliable Failure Handling**:
+   - If `MAIL_APP_PASSWORD` is not yet configured, the invitation token and database record are still created safely, and the UI provides a clear status, direct link copy, and a Resend action.

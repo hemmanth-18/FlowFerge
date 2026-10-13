@@ -245,7 +245,7 @@ export const WorkflowsPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* Ownership Navigation Tabs (Section 5) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
-          <div className="flex items-center space-x-1 p-1 bg-dark-900 border border-slate-800 rounded-xl overflow-x-auto text-xs">
+          <div className="flex items-center space-x-1 p-1 bg-dark-900 border border-slate-800 rounded-xl overflow-x-auto text-xs whitespace-nowrap">
             <button
               onClick={() => setSearchParams({ filter: 'all' })}
               className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all ${
@@ -492,8 +492,8 @@ export const WorkflowsPage = () => {
                   })()}
 
                   {/* Card Actions (Section 5, 6, 9) */}
-                  <div className="flex items-center justify-between pt-2 gap-1 border-t border-slate-800/60">
-                    <div className="flex items-center space-x-1">
+                  <div className="flex items-center justify-between pt-2 gap-1.5 border-t border-slate-800/60 flex-wrap">
+                    <div className="flex items-center space-x-1 flex-wrap gap-y-1">
                       {/* Move to In Progress Transition Button */}
                       {wf.status !== 'IN_PROGRESS' && wf.status !== 'ACTIVE' && wf.status !== 'COMPLETED' && (
                         <button

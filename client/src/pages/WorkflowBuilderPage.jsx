@@ -562,9 +562,9 @@ export const WorkflowBuilderPage = () => {
       )}
 
       {/* Top Bar */}
-      <header className="h-16 border-b border-slate-800/80 bg-dark-900/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between z-20 flex-shrink-0">
+      <header className="h-16 border-b border-slate-800/80 bg-dark-900/90 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between z-20 flex-shrink-0 gap-2">
         {/* Left: Back Link & Workflow Info */}
-        <div className="flex items-center space-x-3 sm:space-x-4 min-w-0">
+        <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
           <Link
             to="/workflows"
             className="p-2 text-slate-400 hover:text-slate-100 hover:bg-dark-800 rounded-xl transition-colors flex-shrink-0"
@@ -615,7 +615,7 @@ export const WorkflowBuilderPage = () => {
         </div>
 
         {/* Right: Actions (Role Badge, Team, Add Task, Auto Align, Save Workflow) */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
           {saveMessage && (
             <span className="text-xs font-mono text-emerald-400 animate-fadeIn hidden sm:inline-flex items-center space-x-1">
               <Check className="w-3.5 h-3.5 text-emerald-400" />

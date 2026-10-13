@@ -132,7 +132,7 @@ export const SettingsPage = () => {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* 24. USER PROFILE (Name, Email, Teams, Roles, Assigned Tasks) */}
-        <div className="p-6 rounded-2xl bg-dark-900 border border-slate-800 space-y-5">
+        <div className="p-4 sm:p-6 rounded-2xl bg-dark-900 border border-slate-800 space-y-5">
           <div className="flex items-center space-x-3 pb-3 border-b border-slate-800">
             <div className="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-400 flex items-center justify-center">
               <User className="w-5 h-5" />
@@ -192,12 +192,12 @@ export const SettingsPage = () => {
                       <span>Edit Name</span>
                     </button>
                   ) : (
-                    <form onSubmit={handleUpdateProfile} className="flex items-center space-x-2">
+                    <form onSubmit={handleUpdateProfile} className="flex flex-wrap sm:flex-nowrap items-center gap-2">
                       <input
                         type="text"
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="px-2.5 py-1.5 bg-dark-900 border border-brand-500/50 rounded-lg text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        className="min-w-0 flex-1 sm:w-auto px-2.5 py-1.5 bg-dark-900 border border-brand-500/50 rounded-lg text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand-500"
                         placeholder="Full Name"
                         required
                       />
@@ -363,7 +363,7 @@ export const SettingsPage = () => {
 
         {/* ACTIVE TEAM SETTINGS & ARCHIVING (Team Admin Only) */}
         {isAdmin && activeTeam && (
-          <div className="p-6 rounded-2xl bg-dark-900 border border-slate-800 space-y-5">
+          <div className="p-4 sm:p-6 rounded-2xl bg-dark-900 border border-slate-800 space-y-5">
             <div className="flex items-center space-x-3 pb-3 border-b border-slate-800">
               <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
                 <Building2 className="w-5 h-5" />
@@ -471,7 +471,7 @@ export const SettingsPage = () => {
         )}
 
         {/* Database & System Telemetry */}
-        <div className="p-6 rounded-2xl bg-dark-900 border border-slate-800 space-y-4">
+        <div className="p-4 sm:p-6 rounded-2xl bg-dark-900 border border-slate-800 space-y-4">
           <div className="flex items-center space-x-3 pb-3 border-b border-slate-800">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
               <Database className="w-5 h-5" />

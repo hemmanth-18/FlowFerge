@@ -32,6 +32,7 @@ router.delete('/:teamId/members/:userId', rbac.requireTeamAdmin(), teamControlle
 // Team Invitations
 router.get('/:teamId/invitations', rbac.requireTeamManager(), teamController.getTeamInvitations);
 router.post('/:teamId/invitations', rbac.requireTeamManager(), teamController.createInvitation);
+router.post('/:teamId/invitations/:invitationId/resend', rbac.requireTeamManager(), teamController.resendInvitation);
 router.delete('/:teamId/invitations/:invitationId', rbac.requireTeamManager(), teamController.cancelInvitation);
 
 // Team Activity & Audit

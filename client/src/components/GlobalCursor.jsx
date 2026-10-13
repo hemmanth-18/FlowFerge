@@ -11,7 +11,10 @@ export const GlobalCursor = () => {
 
   useEffect(() => {
     // 1. Accessibility & Touch Detection
-    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+    const isTouch =
+      window.matchMedia('(pointer: coarse)').matches ||
+      ('ontouchstart' in window) ||
+      (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (isTouch || prefersReducedMotion) {
