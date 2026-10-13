@@ -3502,7 +3502,7 @@ const SupabaseService = {
     const standardPasswordHash = await bcrypt.hash('Password123!', salt);
 
     const accountsToEnsure = [
-      { id: 'user_hemmanth', name: 'Hemmanth', username: 'hemmanth', email: 'hemmanth@example.com' },
+      { id: 'user_hemmanth', name: 'Hemmanth', username: 'hemmanth', email: 'hemmanthguna@gmail.com' },
       { id: 'user_priya', name: 'Priya', username: 'priya', email: 'priya@example.com' },
       { id: 'user_ravi', name: 'Ravi', username: 'ravi', email: 'ravi@example.com' },
       { id: 'user_kumar', name: 'Kumar', username: 'kumar', email: 'kumar@example.com' },
@@ -3577,40 +3577,51 @@ const SupabaseService = {
   async seedMultiTeamScenario() {
     await this.seedDefaultData();
 
-    // 1. Dev Team
-    const devTeam = await this.createTeam('user_arun', {
+    // 1. Dev Team (Created and owned by Hemmanth)
+    const devTeam = await this.createTeam('user_hemmanth', {
       name: 'Development Team',
       description: 'Core software engineering and infrastructure team',
       icon: '💻',
     });
 
-    // 2. Marketing Team
-    const mktTeam = await this.createTeam('user_arun', {
+    // Also link real Supabase user_0926a83f2438 as TEAM_ADMIN if exists
+    try {
+      await this.addTeamMember(devTeam.id, 'user_0926a83f2438', 'TEAM_ADMIN');
+    } catch (e) {}
+
+    // Add Arun, Ravi, Kumar, and Priya as team collaborators
+    await this.addTeamMember(devTeam.id, 'user_arun', 'TEAM_MEMBER');
+    await this.addTeamMember(devTeam.id, 'user_ravi', 'TEAM_MEMBER');
+    await this.addTeamMember(devTeam.id, 'user_kumar', 'TEAM_MEMBER');
+    await this.addTeamMember(devTeam.id, 'user_priya', 'TEAM_MANAGER');
+
+    // 2. Marketing Team (Created and owned by Hemmanth)
+    const mktTeam = await this.createTeam('user_hemmanth', {
       name: 'Marketing Team',
       description: 'Growth and digital campaigns',
       icon: '📢',
     });
+    try {
+      await this.addTeamMember(mktTeam.id, 'user_0926a83f2438', 'TEAM_ADMIN');
+    } catch (e) {}
+    await this.addTeamMember(mktTeam.id, 'user_arun', 'TEAM_MEMBER');
 
-    // 3. Event Team
-    const eventTeam = await this.createTeam('user_ravi', {
+    // 3. Event Team (Hemmanth as owner/admin, Ravi as Manager)
+    const eventTeam = await this.createTeam('user_hemmanth', {
       name: 'Event Operations',
       description: 'Logistics and summit management',
       icon: '🎪',
     });
-
-    // Add Ravi to Dev Team as TEAM_MEMBER
-    await this.addTeamMember(devTeam.id, 'user_ravi', 'TEAM_MEMBER');
-    // Add Ravi to Event Team as TEAM_MANAGER
     await this.addTeamMember(eventTeam.id, 'user_ravi', 'TEAM_MANAGER');
 
-    // Create Workflows in Dev Team
-    const webWf = await this.createWorkflow('user_arun', {
+    // Create Workflows in Dev Team (Created by Hemmanth)
+    const webWf = await this.createWorkflow('user_hemmanth', {
       name: 'Website Development',
       description: 'Full-stack platform web portal',
       teamId: devTeam.id,
     });
 
-    const mobileWf = await this.createWorkflow('user_arun', {
+    const mobileWf = await this.createWorkflow('user_hemmanth', {
       name: 'Mobile App',
       description: 'React Native companion app',
       teamId: devTeam.id,
@@ -3618,11 +3629,17 @@ const SupabaseService = {
     });
 
     // Workflow collaborator permissions
+    try {
+      await this.addWorkflowMember(webWf.id, 'user_0926a83f2438', 'ADMIN');
+    } catch (e) {}
     await this.addWorkflowMember(webWf.id, 'user_ravi', 'MEMBER');
+    await this.addWorkflowMember(webWf.id, 'user_kumar', 'MEMBER');
+    await this.addWorkflowMember(webWf.id, 'user_arun', 'MEMBER');
     await this.addWorkflowMember(mobileWf.id, 'user_ravi', 'MEMBER');
+    await this.addWorkflowMember(mobileWf.id, 'user_arun', 'MEMBER');
 
     // Tasks for webWf
-    const t1 = await this.createTask('user_arun', {
+    const t1 = await this.createTask('user_hemmanth', {
       workflowId: webWf.id,
       teamId: devTeam.id,
       title: 'Development: Team Workspace',
@@ -3632,7 +3649,7 @@ const SupabaseService = {
       assignedTo: 'user_ravi',
     });
 
-    const t2 = await this.createTask('user_arun', {
+    const t2 = await this.createTask('user_hemmanth', {
       workflowId: webWf.id,
       teamId: devTeam.id,
       title: 'Integration & Testing',
@@ -3640,16 +3657,16 @@ const SupabaseService = {
       priority: 'MEDIUM',
       status: 'TODO',
       dependencies: [t1.id],
-      assignedTo: 'user_arun',
+      assignedTo: 'user_hemmanth',
     });
 
     // Connect dependencies in workflow object
-    await this.updateWorkflow('user_arun', webWf.id, {
+    await this.updateWorkflow('user_hemmanth', webWf.id, {
       dependencies: { [t2.id]: [t1.id] },
     });
 
     // Log initial audit log
-    await this.createAuditLog(devTeam.id, 'user_arun', 'TEAM_INITIALIZED', { name: devTeam.name });
+    await this.createAuditLog(devTeam.id, 'user_hemmanth', 'TEAM_INITIALIZED', { name: devTeam.name });
 
     return { devTeam, mktTeam, eventTeam };
   },

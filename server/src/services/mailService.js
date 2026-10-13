@@ -516,7 +516,7 @@ ${process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app'}
   <div class="card">
     <div class="badge">🔒 Confidential Document Delivery</div>
     <h2>Hello ${safeRecipient},</h2>
-    <p><span class="highlight">${safeSender}</span> (<span class="highlight">${safeSenderRole}</span>) has shared a private document with you in team <span class="highlight">${safeTeam}</span>.</p>
+    <p><span class="highlight">${safeSender}</span> (<span class="highlight">${safeSenderRole}</span>) has shared a private document with you in the workflow <span class="highlight">${safeWorkflow}</span> (Team: <span class="highlight">${safeTeam}</span>).</p>
     
     <div class="doc-box">
       <div style="font-size: 16px; font-weight: 700; color: #ffffff; margin-bottom: 10px;">📄 ${safeDoc}</div>
@@ -540,8 +540,12 @@ ${process.env.APP_BASE_URL || 'https://flow-ferge.vercel.app'}
 
     try {
       const transporter = this.getTransporter();
+      const fromHeader = safeSenderRole
+        ? `"${safeSender} (${safeSenderRole}) via FlowForge" <${senderEmail}>`
+        : `"${safeSender} via FlowForge" <${senderEmail}>`;
+
       const info = await transporter.sendMail({
-        from: `"FlowForge Documents" <${senderEmail}>`,
+        from: fromHeader,
         to: cleanTo,
         replyTo: senderEmail,
         subject,

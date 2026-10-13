@@ -8,7 +8,7 @@ async function runDocumentSharingTests() {
   // 1. Seed or retrieve test environment
   console.log('1. Setting up multi-team environment and test accounts...');
   const { devTeam } = await SupabaseService.seedMultiTeamScenario();
-  const workflows = await SupabaseService.getWorkflowsByTeam(devTeam.id, 'user_arun');
+  const workflows = await SupabaseService.getWorkflowsByTeam(devTeam.id, 'user_hemmanth');
   const webWf = workflows.find((w) => w.name === 'Website Development') || workflows[0];
   console.log(`✓ Active Team: ${devTeam.name} (${devTeam.id})`);
   console.log(`✓ Target Workflow: ${webWf.name} (${webWf.id})`);
@@ -17,10 +17,10 @@ async function runDocumentSharingTests() {
   await SupabaseService.addWorkflowMember(webWf.id, 'user_kumar', 'MEMBER');
 
   // Verify roles in workflow
-  const arunRole = await SupabaseService.getWorkflowMemberRole(webWf.id, 'user_arun'); // Owner / Admin
+  const hemmanthRole = await SupabaseService.getWorkflowMemberRole(webWf.id, 'user_hemmanth'); // Owner / Admin
   const raviRole = await SupabaseService.getWorkflowMemberRole(webWf.id, 'user_ravi'); // Member
   const kumarRole = await SupabaseService.getWorkflowMemberRole(webWf.id, 'user_kumar'); // Member
-  console.log(`   - Arun: ${arunRole}`);
+  console.log(`   - Hemmanth: ${hemmanthRole}`);
   console.log(`   - Ravi: ${raviRole}`);
   console.log(`   - Kumar: ${kumarRole}`);
 
@@ -38,7 +38,7 @@ async function runDocumentSharingTests() {
       size: validPdfBuffer.length,
       mimetype: 'application/pdf',
     },
-    uploadedBy: 'user_arun',
+    uploadedBy: 'user_hemmanth',
     description: 'Q4 executive compensation review strictly for Ravi.',
     recipientIds: ['user_ravi'], // Specified recipient
   });
@@ -110,12 +110,12 @@ async function runDocumentSharingTests() {
       size: validDocxBuffer.length,
       mimetype: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     },
-    uploadedBy: 'user_arun',
+    uploadedBy: 'user_hemmanth',
     description: 'Confidential performance matrix.',
     recipientIds: ['user_ravi', 'user_kumar'], // Sent to both
   });
 
-  console.log(`✓ Multi-recipient doc label for Sender (Arun): "${multiRecDoc.visibilityLabel}"`);
+  console.log(`✓ Multi-recipient doc label for Sender (Hemmanth): "${multiRecDoc.visibilityLabel}"`);
   if (!multiRecDoc.visibilityLabel.includes('+ 1')) {
     throw new Error(`FAILED: Multi-recipient label expected "+ 1", got "${multiRecDoc.visibilityLabel}"`);
   }
@@ -147,7 +147,7 @@ async function runDocumentSharingTests() {
       size: validPdfBuffer.length,
       mimetype: 'application/pdf',
     },
-    uploadedBy: 'user_arun',
+    uploadedBy: 'user_hemmanth',
     description: 'Shared technical specifications for all members.',
     shareWithEntireWorkflow: true,
   });
@@ -206,19 +206,19 @@ async function runDocumentSharingTests() {
     throw new Error('FAILED: Manager private doc label mismatch!');
   }
 
-  // Admin (Arun) can view and download the manager's private document
-  const adminDocList = await SupabaseService.getWorkflowDocuments(webWf.id, 'user_arun');
+  // Admin (Hemmanth) can view and download the manager's private document
+  const adminDocList = await SupabaseService.getWorkflowDocuments(webWf.id, 'user_hemmanth');
   const adminFoundDoc = adminDocList.find((d) => d.id === managerDoc.id);
   if (!adminFoundDoc) {
     throw new Error('FAILED: Administrator cannot view private document sent by manager!');
   }
-  console.log(`✓ Admin (Arun) successfully discovered manager private document: "${adminFoundDoc.fileName}"`);
+  console.log(`✓ Admin (Hemmanth) successfully discovered manager private document: "${adminFoundDoc.fileName}"`);
 
-  const adminDownload = await SupabaseService.getDocumentDownloadUrl(managerDoc.id, 'user_arun');
+  const adminDownload = await SupabaseService.getDocumentDownloadUrl(managerDoc.id, 'user_hemmanth');
   if (!adminDownload.doc) {
     throw new Error('FAILED: Administrator cannot download private document sent by manager!');
   }
-  console.log('✓ Admin (Arun) successfully downloaded manager private document with audit tracking.');
+  console.log('✓ Admin (Hemmanth) successfully downloaded manager private document with audit tracking.');
 
   // Verify Kumar's notification contains: Sender Name, Sender Role, Team Name, Workflow Name
   const kumarNotifs = await SupabaseService.getUserNotifications('user_kumar');
@@ -256,7 +256,7 @@ async function runDocumentSharingTests() {
         size: 28,
         mimetype: 'application/pdf',
       },
-      uploadedBy: 'user_arun',
+      uploadedBy: 'user_hemmanth',
       recipientIds: ['user_ravi'],
     });
   } catch (err) {
@@ -278,7 +278,7 @@ async function runDocumentSharingTests() {
         size: 100,
         mimetype: 'application/octet-stream',
       },
-      uploadedBy: 'user_arun',
+      uploadedBy: 'user_hemmanth',
       recipientIds: ['user_ravi'],
     });
   } catch (err) {
@@ -292,7 +292,7 @@ async function runDocumentSharingTests() {
 
   // 10. Test Document Deletion
   console.log('\n10. Testing Document Deletion & Cascade...');
-  await SupabaseService.deleteWorkflowDocument(privateDoc.id, 'user_arun');
+  await SupabaseService.deleteWorkflowDocument(privateDoc.id, 'user_hemmanth');
   let deletedAccessBlocked = false;
   try {
     await SupabaseService.getDocumentDownloadUrl(privateDoc.id, 'user_ravi');
