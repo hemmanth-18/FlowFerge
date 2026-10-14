@@ -520,10 +520,10 @@ void main() {
   float edge = abs(base);
   vec2 halo = aura(pr, k);
   float ink = uInk;
-  float bloom = (halo.x * 0.16 + halo.y * 0.08) * (1.0 - ink * 0.65) * uGlow * (1.0 + heat * 1.2);
-  float body = smoothstep(0.75, -0.75, base) * uFill * (0.06 + 1.2 * min(halo.x, 1.0)) * (1.0 + heat * 0.5);
-  light += uGlowColor * bloom * grow * grow;
-  energy += bloom * grow * grow;
+  // Zero ambient bloom / box fog - tight exponential glow around the letter shape only
+  float tightGlow = exp(-edge * edge / (uThickness * uThickness * 14.0)) * uGlow * 0.35;
+  light += uGlowColor * tightGlow * grow;
+  energy += tightGlow * grow;
 
   float reachScale = mix(0.15, 1.0, grow) * (1.0 + heat * 0.9);
   float reach = (uUnit * uBend * 16.0 + uCrackle * 3.0) * (1.0 + heatCap * 0.9) + uThickness * 20.0 + 8.0;
@@ -566,15 +566,13 @@ void main() {
   for (int i = 0; i < ${ARCS}; i++) addArc(pr, uArcEnds[i], uArcShape[i], t, light, energy, hot);
 
   float gain = uIntensity * breath * (1.0 + heat * 0.45) * (1.0 + uFlash * 0.3) * 1.4;
-  float alpha = 1.0 - exp(-energy * gain);
+  float rawAlpha = 1.0 - exp(-energy * gain);
+  // Cleanly fade out low-energy ambient halo so canvas background is 100% transparent:
+  float alpha = smoothstep(0.02, 0.09, energy) * rawAlpha;
   vec3 color = mix(1.0 - exp(-light * gain), alpha * light / max(energy, 1e-4), ink);
   color = mix(color, vec3(alpha), clamp(hot * grow, 0.0, 1.0) * ink * 0.85);
-  float tint = (1.0 - exp(-body * gain * 1.2)) * grow * grow * (1.0 - ink * 0.82);
-  color += uGlowColor * tint * (1.0 - alpha);
-  alpha += tint * (1.0 - alpha);
-  float grain = (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5) / 255.0;
-  alpha = clamp(alpha + grain, 0.0, 1.0);
-  fragColor = vec4(clamp(color + grain, 0.0, alpha), alpha);
+
+  fragColor = vec4(clamp(color, 0.0, 1.0), alpha);
 }
 `;
 
