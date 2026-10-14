@@ -151,7 +151,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
       >
         {/* Brand Logo */}
         <div className="h-16 px-4 flex items-center justify-between border-b border-white/10 bg-white/[0.02]">
-          <NavLink to="/dashboard" className="flex items-center space-x-2.5 group">
+          <NavLink to="/" className="flex items-center space-x-2.5 group" title="Return to Landing Page">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#8B5CF6] to-[#38BDF8] flex items-center justify-center shadow-lg shadow-purple-500/20 group-hover:scale-105 transition-transform">
               <Zap className="w-4 h-4 text-white fill-white" />
             </div>
