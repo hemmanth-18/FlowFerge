@@ -28,6 +28,7 @@ import { useToast } from '../context/ToastContext';
 import { usePageMeta } from '../hooks/usePageMeta';
 import TechText from '../components/TechText';
 import MicroSlats from '../components/MicroSlats';
+import ElectricLogo from '../components/ElectricLogo';
 
 export const LandingPage = () => {
   const { user } = useAuth();
@@ -102,8 +103,19 @@ export const LandingPage = () => {
             className="flex items-center space-x-3 group cursor-pointer"
             title="FlowForge Home"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-sky-400 flex items-center justify-center shadow-lg shadow-brand-500/25 group-hover:scale-105 transition-transform border border-white/15 flex-shrink-0">
-              <Zap className="w-5 h-5 text-white fill-white" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-sky-400 flex items-center justify-center shadow-lg shadow-brand-500/25 group-hover:scale-105 transition-transform border border-white/15 flex-shrink-0 overflow-hidden relative">
+              <ElectricLogo
+                color="#ffffff"
+                glowColor="#c084fc"
+                scale={0.75}
+                thickness={1.5}
+                strands={3}
+                bend={0.5}
+                crackle={1.2}
+                arcs={1}
+                speed={2.2}
+                interactive={true}
+              />
             </div>
             <div className="flex flex-col">
               <span className="text-xl font-black tracking-tight text-white uppercase tracking-wider group-hover:text-brand-300 transition-colors">
@@ -650,8 +662,19 @@ export const LandingPage = () => {
             {/* Brand Column */}
             <div className="space-y-3.5">
               <Link to="/" className="flex items-center space-x-2.5 group cursor-pointer">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-sky-400 flex items-center justify-center shadow-lg shadow-brand-500/25 border border-white/15">
-                  <Zap className="w-4 h-4 text-white fill-white" />
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-sky-400 flex items-center justify-center shadow-lg shadow-brand-500/25 border border-white/15 overflow-hidden relative">
+                  <ElectricLogo
+                    color="#ffffff"
+                    glowColor="#c084fc"
+                    scale={0.75}
+                    thickness={1.5}
+                    strands={3}
+                    bend={0.5}
+                    crackle={1.2}
+                    arcs={1}
+                    speed={2.2}
+                    interactive={true}
+                  />
                 </div>
                 <span className="text-base font-black tracking-tight text-white uppercase tracking-wider group-hover:text-brand-300 transition-colors">
                   FlowForge

@@ -30,6 +30,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
 import { CreateTeamModal } from './CreateTeamModal';
 import { TeamIcon } from './TeamIcon';
+import ElectricLogo from './ElectricLogo';
 import { api } from '../services/api';
 
 export const Sidebar = ({ isOpen, onClose }) => {
@@ -152,8 +153,19 @@ export const Sidebar = ({ isOpen, onClose }) => {
         {/* Brand Logo */}
         <div className="h-16 px-4 flex items-center justify-between border-b border-white/10 bg-white/[0.02]">
           <NavLink to="/" className="flex items-center space-x-2.5 group" title="Return to Landing Page">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#8B5CF6] to-[#38BDF8] flex items-center justify-center shadow-lg shadow-purple-500/20 group-hover:scale-105 transition-transform">
-              <Zap className="w-4 h-4 text-white fill-white" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#8B5CF6] to-[#38BDF8] flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:scale-105 transition-transform overflow-hidden relative border border-white/20 flex-shrink-0">
+              <ElectricLogo
+                color="#ffffff"
+                glowColor="#c084fc"
+                scale={0.75}
+                thickness={1.5}
+                strands={3}
+                bend={0.5}
+                crackle={1.2}
+                arcs={1}
+                speed={2.2}
+                interactive={true}
+              />
             </div>
             <div>
               <div className="flex items-center space-x-1.5">

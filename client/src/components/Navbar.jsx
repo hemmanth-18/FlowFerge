@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { TeamIcon } from './TeamIcon';
+import ElectricLogo from './ElectricLogo';
 import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
 import { api } from '../services/api';
@@ -91,6 +92,28 @@ export const Navbar = ({ onOpenSidebar, title, actions = null }) => {
         >
           <Menu className="w-5 h-5" />
         </button>
+
+        {/* Mobile Brand Electric Logo */}
+        <Link
+          to="/"
+          className="flex items-center space-x-2 lg:hidden flex-shrink-0 group"
+          title="Return to Landing Page"
+        >
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#8B5CF6] to-[#38BDF8] flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:scale-105 transition-transform overflow-hidden relative border border-white/20">
+            <ElectricLogo
+              color="#ffffff"
+              glowColor="#c084fc"
+              scale={0.75}
+              thickness={1.5}
+              strands={3}
+              bend={0.5}
+              crackle={1.2}
+              arcs={1}
+              speed={2.2}
+              interactive={true}
+            />
+          </div>
+        </Link>
 
         {/* Page Title & Breadcrumbs */}
         <div className="flex items-center space-x-2 min-w-0">
