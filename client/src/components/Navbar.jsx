@@ -99,12 +99,12 @@ export const Navbar = ({ onOpenSidebar, title, actions = null }) => {
           className="flex items-center space-x-2 lg:hidden flex-shrink-0 group"
           title="Return to Landing Page"
         >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#8B5CF6] to-[#38BDF8] flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:scale-105 transition-transform overflow-hidden relative border border-white/20">
+          <div className="w-8 h-8 flex items-center justify-center group-hover:scale-110 transition-transform overflow-hidden relative flex-shrink-0">
             <ElectricLogo
               color="#ffffff"
               glowColor="#c084fc"
-              scale={0.75}
-              thickness={1.5}
+              scale={0.82}
+              thickness={1.6}
               strands={3}
               bend={0.5}
               crackle={1.2}

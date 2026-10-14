@@ -103,12 +103,12 @@ export const LandingPage = () => {
             className="flex items-center space-x-3 group cursor-pointer"
             title="FlowForge Home"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-sky-400 flex items-center justify-center shadow-lg shadow-brand-500/25 group-hover:scale-105 transition-transform border border-white/15 flex-shrink-0 overflow-hidden relative">
+            <div className="w-10 h-10 flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0 overflow-hidden relative">
               <ElectricLogo
                 color="#ffffff"
                 glowColor="#c084fc"
-                scale={0.75}
-                thickness={1.5}
+                scale={0.82}
+                thickness={1.6}
                 strands={3}
                 bend={0.5}
                 crackle={1.2}
@@ -662,12 +662,12 @@ export const LandingPage = () => {
             {/* Brand Column */}
             <div className="space-y-3.5">
               <Link to="/" className="flex items-center space-x-2.5 group cursor-pointer">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-sky-400 flex items-center justify-center shadow-lg shadow-brand-500/25 border border-white/15 overflow-hidden relative">
+                <div className="w-8 h-8 flex items-center justify-center overflow-hidden relative">
                   <ElectricLogo
                     color="#ffffff"
                     glowColor="#c084fc"
-                    scale={0.75}
-                    thickness={1.5}
+                    scale={0.82}
+                    thickness={1.6}
                     strands={3}
                     bend={0.5}
                     crackle={1.2}

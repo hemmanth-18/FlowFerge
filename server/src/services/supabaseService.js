@@ -4084,23 +4084,28 @@ const SupabaseService = {
     };
   },
 
-  async getWorkflowDocuments(workflowId, userId) {
+  async getWorkflowDocuments(workflowId, userId = null) {
     if (!workflowId) return [];
+    await this.syncDocumentsFromSupabase();
     const wf = await this.getWorkflowById(workflowId);
     if (!wf) return [];
 
-    const userObj = await this.getUserById(userId);
-    const isGlobalAdmin = userObj?.role === 'ADMIN' || userObj?.isAdmin === true;
+    let isGlobalAdmin = false;
     let teamRole = null;
-    if (wf.teamId) {
-      teamRole = await this.getTeamMemberRole(wf.teamId, userId);
+    let role = null;
+    if (userId) {
+      const userObj = await this.getUserById(userId);
+      isGlobalAdmin = userObj?.role === 'ADMIN' || userObj?.isAdmin === true;
+      if (wf.teamId) {
+        teamRole = await this.getTeamMemberRole(wf.teamId, userId);
+      }
+      role = await this.getWorkflowMemberRole(workflowId, userId);
     }
-    const role = await this.getWorkflowMemberRole(workflowId, userId);
     const isTeamAdmin = teamRole === 'TEAM_ADMIN';
     const isTeamManager = teamRole === 'TEAM_MANAGER';
 
     // Must have at least workflow access or admin/manager role
-    if (!role && !isGlobalAdmin && !isTeamAdmin && !isTeamManager) return [];
+    if (userId && !role && !isGlobalAdmin && !isTeamAdmin && !isTeamManager) return [];
 
     const isAdminOrManager =
       isGlobalAdmin ||
@@ -4175,6 +4180,7 @@ const SupabaseService = {
 
   async getReceivedDocuments(userId) {
     if (!userId) return [];
+    await this.syncDocumentsFromSupabase();
     const received = [];
 
     for (const rec of memoryDb.documentRecipients.values()) {
@@ -4203,6 +4209,7 @@ const SupabaseService = {
 
   async getMyUploadedDocuments(userId) {
     if (!userId) return [];
+    await this.syncDocumentsFromSupabase();
     const myDocs = [];
 
     for (const doc of memoryDb.workflowDocuments.values()) {
@@ -4238,8 +4245,63 @@ const SupabaseService = {
     return myDocs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   },
 
+  // Sync documents and private recipients from Supabase table if available
+  async syncDocumentsFromSupabase() {
+    if (!supabase || !(await areTablesReady())) return;
+    try {
+      const { data: dbDocs, error: docErr } = await supabase.from('workflow_documents').select('*');
+      if (!docErr && Array.isArray(dbDocs)) {
+        for (const row of dbDocs) {
+          const doc = {
+            id: row.id,
+            workflowId: row.workflow_id,
+            fileName: row.file_name,
+            storagePath: row.storage_path,
+            fileType: row.file_type || 'PDF',
+            mimeType: row.mime_type,
+            fileSize: row.file_size,
+            uploadedBy: row.uploaded_by,
+            uploaderName: row.uploader_name || 'Team Member',
+            description: row.description || '',
+            visibility: row.visibility || (row.is_private ? 'PRIVATE' : 'PUBLIC'),
+            isPrivate: Boolean(row.is_private),
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+          };
+          if (!doc.teamId && doc.workflowId) {
+            const wf = memoryDb.workflows.get(doc.workflowId);
+            if (wf?.teamId) doc.teamId = wf.teamId;
+          }
+          memoryDb.workflowDocuments.set(doc.id, doc);
+        }
+      }
+
+      const { data: dbRecs, error: recErr } = await supabase.from('document_recipients').select('*');
+      if (!recErr && Array.isArray(dbRecs)) {
+        for (const row of dbRecs) {
+          const rec = {
+            id: row.id,
+            documentId: row.document_id,
+            workflowId: row.workflow_id,
+            recipientUserId: row.recipient_user_id,
+            recipientUsername: row.recipient_username || 'member',
+            recipientName: row.recipient_name || 'Member',
+            recipientEmail: row.recipient_email || '',
+            sentAt: row.sent_at,
+            status: row.status || 'DELIVERED',
+          };
+          memoryDb.documentRecipients.set(rec.id, rec);
+        }
+      }
+      savePersistedDocuments();
+    } catch (e) {
+      // Non-fatal if tables are undergoing initialization
+    }
+  },
+
   async getAllAccessibleDocuments(userId, { teamId = null, workflowId = null, view = 'workflow' } = {}) {
     if (!userId) return [];
+    await this.syncDocumentsFromSupabase();
 
     if (view === 'received') {
       return this.getReceivedDocuments(userId);
@@ -4251,18 +4313,84 @@ const SupabaseService = {
       return this.getWorkflowDocuments(workflowId, userId);
     }
 
-    // Team-scoped document retrieval
-    if (teamId) {
-      const teamWorkflows = await this.getWorkflowsByTeam(teamId, userId);
-      const allDocs = [];
+    // Determine target teamId if not explicitly passed
+    let effectiveTeamId = teamId;
+    if (!effectiveTeamId) {
+      const userTeams = await this.getUserTeams(userId);
+      if (userTeams.length > 0) {
+        effectiveTeamId = userTeams[0].id;
+      }
+    }
+
+    if (effectiveTeamId) {
+      const teamWorkflows = await this.getWorkflowsByTeam(effectiveTeamId, userId);
+      const teamWorkflowIds = new Set((teamWorkflows || []).map((w) => w.id));
+      const workflowMap = new Map((teamWorkflows || []).map((w) => [w.id, w.name]));
+      const docMap = new Map();
+
+      // 1. Gather all documents from all team workflows
       for (const wf of teamWorkflows || []) {
         const docs = await this.getWorkflowDocuments(wf.id, userId);
-        allDocs.push(...docs);
+        for (const d of docs) {
+          docMap.set(d.id, {
+            ...d,
+            workflowName: workflowMap.get(d.workflowId) || d.workflowName || 'Workflow',
+          });
+        }
       }
+
+      // 2. Also retrieve documents matching teamId directly or matching team workflow ids in memoryDb
+      for (const doc of memoryDb.workflowDocuments.values()) {
+        if (docMap.has(doc.id)) continue;
+
+        const belongsToTeam =
+          doc.teamId === effectiveTeamId ||
+          teamWorkflowIds.has(doc.workflowId);
+
+        if (belongsToTeam) {
+          const wf = doc.workflowId ? await this.getWorkflowById(doc.workflowId) : null;
+          const userObj = await this.getUserById(userId);
+          const isGlobalAdmin = userObj?.role === 'ADMIN' || userObj?.isAdmin === true;
+          const teamRole = await this.getTeamMemberRole(effectiveTeamId, userId);
+          const role = doc.workflowId ? await this.getWorkflowMemberRole(doc.workflowId, userId) : null;
+          const isSender = doc.uploadedBy === userId;
+          const recs = this.getDocumentRecipients(doc.id);
+          const isRecipient = recs.some((r) => r.recipientUserId === userId);
+          const isAdminOrManager =
+            isGlobalAdmin ||
+            teamRole === 'TEAM_ADMIN' ||
+            teamRole === 'TEAM_MANAGER' ||
+            role === 'OWNER' ||
+            role === 'MANAGER' ||
+            role === 'ADMIN';
+
+          if (isSender || isAdminOrManager || isRecipient || (!doc.isPrivate && (role || teamRole))) {
+            docMap.set(doc.id, {
+              ...doc,
+              workflowName: wf?.name || doc.workflowName || 'Workflow',
+              visibility: doc.isPrivate ? 'PRIVATE' : 'PUBLIC',
+              visibilityLabel: doc.isPrivate ? 'Private' : 'Public',
+              canDelete: isSender || isAdminOrManager,
+            });
+          }
+        }
+      }
+
+      const allDocs = Array.from(docMap.values());
       return allDocs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
-    return this.getReceivedDocuments(userId);
+    // Fallback if user is not in any team yet: return documents directly accessible to this user
+    const fallbackDocs = [];
+    for (const doc of memoryDb.workflowDocuments.values()) {
+      const isSender = doc.uploadedBy === userId;
+      const recs = this.getDocumentRecipients(doc.id);
+      const isRecipient = recs.some((r) => r.recipientUserId === userId);
+      if (isSender || isRecipient || !doc.isPrivate) {
+        fallbackDocs.push(doc);
+      }
+    }
+    return fallbackDocs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   },
 
   async getDocumentDownloadUrl(docId, userId) {

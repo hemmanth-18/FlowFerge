@@ -480,7 +480,7 @@ const teamController = {
 
       const allDocs = [];
       for (const wf of teamWorkflows || []) {
-        const docs = await SupabaseService.getWorkflowDocuments(wf.id);
+        const docs = await SupabaseService.getWorkflowDocuments(wf.id, userId);
         for (const doc of docs) {
           allDocs.push({
             ...doc,

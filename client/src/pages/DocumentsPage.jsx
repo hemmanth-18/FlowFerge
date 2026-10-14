@@ -38,17 +38,18 @@ export const DocumentsPage = () => {
   const { setSidebarOpen } = useOutletContext() || {};
   const toast = useToast();
   const { user } = useAuth();
-  const { teams, activeTeam, isAdmin, isManager } = useTeam();
+  const { teams, activeTeam, isAdmin, isManager, loadingTeams } = useTeam();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Active Tab: 'workflow' | 'received' | 'my' | 'admin'
   const initialTab = searchParams.get('tab') || 'workflow';
   const [activeTab, setActiveTab] = useState(initialTab);
 
-  // Filters
-  const [selectedTeamId, setSelectedTeamId] = useState(activeTeam?.id || '');
+  // Filters - sync with activeTeam and localStorage
+  const savedTeamId = typeof window !== 'undefined' ? localStorage.getItem('flowforge_active_team_id') : '';
+  const [selectedTeamId, setSelectedTeamId] = useState(activeTeam?.id || savedTeamId || '');
   const [workflows, setWorkflows] = useState([]);
-  const [selectedWorkflowId, setSelectedWorkflowId] = useState('');
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState(searchParams.get('workflowId') || '');
   const [searchQuery, setSearchQuery] = useState('');
   const [fileTypeFilter, setFileTypeFilter] = useState('ALL'); // 'ALL' | 'PDF' | 'DOC'
 
@@ -72,16 +73,15 @@ export const DocumentsPage = () => {
 
   // Keep selectedTeamId synced with activeTeam
   useEffect(() => {
-    if (activeTeam?.id && !selectedTeamId) {
+    if (activeTeam?.id && activeTeam.id !== selectedTeamId) {
       setSelectedTeamId(activeTeam.id);
     }
-  }, [activeTeam]);
+  }, [activeTeam?.id]);
 
   // Load Workflows for selected team
   useEffect(() => {
     if (!selectedTeamId) {
       setWorkflows([]);
-      setSelectedWorkflowId('');
       return;
     }
 
@@ -90,11 +90,6 @@ export const DocumentsPage = () => {
         const res = await api.get(`/workflows?teamId=${selectedTeamId}`);
         const list = res.data?.data || [];
         setWorkflows(list);
-        if (list.length > 0 && !selectedWorkflowId) {
-          setSelectedWorkflowId(list[0].id);
-        } else if (list.length === 0) {
-          setSelectedWorkflowId('');
-        }
       } catch (err) {
         console.error('Failed to load workflows for team:', err);
       }
@@ -105,10 +100,14 @@ export const DocumentsPage = () => {
 
   // Fetch Documents according to active tab and filters
   const fetchDocuments = async () => {
+    // If teams are still loading and no team is selected yet, wait to avoid premature empty response
+    if (loadingTeams && !selectedTeamId && !activeTeam?.id) return;
+
     try {
       setLoading(true);
       let endpoint = '/documents';
       const params = {};
+      const currentTeamId = selectedTeamId || activeTeam?.id || (typeof window !== 'undefined' ? localStorage.getItem('flowforge_active_team_id') : '');
 
       if (activeTab === 'received') {
         endpoint = '/documents/received';
@@ -116,15 +115,15 @@ export const DocumentsPage = () => {
         endpoint = '/documents/my';
       } else if (activeTab === 'admin') {
         params.view = 'all';
-        if (selectedTeamId) params.teamId = selectedTeamId;
+        if (currentTeamId) params.teamId = currentTeamId;
         if (selectedWorkflowId) params.workflowId = selectedWorkflowId;
       } else {
         // 'workflow' tab
         params.view = 'workflow';
         if (selectedWorkflowId) {
           params.workflowId = selectedWorkflowId;
-        } else if (selectedTeamId) {
-          params.teamId = selectedTeamId;
+        } else if (currentTeamId) {
+          params.teamId = currentTeamId;
         }
       }
 
@@ -142,7 +141,7 @@ export const DocumentsPage = () => {
 
   useEffect(() => {
     fetchDocuments();
-  }, [activeTab, selectedTeamId, selectedWorkflowId]);
+  }, [activeTab, selectedTeamId, selectedWorkflowId, activeTeam?.id]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -352,6 +351,9 @@ export const DocumentsPage = () => {
                   onChange={(e) => setSelectedWorkflowId(e.target.value)}
                   className="w-full pl-8 pr-8 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 text-white text-xs focus:outline-none focus:border-purple-500 cursor-pointer appearance-none transition-colors truncate h-9"
                 >
+                  <option value="" className="bg-[#0D1220] text-white">
+                    All Workflows {workflows.length > 0 ? `(${workflows.length})` : ''}
+                  </option>
                   {workflows.map((wf) => (
                     <option key={wf.id} value={wf.id} className="bg-[#0D1220] text-white">
                       {wf.name}
